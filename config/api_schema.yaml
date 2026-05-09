@@ -1,0 +1,284 @@
+openapi: "3.1.0"
+info:
+  title: EduMultiAgent API
+  version: "0.1.0"
+  description: |
+    Socrates-Cube 多智能体自适应学习系统接口规范。
+    包含三个核心数据结构：学生六维画像、SSE流式输出数据包、Agent调度日志。
+
+# ─────────────────────────────────────────
+# 公共 Schema 定义
+# ─────────────────────────────────────────
+components:
+  schemas:
+
+    # ① 学生六维画像 JSON 结构
+    StudentProfile:
+      type: object
+      required: [user_id, updated_at, profile]
+      properties:
+        user_id:
+          type: string
+          description: 用户唯一标识（UUID 或学号）
+          example: "user_20260508_001"
+        updated_at:
+          type: string
+          format: date-time
+          description: 画像最后更新时间（ISO 8601）
+          example: "2026-05-08T10:00:00+08:00"
+        profile:
+          type: object
+          required:
+            - knowledge_base
+            - cognitive_style
+            - learning_progress
+            - protocol_understanding
+            - hands_on_ability
+            - common_mistakes
+          properties:
+            knowledge_base:
+              type: object
+              description: 知识储备维度
+              required: [level]
+              properties:
+                level:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  description: 掌握程度 1-5
+                  example: 3
+                desc:
+                  type: string
+                  description: 简要描述
+                  example: "掌握基本概念，TCP 细节薄弱"
+            cognitive_style:
+              type: object
+              description: 认知风格维度
+              required: [type]
+              properties:
+                type:
+                  type: string
+                  enum: [visual, textual, practical]
+                  description: "visual=视觉型 | textual=文本型 | practical=实践型"
+                  example: "visual"
+                desc:
+                  type: string
+                  example: "偏好图示和流程图"
+            learning_progress:
+              type: object
+              description: 学习进度维度
+              properties:
+                completed_topics:
+                  type: array
+                  items:
+                    type: string
+                  description: 已完成章节列表
+                  example: ["第1章概述", "第3章传输层"]
+                current_topic:
+                  type: string
+                  description: 当前学习章节
+                  example: "第4章网络层"
+                completion_rate:
+                  type: number
+                  format: float
+                  minimum: 0.0
+                  maximum: 1.0
+                  description: 整体完成率（0.0~1.0）
+                  example: 0.4
+            protocol_understanding:
+              type: object
+              description: 协议理解维度（TCP/IP、HTTP、DNS 等）
+              required: [level]
+              properties:
+                level:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  example: 2
+                weak_points:
+                  type: array
+                  items:
+                    type: string
+                  description: 薄弱知识点列表
+                  example: ["TCP拥塞控制", "BGP路由协议"]
+            hands_on_ability:
+              type: object
+              description: 动手实践能力维度（抓包、Socket编程等）
+              required: [level]
+              properties:
+                level:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  example: 4
+                desc:
+                  type: string
+                  example: "能使用Wireshark进行抓包分析"
+            common_mistakes:
+              type: object
+              description: 常见错误画像维度
+              properties:
+                types:
+                  type: array
+                  items:
+                    type: string
+                  description: 错误类型列表
+                  example: ["概念混淆", "流程记忆错误"]
+                frequency:
+                  type: object
+                  additionalProperties:
+                    type: integer
+                  description: 各类错误出现次数
+                  example:
+                    "概念混淆": 5
+                    "流程记忆错误": 2
+
+    # ② SSE 流式输出数据包结构
+    SSEPayload:
+      type: object
+      required: [event, agent_name, data, timestamp]
+      description: |
+        Server-Sent Events 数据包格式。
+        前端通过 EventSource 接收，按 event 字段分发处理。
+      properties:
+        event:
+          type: string
+          enum: [agent_start, token, agent_end, error]
+          description: |
+            事件类型：
+            - agent_start: Agent 开始执行
+            - token: 流式输出的单个 token
+            - agent_end: Agent 执行完毕
+            - error: 执行过程中发生错误
+          example: "token"
+        agent_name:
+          type: string
+          enum: [Orchestrator, Profiler, Retriever, Diagnosis, Generator, Planner]
+          description: 当前发送数据的 Agent 名称
+          example: "Generator"
+        data:
+          type: string
+          description: 事件携带的内容（token 文本、状态消息或错误描述）
+          example: "TCP 三次握手的第一步是..."
+        timestamp:
+          type: string
+          format: date-time
+          description: 事件发生时间（ISO 8601）
+          example: "2026-05-08T10:05:23.456+08:00"
+
+    # ③ Agent 调度日志格式
+    AgentLog:
+      type: object
+      required: [log_id, session_id, agent_name, action, input_state, output_state, duration_ms, timestamp]
+      description: |
+        记录每次 Agent 调度的完整上下文，用于调试、性能分析和审计。
+      properties:
+        log_id:
+          type: string
+          format: uuid
+          description: 日志唯一标识
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        session_id:
+          type: string
+          description: 对话会话 ID
+          example: "session_20260508_abc123"
+        agent_name:
+          type: string
+          enum: [Orchestrator, Profiler, Retriever, Diagnosis, Generator, Planner]
+          description: 执行本次调度的 Agent
+          example: "Retriever"
+        action:
+          type: string
+          description: Agent 执行的动作描述
+          example: "向量检索：TCP拥塞控制"
+        input_state:
+          type: object
+          description: Agent 执行前的输入状态（GraphState 快照）
+          additionalProperties: true
+          example:
+            query: "TCP拥塞控制如何工作？"
+            user_id: "user_001"
+        output_state:
+          type: object
+          description: Agent 执行后的输出状态（GraphState 快照）
+          additionalProperties: true
+          example:
+            retrieved_docs: ["文档片段1", "文档片段2"]
+            retrieval_score: 0.87
+        duration_ms:
+          type: integer
+          description: Agent 执行耗时（毫秒）
+          minimum: 0
+          example: 342
+        timestamp:
+          type: string
+          format: date-time
+          description: 日志记录时间（ISO 8601）
+          example: "2026-05-08T10:05:23.100+08:00"
+
+# ─────────────────────────────────────────
+# 接口路径定义
+# ─────────────────────────────────────────
+paths:
+  /health:
+    get:
+      summary: 健康检查
+      responses:
+        "200":
+          description: 服务正常
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  version:
+                    type: string
+                    example: "0.1.0"
+
+  /api/v1/chat:
+    post:
+      summary: 发起对话（SSE 流式输出）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, message]
+              properties:
+                user_id:
+                  type: string
+                  example: "user_001"
+                message:
+                  type: string
+                  example: "TCP三次握手的过程是什么？"
+                session_id:
+                  type: string
+                  description: 会话ID，不传则新建会话
+      responses:
+        "200":
+          description: SSE 流式响应
+          content:
+            text/event-stream:
+              schema:
+                $ref: "#/components/schemas/SSEPayload"
+
+  /api/v1/profile/{user_id}:
+    get:
+      summary: 获取学生六维画像
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 学生画像数据
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentProfile"

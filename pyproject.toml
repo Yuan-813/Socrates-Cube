@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "socrates-cube"
+version = "0.1.0"
+description = "面向高校《计算机网络》课程的多智能体自适应学习系统"
+requires-python = "==3.10.*"
+readme = "README.md"
+license = { text = "MIT" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]

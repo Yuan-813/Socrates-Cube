@@ -1,20 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { DiagnosisResult } from '@/types'
+import { computed } from 'vue'
+import { useAssistantStore } from '@/stores/assistantStore'
 
-const diagnosis = ref<DiagnosisResult>({
-  diagnosisId: 'diag-001',
-  sessionId: 'session-001',
-  trigger: '学生回答：HTTP直接基于IP传输',
-  surfaceError: '协议层次错位',
-  rootCause: {
-    weakKnowledge: 'TCP/IP 分层封装机制',
-    confidence: 0.92,
-    evidence: ['教材第4章第2节', 'RFC 793 摘要段落3'],
-  },
-  misconceptionPattern: '层次穿越型',
-  suggestedResourceTypes: ['分层封装动画', '封装过程代码演示', '对比练习'],
-})
+const assistantStore = useAssistantStore()
+const diagnosis = computed(() => assistantStore.diagnosis)
 
 const layers = [
   { name: '应用层', desc: 'HTTP / FTP / DNS', color: '#f59e0b' },
@@ -25,7 +14,7 @@ const layers = [
 </script>
 
 <template>
-  <div class="diagnosis-panel space-y-6">
+  <div v-if="diagnosis" class="diagnosis-panel space-y-6">
     <!-- 触发信息 -->
     <div class="diagnosis-section">
       <div class="section-header">
@@ -126,6 +115,7 @@ const layers = [
       </div>
     </div>
   </div>
+  <app-empty v-else description="等待对话后生成认知诊断结果" />
 </template>
 
 <style scoped>

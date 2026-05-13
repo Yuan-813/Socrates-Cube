@@ -1,21 +1,34 @@
 <script setup lang="ts">
-import { ref, nextTick, onMounted } from 'vue'
+import { computed, ref, nextTick, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { getMockChatPanels, streamChat } from '@/api/chat'
 import { useChatStore } from '@/stores/chatStore'
-import { useFetchSSE } from '@/composables/useSSE'
+import { useAssistantStore } from '@/stores/assistantStore'
 import ChatMessage from './ChatMessage.vue'
 import type { ChatMessage as ChatMessageType } from '@/stores/chatStore'
+import type { SSEEvent } from '@/types/sse'
 
 const chatStore = useChatStore()
-const sse = useFetchSSE()
+const assistantStore = useAssistantStore()
 const inputText = ref('')
 const messagesContainer = ref<HTMLElement>()
 const inputRef = ref<any>(null)
 
 const mockReply = ref('')
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const sseEndpoint = import.meta.env.VITE_SSE_ENDPOINT || '/api/v1/chat/stream'
+const useMockByEnv = import.meta.env.VITE_USE_MOCK !== 'false'
 
-// 是否启用真实 SSE（通过环境变量控制）
-const SSE_ENDPOINT = import.meta.env.VITE_SSE_ENDPOINT || ''
-const USE_REAL_SSE = SSE_ENDPOINT.length > 0
+const runtimeMode = computed(() => assistantStore.mode)
+const resolvedSseEndpoint = computed(() => {
+  if (sseEndpoint.startsWith('http://') || sseEndpoint.startsWith('https://')) {
+    return sseEndpoint
+  }
+
+  const normalizedBase = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl
+  const normalizedPath = sseEndpoint.startsWith('/') ? sseEndpoint : `/${sseEndpoint}`
+  return `${normalizedBase}${normalizedPath}`
+})
 
 const quickPrompts = [
   { icon: 'QuestionFilled', text: '什么是TCP三次握手？', label: '概念询问' },
@@ -40,35 +53,45 @@ async function sendMessage() {
   const text = inputText.value
   inputText.value = ''
   chatStore.setStreaming(true)
+  assistantStore.resetRuntimeState()
+  assistantStore.setConnectionStatus('connecting')
   mockReply.value = ''
 
   await nextTick()
   scrollToBottom()
 
-  if (USE_REAL_SSE) {
-    await sendWithRealSSE(sessionId, text)
-  } else {
-    sendWithMockSSE(sessionId, text)
-  }
+  const panelPayload = getMockChatPanels(text)
+  assistantStore.setProfile(panelPayload.profile)
+  assistantStore.setDiagnosis(panelPayload.diagnosis)
+  assistantStore.setResources(panelPayload.resources)
+  assistantStore.setLearningPath(panelPayload.learningPath)
+  assistantStore.setLogs(panelPayload.logs)
+  assistantStore.setSimulatorSummary(panelPayload.simulatorSummary)
+
+  await sendWithStream(sessionId, text)
 }
 
-async function sendWithRealSSE(sessionId: string, text: string) {
+async function sendWithStream(sessionId: string, text: string) {
   const session = chatStore.currentSession
   const history = session ? session.messages.map((m: ChatMessageType) => ({ role: m.role, content: m.content })) : []
 
-  const body = {
-    session_id: sessionId,
-    message: text,
-    history: history.slice(-10), // 最近 10 轮上下文
-  }
-
-  await sse.connect(SSE_ENDPOINT, {
-    body,
-    onMessage: (chunk: string) => {
+  await streamChat({
+    payload: {
+      session_id: sessionId,
+      user_id: 'demo-user',
+      message: text,
+      history: history.slice(-10),
+    },
+    useMock: runtimeMode.value === 'mock',
+    endpoint: resolvedSseEndpoint.value,
+    onEvent: handleSSEEvent,
+    onToken: (chunk: string) => {
+      assistantStore.setConnectionStatus('streaming')
       mockReply.value += chunk
       scrollToBottom()
     },
     onDone: () => {
+      assistantStore.setConnectionStatus('idle')
       chatStore.setStreaming(false)
       const assistantMsg: ChatMessageType = {
         id: `msg-${Date.now()}`,
@@ -78,43 +101,41 @@ async function sendWithRealSSE(sessionId: string, text: string) {
         agentName: 'Orchestrator',
       }
       chatStore.addMessage(sessionId, assistantMsg)
+      mockReply.value = ''
     },
     onError: (err) => {
+      assistantStore.setConnectionStatus('error')
+      assistantStore.setLastError(err.message)
       chatStore.setStreaming(false)
       const assistantMsg: ChatMessageType = {
         id: `msg-${Date.now()}`,
         role: 'assistant',
-        content: `⚠️ 连接异常：${err.message}\n\n已切换为离线模式。`,
+        content: `⚠️ 连接异常：${err.message}\n\n请检查后端服务或继续使用演示模式。`,
         timestamp: Date.now(),
         agentName: 'System',
       }
       chatStore.addMessage(sessionId, assistantMsg)
+      ElMessage.error(`流式连接失败：${err.message}`)
     },
   })
 }
 
-function sendWithMockSSE(sessionId: string, text: string) {
-  const fullReply = `收到你的问题："${text}"\n\n我是 Socrates Cube 的 AI 教练，正在分析你的协议理解水平...\n\n（当前为演示模式，真实 SSE 连接请在 .env 中配置 VITE_SSE_ENDPOINT）`
-  let index = 0
+function handleSSEEvent(event: SSEEvent) {
+  if (event.event === 'agent_start') {
+    assistantStore.appendLog({
+      logId: `log-${Date.now()}`,
+      sessionId: chatStore.currentSession?.sessionId || 'unknown',
+      agentName: event.agent_name || 'Orchestrator',
+      action: '开始执行',
+      state: typeof event.data === 'string' ? event.data : '收到事件',
+      timestamp: new Date().toLocaleString(),
+      result: '处理中',
+    })
+  }
 
-  const timer = setInterval(() => {
-    if (index >= fullReply.length) {
-      clearInterval(timer)
-      chatStore.setStreaming(false)
-      const assistantMsg: ChatMessageType = {
-        id: `msg-${Date.now()}`,
-        role: 'assistant',
-        content: mockReply.value,
-        timestamp: Date.now(),
-        agentName: 'Orchestrator',
-      }
-      chatStore.addMessage(sessionId, assistantMsg)
-      return
-    }
-    mockReply.value += fullReply[index]
-    index++
-    scrollToBottom()
-  }, 30)
+  if (event.event === 'error') {
+    assistantStore.setLastError(typeof event.data === 'string' ? event.data : 'SSE 返回错误')
+  }
 }
 
 function scrollToBottom() {
@@ -139,8 +160,15 @@ function clearChat() {
   chatStore.clearCurrentSessionMessages()
 }
 
+function toggleMode() {
+  const nextMode = runtimeMode.value === 'mock' ? 'real' : 'mock'
+  assistantStore.setMode(nextMode)
+  ElMessage.success(nextMode === 'mock' ? '已切换到演示模式' : '已切换到真实联调模式')
+}
+
 onMounted(() => {
   chatStore.ensureValidCurrentSession()
+  assistantStore.setMode(useMockByEnv ? 'mock' : 'real')
   scrollToBottom()
 })
 </script>
@@ -203,10 +231,19 @@ onMounted(() => {
             @click="setPrompt(prompt.text)"
           >{{ prompt.label }}</span>
         </div>
-        <el-button link size="small" @click="clearChat">
-          <el-icon size="14"><Delete /></el-icon>
-          清空对话
-        </el-button>
+        <div class="toolbar-actions">
+          <el-tag :type="assistantStore.isMockMode ? 'warning' : 'success'" effect="light">
+            {{ assistantStore.isMockMode ? 'Mock 模式' : 'Real 模式' }}
+          </el-tag>
+          <el-button link size="small" @click="toggleMode">
+            <el-icon size="14"><Switch /></el-icon>
+            切换模式
+          </el-button>
+          <el-button link size="small" @click="clearChat">
+            <el-icon size="14"><Delete /></el-icon>
+            清空对话
+          </el-button>
+        </div>
       </div>
       <div class="input-row">
         <el-input
@@ -230,7 +267,7 @@ onMounted(() => {
       </div>
       <div class="input-meta">
         <span class="meta-text">Socrates Cube · 计算机网络协议智能教练</span>
-        <span v-if="chatStore.isStreaming" class="meta-status">正在生成回复...</span>
+        <span v-if="chatStore.isStreaming" class="meta-status">{{ assistantStore.connectionStatus === 'connecting' ? '正在建立连接...' : '正在生成回复...' }}</span>
       </div>
     </div>
   </div>

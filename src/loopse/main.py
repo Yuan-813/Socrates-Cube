@@ -1,12 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import os
+from src.loopse.api.health import router as health_router
+from src.loopse.api.chat import router as chat_router
 
-app = FastAPI(
-    title="EduMultiAgent",
-    version="0.1.0",
-    description="Socrates-Cube 多智能体自适应学习系统",
-)
+app = FastAPI(title="EduMultiAgent", version="0.1.0", description="Socrates-Cube")
 
 app.add_middleware(
     CORSMiddleware,
@@ -15,12 +12,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.get("/health", tags=["系统"])
-async def health_check():
-    return {"status": "ok", "version": "0.1.0"}
-
-
-@app.get("/api/v1/chat/test", tags=["对话"])
-async def chat_test():
-    return {"message": "后端联通成功"}
+app.include_router(health_router)
+app.include_router(chat_router)

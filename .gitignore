@@ -49,4 +49,3 @@ build/
 node_modules/
 dist/
 .env.local
-.venv/Lib/site-packages/_distutils_hack/__pycache__/__init__.cpython-310.pyc

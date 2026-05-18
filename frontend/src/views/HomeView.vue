@@ -18,10 +18,10 @@ onMounted(async () => {
 })
 
 const stats = ref([
-  { label: '已完成知识点', value: '12', total: '48', color: 'blue', percent: 25, icon: 'Collection' },
-  { label: '能力画像维度', value: '8', total: '8', color: 'emerald', percent: 60, icon: 'TrendCharts' },
-  { label: '学习时长', value: '3.5', total: '小时', color: 'amber', percent: 40, icon: 'Timer' },
-  { label: '诊断记录', value: '5', total: '次', color: 'rose', percent: 80, icon: 'FirstAidKit' },
+  { label: '已完成知识点', value: '12', total: '48', color: '#3b82f6', bg: '#eff6ff', percent: 25, icon: 'Collection' },
+  { label: '能力画像维度', value: '8', total: '8', color: '#10b981', bg: '#ecfdf5', percent: 60, icon: 'TrendCharts' },
+  { label: '学习时长', value: '3.5', total: '小时', color: '#f59e0b', bg: '#fffbeb', percent: 40, icon: 'Timer' },
+  { label: '诊断记录', value: '5', total: '次', color: '#f43f5e', bg: '#fff1f2', percent: 80, icon: 'FirstAidKit' },
 ])
 
 const quickActions = [

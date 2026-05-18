@@ -1,49 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { LearningResource } from '@/types'
+import { computed, ref } from 'vue'
+import { useAssistantStore } from '@/stores/assistantStore'
 
-const resources = ref<LearningResource[]>([
-  {
-    id: 'res-001',
-    title: 'TCP vs UDP 决策指南',
-    type: 'document',
-    content: '详细对比TCP和UDP的适用场景、性能特征及选择策略...',
-    difficulty: 2,
-    tags: ['协议对比', '传输层'],
-  },
-  {
-    id: 'res-002',
-    title: 'TCP三次握手思维导图',
-    type: 'mindmap',
-    content: '完整的TCP连接建立流程，包含SYN/ACK标志位详解...',
-    difficulty: 2,
-    tags: ['思维导图', '连接管理'],
-  },
-  {
-    id: 'res-003',
-    title: '协议流程填空练习',
-    type: 'quiz',
-    content: '10道精选协议流程题，涵盖握手、挥手、窗口机制...',
-    difficulty: 3,
-    tags: ['练习题', '流程记忆'],
-  },
-  {
-    id: 'res-004',
-    title: 'Socket编程实战案例',
-    type: 'code',
-    content: 'Python Socket实现TCP客户端/服务端通信完整代码...',
-    difficulty: 3,
-    tags: ['代码实操', 'Socket'],
-  },
-  {
-    id: 'res-005',
-    title: '分层封装动画演示',
-    type: 'video',
-    content: '3分钟动画展示HTTP报文如何被逐层封装为以太网帧...',
-    difficulty: 1,
-    tags: ['视频', '分层封装'],
-  },
-])
+const assistantStore = useAssistantStore()
+const resources = computed(() => assistantStore.resources)
 
 const filterType = ref('')
 
@@ -73,10 +33,8 @@ const typeColors: Record<string, string> = {
 
 const filteredResources = computed(() => {
   if (!filterType.value) return resources.value
-  return resources.value.filter((r: LearningResource) => r.type === filterType.value)
+  return resources.value.filter((r) => r.type === filterType.value)
 })
-
-import { computed } from 'vue'
 </script>
 
 <template>
@@ -145,8 +103,8 @@ import { computed } from 'vue'
     <!-- 空状态 -->
     <div v-else class="resource-empty">
       <AppEmpty
-        title="暂无该类型资源"
-        description="切换筛选条件或联系系统管理员添加资源"
+        title="暂无联动资源"
+        description="先去聊天页发起一次对话，系统会同步资源推荐结果"
         icon="Filter"
       />
     </div>

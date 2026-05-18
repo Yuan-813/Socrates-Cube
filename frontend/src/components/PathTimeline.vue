@@ -1,15 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { LearningPathNode } from '@/types'
+import { computed } from 'vue'
+import { useAssistantStore } from '@/stores/assistantStore'
 
-const pathNodes = ref<LearningPathNode[]>([
-  { id: 'n1', title: 'TCP/IP 概述', status: 'completed', estimatedTime: 30 },
-  { id: 'n2', title: 'TCP 报文格式', status: 'completed', estimatedTime: 45 },
-  { id: 'n3', title: 'TCP 连接管理', status: 'current', reason: '你在连接管理练习中3次混淆SYN/ACK标志位', estimatedTime: 60 },
-  { id: 'n4', title: 'TCP 可靠传输', status: 'locked', estimatedTime: 50 },
-  { id: 'n5', title: 'TCP 拥塞控制', status: 'locked', estimatedTime: 55 },
-  { id: 'n6', title: '综合实践项目', status: 'locked', estimatedTime: 120 },
-])
+const assistantStore = useAssistantStore()
+const pathNodes = computed(() => assistantStore.learningPath)
 
 const statusConfig = {
   completed: { color: '#10b981', icon: 'Check', label: '已完成' },
@@ -19,7 +13,7 @@ const statusConfig = {
 </script>
 
 <template>
-  <div class="path-timeline">
+  <div v-if="pathNodes.length" class="path-timeline">
     <div class="timeline-container">
       <div
         v-for="(node, index) in pathNodes"
@@ -88,6 +82,7 @@ const statusConfig = {
       </div>
     </div>
   </div>
+  <app-empty v-else description="等待对话后生成学习路径建议" />
 </template>
 
 <style scoped>

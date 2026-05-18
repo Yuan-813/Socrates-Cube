@@ -1,14 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { AgentLog } from '@/types'
+import { computed, ref } from 'vue'
+import { useAssistantStore } from '@/stores/assistantStore'
 
-const logs = ref<AgentLog[]>([
-  { logId: 'log-001', sessionId: 's-001', agentName: 'Orchestrator', action: '调度', state: '分析用户意图', timestamp: '2024-05-09 14:32:01', result: '识别为"概念询问"类型' },
-  { logId: 'log-002', sessionId: 's-001', agentName: 'Profiler', action: '画像更新', state: '抽取8维特征', timestamp: '2024-05-09 14:32:03', result: '更新"协议流程记忆"维度' },
-  { logId: 'log-003', sessionId: 's-001', agentName: 'Retriever', action: '知识检索', state: '三库联合检索', timestamp: '2024-05-09 14:32:05', result: '命中教材第3章+2条误解' },
-  { logId: 'log-004', sessionId: 's-001', agentName: 'Diagnosis', action: '认知诊断', state: '三层诊断模型', timestamp: '2024-05-09 14:32:08', result: '发现"层次错位"错误' },
-  { logId: 'log-005', sessionId: 's-001', agentName: 'Simulator', action: '仿真触发', state: '分层封装动画', timestamp: '2024-05-09 14:32:10', result: '播放封装过程可视化' },
-])
+const assistantStore = useAssistantStore()
+const logs = computed(() => assistantStore.logs)
 
 const agentColors: Record<string, string> = {
   Orchestrator: '#8b5cf6',
@@ -24,8 +19,7 @@ const agentColors: Record<string, string> = {
 const filterAgent = ref('')
 
 const uniqueAgents = computed(() => [...new Set(logs.value.map(l => l.agentName))])
-
-import { computed } from 'vue'
+const filteredLogs = computed(() => logs.value.filter(l => !filterAgent.value || l.agentName === filterAgent.value))
 </script>
 
 <template>
@@ -43,9 +37,9 @@ import { computed } from 'vue'
     </div>
 
     <!-- 日志列表 -->
-    <div class="log-list">
+    <div v-if="filteredLogs.length" class="log-list">
       <div
-        v-for="log in logs.filter(l => !filterAgent || l.agentName === filterAgent)"
+        v-for="log in filteredLogs"
         :key="log.logId"
         class="log-item"
       >
@@ -80,6 +74,7 @@ import { computed } from 'vue'
         </div>
       </div>
     </div>
+    <app-empty v-else description="等待对话后生成 Agent 联调日志" />
   </div>
 </template>
 

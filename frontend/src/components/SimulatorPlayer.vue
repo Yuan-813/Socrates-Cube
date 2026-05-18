@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useSimulatorStore } from '@/stores/simulatorStore'
+import { useAssistantStore } from '@/stores/assistantStore'
 
 const store = useSimulatorStore()
+const assistantStore = useAssistantStore()
 const canvasRef = ref<HTMLCanvasElement>()
 
 interface SimStep {
@@ -23,6 +25,27 @@ const scenarios = [
   { label: 'TCP 滑动窗口', value: 'sliding_window', desc: '连续数据传输与流量控制' },
   { label: 'HTTP 请求响应', value: 'http_request', desc: '应用层请求与响应过程' },
 ]
+
+watch(
+  () => assistantStore.simulatorSummary,
+  (summary) => {
+    const lower = summary.toLowerCase()
+    if (lower.includes('http')) {
+      store.setScenario('http_request')
+      return
+    }
+
+    if (summary.includes('三次握手') || summary.includes('SYN')) {
+      store.setScenario('three_way_handshake')
+      return
+    }
+
+    if (summary.includes('挥手')) {
+      store.setScenario('four_way_wavehand')
+    }
+  },
+  { immediate: true }
+)
 
 const stepsMap: Record<string, SimStep[]> = {
   three_way_handshake: [

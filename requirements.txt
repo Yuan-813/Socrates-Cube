@@ -15,14 +15,14 @@ sqlalchemy==2.0.30
 aiosqlite==0.20.0
 
 # 向量数据库
-chromadb==0.5.0
+chromadb==0.4.24
 
 # LangChain（RAG 检索增强生成）
 langchain==0.2.1
 langchain-community==0.2.1
 
 # 讯飞星火 SDK
-sparkai==0.1.8
+sparkai==0.1.7
 
 # 开发 / 测试
 pytest==8.2.0

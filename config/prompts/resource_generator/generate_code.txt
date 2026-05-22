@@ -1,0 +1,22 @@
+你是计算机网络实操专家，请为以下知识点生成一份Python代码实操案例。
+
+知识点：{knowledge_point}
+参考内容：{reference_content}
+目标：让学生通过运行代码，直观理解 {knowledge_point} 的工作机制
+
+代码要求：
+1. 使用Python标准库（socket / struct / scapy按需选用）
+2. 代码量50-100行，有详细注释
+3. 可以在本地直接运行（不依赖外部服务器）
+4. 代码后附：预期输出说明 + 1个思考问题
+
+返回JSON（不要加代码块标记）：
+{
+  "title": "代码案例标题",
+  "language": "python",
+  "code": "完整代码（含注释）",
+  "explanation": "代码逻辑解释（3-5句）",
+  "expected_output": "预期运行输出",
+  "wireshark_filter": "推荐的Wireshark过滤器（如：tcp.flags.syn==1）",
+  "think_question": "一个让学生思考的问题"
+}

@@ -2,6 +2,7 @@
 import { computed, ref, nextTick, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getMockChatPanels, streamChat } from '@/api/chat'
+import { fetchSessionLogs } from '@/api/logs'
 import { useChatStore } from '@/stores/chatStore'
 import { useAssistantStore } from '@/stores/assistantStore'
 import ChatMessage from './ChatMessage.vue'
@@ -90,7 +91,7 @@ async function sendWithStream(sessionId: string, text: string) {
       mockReply.value += chunk
       scrollToBottom()
     },
-    onDone: () => {
+    onDone: async () => {
       assistantStore.setConnectionStatus('idle')
       chatStore.setStreaming(false)
       const assistantMsg: ChatMessageType = {
@@ -102,6 +103,16 @@ async function sendWithStream(sessionId: string, text: string) {
       }
       chatStore.addMessage(sessionId, assistantMsg)
       mockReply.value = ''
+
+      // real 模式下对话结束后从后端拉取日志
+      if (runtimeMode.value === 'real') {
+        try {
+          const serverLogs = await fetchSessionLogs(sessionId)
+          if (serverLogs.length > 0) {
+            assistantStore.setLogs(serverLogs)
+          }
+        } catch { /* 日志拉取失败不影响主流程 */ }
+      }
     },
     onError: (err) => {
       assistantStore.setConnectionStatus('error')
@@ -121,20 +132,83 @@ async function sendWithStream(sessionId: string, text: string) {
 }
 
 function handleSSEEvent(event: SSEEvent) {
-  if (event.event === 'agent_start') {
-    assistantStore.appendLog({
-      logId: `log-${Date.now()}`,
-      sessionId: chatStore.currentSession?.sessionId || 'unknown',
-      agentName: event.agent_name || 'Orchestrator',
-      action: '开始执行',
-      state: typeof event.data === 'string' ? event.data : '收到事件',
-      timestamp: new Date().toLocaleString(),
-      result: '处理中',
-    })
-  }
+  const agentName = event.agent_name || 'Orchestrator'
+  const sessionId = chatStore.currentSession?.sessionId || 'unknown'
 
-  if (event.event === 'error') {
-    assistantStore.setLastError(typeof event.data === 'string' ? event.data : 'SSE 返回错误')
+  switch (event.event) {
+    case 'agent_start':
+      assistantStore.appendLog({
+        logId: `log-${Date.now()}-${agentName}`,
+        sessionId,
+        agentName,
+        action: '开始执行',
+        state: typeof event.data === 'string' ? event.data : JSON.stringify(event.data),
+        timestamp: new Date().toLocaleString(),
+        result: '处理中',
+      })
+      break
+
+    case 'agent_end': {
+      const data = typeof event.data === 'object' ? event.data as Record<string, unknown> : null
+      assistantStore.appendLog({
+        logId: `log-${Date.now()}-${agentName}-end`,
+        sessionId,
+        agentName,
+        action: '执行完毕',
+        state: data?.status ? String(data.status) : 'done',
+        timestamp: new Date().toLocaleString(),
+        result: data ? JSON.stringify(data) : 'done',
+      })
+      break
+    }
+
+    case 'tool_call':
+      assistantStore.appendLog({
+        logId: `log-${Date.now()}-tool`,
+        sessionId,
+        agentName,
+        action: '工具调用',
+        state: typeof event.data === 'string' ? event.data : JSON.stringify(event.data),
+        timestamp: new Date().toLocaleString(),
+        result: '检索完成',
+      })
+      break
+
+    case 'diagnosis': {
+      const diagData = typeof event.data === 'object' ? event.data as Record<string, any> : null
+      if (diagData) {
+        assistantStore.setDiagnosis({
+          diagnosisId: `diag-${Date.now()}`,
+          sessionId,
+          trigger: 'SSE 诊断事件',
+          surfaceError: diagData.surface_error?.error_description || diagData.error_type || '',
+          rootCause: {
+            weakKnowledge: diagData.root_causes?.weak_knowledge || '',
+            confidence: diagData.root_causes?.confidence || 0,
+            evidence: diagData.root_causes?.evidence || [],
+          },
+          misconceptionPattern: diagData.pattern || '',
+          suggestedResourceTypes: diagData.suggested_resources || [],
+        })
+      }
+      break
+    }
+
+    case 'profile_update': {
+      const profileData = typeof event.data === 'object' ? event.data as Record<string, any> : null
+      if (profileData && assistantStore.profile) {
+        const dims = assistantStore.profile.dimensions.map(d => {
+          const newLevel = profileData[d.name]
+          return newLevel != null ? { ...d, level: Number(newLevel) } : d
+        })
+        assistantStore.setProfile({ ...assistantStore.profile, dimensions: dims })
+      }
+      break
+    }
+
+    case 'error':
+      assistantStore.setLastError(typeof event.data === 'string' ? event.data : 'SSE 返回错误')
+      break
   }
 }
 
@@ -216,6 +290,16 @@ onMounted(() => {
           </div>
           <div class="streaming-content">{{ mockReply }}</div>
         </div>
+      </div>
+
+      <!-- 诊断提示标签 -->
+      <div
+        v-if="assistantStore.diagnosis?.surfaceError"
+        class="diagnosis-alert"
+      >
+        <span class="diagnosis-icon">⚠️</span>
+        <span class="diagnosis-label">检测到认知偏差：</span>
+        <span class="diagnosis-desc">{{ assistantStore.diagnosis.surfaceError }}</span>
       </div>
     </div>
 
@@ -483,5 +567,32 @@ onMounted(() => {
 
 .mr-1 {
   margin-right: 4px;
+}
+
+.diagnosis-alert {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  margin: 8px 16px 0;
+  background-color: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #92400e;
+  max-width: 88%;
+  align-self: flex-start;
+}
+
+.diagnosis-icon {
+  font-size: 14px;
+}
+
+.diagnosis-label {
+  font-weight: 600;
+}
+
+.diagnosis-desc {
+  color: #78350f;
 }
 </style>

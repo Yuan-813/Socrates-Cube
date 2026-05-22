@@ -2,6 +2,7 @@ export type SSEEventType =
   | 'agent_start'
   | 'token'
   | 'agent_end'
+  | 'tool_call'
   | 'profile_update'
   | 'diagnosis'
   | 'simulator'

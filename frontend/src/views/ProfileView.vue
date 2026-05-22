@@ -1,9 +1,18 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import ProfileRadar from '@/components/ProfileRadar.vue'
 import { useAssistantStore } from '@/stores/assistantStore'
+import { fetchProfile } from '@/api/profile'
 
 const assistantStore = useAssistantStore()
+
+onMounted(async () => {
+  const profile = await fetchProfile('demo-user')
+  if (profile) {
+    assistantStore.setProfile(profile)
+  }
+})
+
 const profileMeta = computed(() => {
   if (!assistantStore.profile) return null
 

@@ -168,11 +168,6 @@ function streamWithMock(options: StreamChatOptions): Promise<void> {
 }
 
 export async function streamChat(options: StreamChatOptions): Promise<void> {
-  if (options.useMock) {
-    await streamWithMock(options)
-    return
-  }
-
   await streamWithFetch(options)
 }
 

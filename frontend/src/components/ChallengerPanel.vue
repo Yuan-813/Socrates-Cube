@@ -338,9 +338,9 @@ function resetAll() {
   flex-wrap: wrap;
   gap: 16px;
   padding: 16px 20px;
-  background-color: #fef2f2;
+  background-color: #eff6ff;
   border-radius: 12px;
-  border: 1px solid #fecaca;
+  border: 1px solid #bfdbfe;
 }
 
 .challenger-title {
@@ -349,17 +349,17 @@ function resetAll() {
   gap: 8px;
   font-size: 18px;
   font-weight: 700;
-  color: #991b1b;
+  color: #1e40af;
   margin: 0;
 }
 
 .challenger-icon {
-  color: #ef4444;
+  color: #3b82f6;
 }
 
 .challenger-subtitle {
   font-size: 13px;
-  color: #b91c1c;
+  color: #2563eb;
   margin: 4px 0 0;
 }
 
@@ -403,7 +403,7 @@ function resetAll() {
 
 .progress-fill {
   height: 100%;
-  background-color: #ef4444;
+  background-color: #3b82f6;
   border-radius: 3px;
   transition: width 0.4s ease;
 }
@@ -456,7 +456,7 @@ function resetAll() {
 
 .statement-bubble {
   background-color: #f1f5f9;
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid #3b82f6;
   border-radius: 0 10px 10px 0;
   padding: 18px 20px;
 }
@@ -701,8 +701,8 @@ function resetAll() {
   justify-content: center;
   font-size: 13px;
   font-weight: 600;
-  background-color: #fee2e2;
-  color: #dc2626;
+  background-color: #f1f5f9;
+  color: #64748b;
 }
 
 .history-dot.correct {

@@ -5,7 +5,6 @@ import { useAssistantStore } from '@/stores/assistantStore'
 const assistantStore = useAssistantStore()
 
 const topDimensions = computed(() => assistantStore.profile?.dimensions.slice(0, 4) || [])
-const recentLogs = computed(() => assistantStore.logs.slice(0, 5))
 const currentPathNode = computed(() => assistantStore.learningPath.find((item) => item.status === 'current') || null)
 </script>
 
@@ -13,23 +12,9 @@ const currentPathNode = computed(() => assistantStore.learningPath.find((item) =
   <div class="workspace-panel">
     <div class="workspace-header">
       <div>
-        <h3 class="workspace-title">联调工作台</h3>
-        <p class="workspace-desc">实时查看画像、诊断、日志和仿真提示</p>
+        <h3 class="workspace-title">学习助手</h3>
+        <p class="workspace-desc">实时追踪你的学习进度与个性化反馈</p>
       </div>
-      <el-tag :type="assistantStore.isMockMode ? 'warning' : 'success'" effect="light">
-        {{ assistantStore.isMockMode ? 'Mock 模式' : 'Real 模式' }}
-      </el-tag>
-    </div>
-
-    <div class="workspace-section">
-      <div class="section-title-row">
-        <span class="section-title">连接状态</span>
-        <el-tag :type="assistantStore.connectionStatus === 'error' ? 'danger' : assistantStore.connectionStatus === 'streaming' ? 'primary' : 'info'" effect="light">
-          {{ assistantStore.connectionStatus }}
-        </el-tag>
-      </div>
-      <p class="section-text" v-if="assistantStore.lastError">{{ assistantStore.lastError }}</p>
-      <p class="section-text" v-else>当前支持聊天主链路、联动摘要展示和 mock / real 切换。</p>
     </div>
 
     <div class="workspace-section">
@@ -60,36 +45,22 @@ const currentPathNode = computed(() => assistantStore.learningPath.find((item) =
         <p class="section-text"><strong>根因：</strong>{{ assistantStore.diagnosis.rootCause.weakKnowledge }}</p>
         <p class="section-text"><strong>模式：</strong>{{ assistantStore.diagnosis.misconceptionPattern }}</p>
       </template>
-      <app-empty v-else description="等待诊断结果" />
+      <app-empty v-else description="暂未检测到认知偏差，继续保持！" />
     </div>
 
     <div class="workspace-section">
       <div class="section-title-row">
-        <span class="section-title">Agent 日志</span>
-        <span class="section-extra">{{ recentLogs.length }} 条</span>
+        <span class="section-title">推荐资源</span>
       </div>
-      <div v-if="recentLogs.length" class="log-list">
-        <div v-for="log in recentLogs" :key="log.logId" class="log-item">
-          <div class="log-head">
-            <span class="log-agent">{{ log.agentName }}</span>
-            <span class="log-time">{{ log.timestamp }}</span>
-          </div>
-          <div class="log-body">{{ log.action }} · {{ log.result }}</div>
-        </div>
-      </div>
-      <app-empty v-else description="等待联调日志" />
-    </div>
-
-    <div class="workspace-section">
-      <div class="section-title-row">
-        <span class="section-title">学习路径与仿真</span>
-      </div>
-      <p class="section-text"><strong>当前节点：</strong>{{ currentPathNode?.title || '等待规划结果' }}</p>
-      <p class="section-text"><strong>仿真提示：</strong>{{ assistantStore.simulatorSummary }}</p>
+      <p class="section-text" v-if="!assistantStore.resources.length">对话后系统会自动推荐适合你当前水平的资源。</p>
       <div class="resource-tags" v-if="assistantStore.resources.length">
-        <el-tag v-for="resource in assistantStore.resources.slice(0, 4)" :key="resource.id" size="small" effect="plain">
+        <el-tag v-for="resource in assistantStore.resources.slice(0, 4)" :key="resource.id" size="small" effect="plain" type="primary">
           {{ resource.title }}
         </el-tag>
+      </div>
+      <div class="path-node" v-if="currentPathNode">
+        <p class="section-text"><strong>当前学习目标：</strong>{{ currentPathNode.title }}</p>
+        <p class="section-text"><strong>建议用时：</strong>{{ currentPathNode.estimatedTime }} 分钟</p>
       </div>
     </div>
   </div>

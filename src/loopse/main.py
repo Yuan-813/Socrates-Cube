@@ -1,4 +1,6 @@
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
+load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -10,6 +12,9 @@ from src.loopse.db.connection import init_db
 from src.loopse.db.repositories import AgentLogRepository
 from src.loopse.api.profile import router as profile_router
 from src.loopse.api.logs import router as logs_router
+from src.loopse.api.resources import router as resources_router
+from src.loopse.api.path import router as path_router
+from src.loopse.agent.orchestrator import orchestrator
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
@@ -18,7 +23,7 @@ async def lifespan(application: FastAPI):
 
 app = FastAPI(
     title="EduMultiAgent",
-    version="0.1.0",
+    version="0.2.0",
     description="Socrates-Cube 多智能体自适应学习系统",
     lifespan=lifespan,
 )
@@ -32,6 +37,8 @@ app.add_middleware(
 
 app.include_router(profile_router)
 app.include_router(logs_router)
+app.include_router(resources_router)
+app.include_router(path_router)
 
 
 class ChatStreamRequest(BaseModel):
@@ -43,7 +50,7 @@ class ChatStreamRequest(BaseModel):
 
 @app.get("/health", tags=["系统"])
 async def health_check():
-    return {"status": "ok", "version": "0.1.0"}
+    return {"status": "ok", "version": "0.2.0"}
 
 
 @app.get("/api/v1/chat/test", tags=["对话"])
@@ -53,63 +60,14 @@ async def chat_test():
 
 @app.post("/api/v1/chat/stream", tags=["对话"])
 async def chat_stream(payload: ChatStreamRequest):
-    import time
-    start_time = time.time()
-
-    async def event_generator():
-        start_event = {
-            "event": "agent_start",
-            "agent_name": "Orchestrator",
-            "data": f"开始处理问题：{payload.message}",
-        }
-        yield {
-            "data": json.dumps(start_event, ensure_ascii=False)
-        }
-
-        reply = (
-            f"收到你的问题：{payload.message}。"
-            "这是后端 real 模式返回的最小联调流式结果，"
-            "前端已经可以据此验证 SSE 主链路、模式切换与联动展示。"
-        )
-
-        for char in reply:
-            token_event = {
-                "event": "token",
-                "agent_name": "Orchestrator",
-                "data": char,
-            }
-            yield {
-                "data": json.dumps(token_event, ensure_ascii=False)
-            }
-            await asyncio.sleep(0.02)
-
-        # 写入 AgentLog
-        duration_ms = int((time.time() - start_time) * 1000)
-        await AgentLogRepository.write(
+    async def sse_generator():
+        turn_count = 0  # Phase 3从DB读取历史轮数
+        async for event_str in orchestrator.process_message(
             session_id=payload.session_id,
-            agent_name="Orchestrator",
-            action="chat_stream",
-            input_state={"user_message": payload.message},
-            output_state={"reply_length": len(reply)},
-            duration_ms=duration_ms,
-        )
+            user_id=payload.user_id,
+            user_message=payload.message,
+            turn_count=turn_count,
+        ):
+            yield {"data": event_str}
 
-        agent_end_event = {
-            "event": "agent_end",
-            "agent_name": "Orchestrator",
-            "data": {"status": "done", "duration_ms": duration_ms},
-        }
-        yield {
-            "data": json.dumps(agent_end_event, ensure_ascii=False)
-        }
-
-        done_event = {
-            "event": "done",
-            "agent_name": "Orchestrator",
-            "data": "done",
-        }
-        yield {
-            "data": json.dumps(done_event, ensure_ascii=False)
-        }
-
-    return EventSourceResponse(event_generator())
+    return EventSourceResponse(sse_generator())

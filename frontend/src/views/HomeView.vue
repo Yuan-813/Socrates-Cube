@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { checkHealth } from '@/api/health'
+import { useAssistantStore } from '@/stores/assistantStore'
+import { useChatStore } from '@/stores/chatStore'
 
 const router = useRouter()
+const assistantStore = useAssistantStore()
+const chatStore = useChatStore()
 const backendStatus = ref<string>('检测中...')
 const backendVersion = ref<string>('')
 
@@ -17,11 +21,11 @@ onMounted(async () => {
   }
 })
 
-const stats = ref([
-  { label: '已完成知识点', value: '12', total: '48', color: '#3b82f6', bg: '#eff6ff', percent: 25, icon: 'Collection' },
-  { label: '能力画像维度', value: '8', total: '8', color: '#10b981', bg: '#ecfdf5', percent: 60, icon: 'TrendCharts' },
-  { label: '学习时长', value: '3.5', total: '小时', color: '#f59e0b', bg: '#fffbeb', percent: 40, icon: 'Timer' },
-  { label: '诊断记录', value: '5', total: '次', color: '#f43f5e', bg: '#fff1f2', percent: 80, icon: 'FirstAidKit' },
+const stats = computed(() => [
+  { label: '对话次数', value: String(chatStore.sessions.reduce((n, s) => n + s.messages.filter(m => m.role === 'user').length, 0)), total: '次', color: '#3b82f6', bg: '#eff6ff', percent: 50, icon: 'ChatRound' },
+  { label: '能力画像维度', value: String(assistantStore.profile?.dimensions?.length || 0), total: '8', color: '#10b981', bg: '#ecfdf5', percent: Math.round((assistantStore.profile?.dimensions?.length || 0) / 8 * 100), icon: 'TrendCharts' },
+  { label: '诊断记录', value: String(assistantStore.logs.length), total: '条', color: '#f59e0b', bg: '#fffbeb', percent: 40, icon: 'FirstAidKit' },
+  { label: '推荐资源', value: String(assistantStore.resources.length), total: '个', color: '#f43f5e', bg: '#fff1f2', percent: 30, icon: 'Collection' },
 ])
 
 const quickActions = [
@@ -31,12 +35,15 @@ const quickActions = [
   { title: '认知诊断', desc: '三层诊断引擎分析理解误区', icon: 'FirstAidKit', color: '#f59e0b', bg: '#fffbeb', path: '/diagnosis' },
 ]
 
-const recentActivity = ref([
-  { time: '14:32', title: '完成"TCP报文格式"学习', type: 'study', tag: '已完成' },
-  { time: '14:15', title: 'AI教练诊断：层次穿越型误解', type: 'diagnosis', tag: '诊断' },
-  { time: '13:50', title: '观看"三次握手仿真"演示', type: 'simulator', tag: '仿真' },
-  { time: '10:20', title: '生成协议流程练习题 5 道', type: 'resource', tag: '资源' },
-])
+const recentActivity = computed(() => {
+  const activities: { time: string; title: string; type: string; tag: string }[] = []
+  for (const log of assistantStore.logs.slice(0, 5)) {
+    const type = log.action?.includes('诊断') ? 'diagnosis' : log.action?.includes('工具') ? 'resource' : 'study'
+    const tag = type === 'diagnosis' ? '诊断' : type === 'resource' ? '资源' : '学习'
+    activities.push({ time: log.timestamp?.split(' ')[1]?.slice(0, 5) || '', title: `${log.agentName}: ${log.action}`, type, tag })
+  }
+  return activities.length ? activities : [{ time: '--:--', title: '暂无活动，去聊天页开始学习吧', type: 'study', tag: '开始' }]
+})
 
 function goTo(path: string) {
   router.push(path)

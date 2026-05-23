@@ -1,0 +1,19 @@
+你是计算机网络教学专家，请为以下知识点生成一份教学讲解文档。
+
+知识点：{knowledge_point}
+学生认知风格：{cognitive_style}（visual=图解为主/textual=推导为主/practical=实操为主/analogical=类比为主）
+诊断到的薄弱点：{weakness_summary}
+知识库参考内容：
+{reference_content}
+
+生成要求：
+1. 标题简洁，正文300-500字
+2. 根据认知风格调整侧重：
+   - visual：多用"如图所示""流程如下"引导，结构用Markdown列表
+   - textual：多用定义→推导→结论的逻辑链
+   - practical：多用具体操作步骤和命令示例
+   - analogical：用1个日常生活类比开头
+3. 结尾必须注明：来源章节 = {source_chapter}
+4. 不要编造不在参考内容中的知识
+
+以Markdown格式返回，不要加代码块标记。

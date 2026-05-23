@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, nextTick, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getMockChatPanels, streamChat } from '@/api/chat'
+import { streamChat } from '@/api/chat'
 import { fetchSessionLogs } from '@/api/logs'
 import { useChatStore } from '@/stores/chatStore'
 import { useAssistantStore } from '@/stores/assistantStore'
@@ -16,11 +16,10 @@ const messagesContainer = ref<HTMLElement>()
 const inputRef = ref<any>(null)
 
 const mockReply = ref('')
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const currentStreamingSessionId = ref<string>('')
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
 const sseEndpoint = import.meta.env.VITE_SSE_ENDPOINT || '/api/v1/chat/stream'
-const useMockByEnv = import.meta.env.VITE_USE_MOCK !== 'false'
 
-const runtimeMode = computed(() => assistantStore.mode)
 const resolvedSseEndpoint = computed(() => {
   if (sseEndpoint.startsWith('http://') || sseEndpoint.startsWith('https://')) {
     return sseEndpoint
@@ -41,6 +40,11 @@ const quickPrompts = [
 async function sendMessage() {
   if (!inputText.value.trim() || chatStore.isStreaming) return
 
+  // 清空上一次对话的诊断和资源，避免跨问题残留
+  assistantStore.setDiagnosis(null)
+  assistantStore.setResources([])
+  assistantStore.setLearningPath([])
+
   const userMsg: ChatMessageType = {
     id: `msg-${Date.now()}`,
     role: 'user',
@@ -53,21 +57,21 @@ async function sendMessage() {
 
   const text = inputText.value
   inputText.value = ''
+
+  // 第一条消息自动生成会话标题
+  const session = chatStore.sessions.find(s => s.sessionId === sessionId)
+  if (session && session.title === '新会话') {
+    const title = text.slice(0, 12) + (text.length > 12 ? '...' : '')
+    chatStore.renameSession(sessionId, title)
+  }
   chatStore.setStreaming(true)
+  currentStreamingSessionId.value = sessionId
   assistantStore.resetRuntimeState()
   assistantStore.setConnectionStatus('connecting')
   mockReply.value = ''
 
   await nextTick()
   scrollToBottom()
-
-  const panelPayload = getMockChatPanels(text)
-  assistantStore.setProfile(panelPayload.profile)
-  assistantStore.setDiagnosis(panelPayload.diagnosis)
-  assistantStore.setResources(panelPayload.resources)
-  assistantStore.setLearningPath(panelPayload.learningPath)
-  assistantStore.setLogs(panelPayload.logs)
-  assistantStore.setSimulatorSummary(panelPayload.simulatorSummary)
 
   await sendWithStream(sessionId, text)
 }
@@ -83,7 +87,7 @@ async function sendWithStream(sessionId: string, text: string) {
       message: text,
       history: history.slice(-10),
     },
-    useMock: runtimeMode.value === 'mock',
+    useMock: false,
     endpoint: resolvedSseEndpoint.value,
     onEvent: handleSSEEvent,
     onToken: (chunk: string) => {
@@ -94,6 +98,7 @@ async function sendWithStream(sessionId: string, text: string) {
     onDone: async () => {
       assistantStore.setConnectionStatus('idle')
       chatStore.setStreaming(false)
+      currentStreamingSessionId.value = ''
       const assistantMsg: ChatMessageType = {
         id: `msg-${Date.now()}`,
         role: 'assistant',
@@ -104,20 +109,19 @@ async function sendWithStream(sessionId: string, text: string) {
       chatStore.addMessage(sessionId, assistantMsg)
       mockReply.value = ''
 
-      // real 模式下对话结束后从后端拉取日志
-      if (runtimeMode.value === 'real') {
-        try {
-          const serverLogs = await fetchSessionLogs(sessionId)
-          if (serverLogs.length > 0) {
-            assistantStore.setLogs(serverLogs)
-          }
-        } catch { /* 日志拉取失败不影响主流程 */ }
-      }
+      // 对话结束后从后端拉取日志
+      try {
+        const serverLogs = await fetchSessionLogs(sessionId)
+        if (serverLogs.length > 0) {
+          assistantStore.setLogs(serverLogs)
+        }
+      } catch { /* 日志拉取失败不影响主流程 */ }
     },
     onError: (err) => {
       assistantStore.setConnectionStatus('error')
       assistantStore.setLastError(err.message)
       chatStore.setStreaming(false)
+      currentStreamingSessionId.value = ''
       const assistantMsg: ChatMessageType = {
         id: `msg-${Date.now()}`,
         role: 'assistant',
@@ -234,21 +238,46 @@ function clearChat() {
   chatStore.clearCurrentSessionMessages()
 }
 
-function toggleMode() {
-  const nextMode = runtimeMode.value === 'mock' ? 'real' : 'mock'
-  assistantStore.setMode(nextMode)
-  ElMessage.success(nextMode === 'mock' ? '已切换到演示模式' : '已切换到真实联调模式')
-}
-
 onMounted(() => {
   chatStore.ensureValidCurrentSession()
-  assistantStore.setMode(useMockByEnv ? 'mock' : 'real')
+  assistantStore.setMode('real')
   scrollToBottom()
 })
 </script>
 
 <template>
   <div class="chat-panel">
+    <!-- 会话切换栏 -->
+    <div class="session-tabs">
+      <div class="tabs-scroll">
+        <div
+          v-for="session in chatStore.sessions"
+          :key="session.sessionId"
+          class="tab-item"
+          :class="{ active: session.sessionId === chatStore.currentSessionId }"
+          @click="chatStore.switchSession(session.sessionId)"
+        >
+          <span class="tab-title">{{ session.title }}</span>
+          <el-icon
+            class="tab-close"
+            size="12"
+            @click.stop="chatStore.deleteSession(session.sessionId)"
+          >
+            <Close />
+          </el-icon>
+        </div>
+      </div>
+      <el-button
+        class="tab-new"
+        size="small"
+        text
+        @click="chatStore.createSession('新会话')"
+      >
+        <el-icon size="14"><Plus /></el-icon>
+        新会话
+      </el-button>
+    </div>
+
     <!-- 消息列表 -->
     <div ref="messagesContainer" class="messages-container">
       <!-- 空状态欢迎语 -->
@@ -316,13 +345,6 @@ onMounted(() => {
           >{{ prompt.label }}</span>
         </div>
         <div class="toolbar-actions">
-          <el-tag :type="assistantStore.isMockMode ? 'warning' : 'success'" effect="light">
-            {{ assistantStore.isMockMode ? 'Mock 模式' : 'Real 模式' }}
-          </el-tag>
-          <el-button link size="small" @click="toggleMode">
-            <el-icon size="14"><Switch /></el-icon>
-            切换模式
-          </el-button>
           <el-button link size="small" @click="clearChat">
             <el-icon size="14"><Delete /></el-icon>
             清空对话
@@ -594,5 +616,77 @@ onMounted(() => {
 
 .diagnosis-desc {
   color: #78350f;
+}
+
+/* 会话切换栏 */
+.session-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.tabs-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  flex: 1;
+  scrollbar-width: none;
+}
+
+.tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #64748b;
+  background-color: #f1f5f9;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.tab-item:hover {
+  background-color: #e2e8f0;
+}
+
+.tab-item.active {
+  background-color: #eff6ff;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.tab-title {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab-close {
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 2px;
+  transition: all 0.2s;
+}
+
+.tab-close:hover {
+  color: #dc2626;
+  background-color: #fee2e2;
+}
+
+.tab-new {
+  flex-shrink: 0;
 }
 </style>

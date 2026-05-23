@@ -50,10 +50,30 @@ export const useChatStore = defineStore('chat', () => {
     isStreaming.value = value
   }
 
+  function renameSession(sessionId: string, title: string) {
+    const session = sessions.value.find(s => s.sessionId === sessionId)
+    if (session) {
+      session.title = title
+    }
+  }
+
   function clearCurrentSessionMessages() {
     const session = currentSession.value
     if (session) {
       session.messages = []
+    }
+  }
+
+  function switchSession(sessionId: string) {
+    currentSessionId.value = sessionId
+  }
+
+  function deleteSession(sessionId: string) {
+    const idx = sessions.value.findIndex(s => s.sessionId === sessionId)
+    if (idx === -1) return
+    sessions.value.splice(idx, 1)
+    if (currentSessionId.value === sessionId) {
+      currentSessionId.value = sessions.value[0]?.sessionId || ''
     }
   }
 
@@ -75,7 +95,10 @@ export const useChatStore = defineStore('chat', () => {
     isStreaming,
     createSession,
     addMessage,
+    renameSession,
     clearCurrentSessionMessages,
+    switchSession,
+    deleteSession,
     ensureValidCurrentSession,
     setStreaming,
   }

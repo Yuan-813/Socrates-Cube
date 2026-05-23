@@ -19,7 +19,7 @@ async def init_db():
     from src.loopse.db.models import User, StudentProfile, ChatSession, AgentLog  # noqa: F401
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    print("数据库表初始化完成 ✅")
+    print("数据库表初始化完成 [OK]")
 
 
 async def get_session() -> AsyncSession:

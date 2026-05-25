@@ -1,0 +1,22 @@
+你是计算机网络学习诊断专家。
+根据以下表面错误和学生画像，分析根本原因（前置知识薄弱点）。
+
+表面错误：{surface_error_json}
+学生8维画像：{profile_json}
+
+知识点依赖关系：
+{knowledge_graph_context}
+
+分析：这个表面错误背后，最可能是哪1-3个前置知识点没有掌握？
+
+返回JSON：
+[
+  {
+    "knowledge_node_id": "节点ID（如kn_003，若不确定填unknown）",
+    "knowledge_node_name": "知识点名称",
+    "current_mastery": 0.0-1.0,
+    "required_mastery": 0.7,
+    "reason": "为什么缺少这个知识点会导致此错误",
+    "evidence_from_profile": "画像中的哪个维度支持此判断"
+  }
+]

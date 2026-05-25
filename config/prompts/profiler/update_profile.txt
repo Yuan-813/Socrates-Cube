@@ -1,0 +1,23 @@
+你是计算机网络学习诊断专家。
+已有学生的8维画像如下：
+{current_profile_json}
+
+根据以下新的对话内容，判断哪些维度需要更新，给出增量更新的JSON。
+只更新有新证据的维度，其余维度返回null。
+不要猜测，只基于对话内容判断。
+
+新对话：
+{new_dialogue}
+
+只返回JSON，格式：
+{"dimension_name": new_value_or_null, ...}
+
+可更新的维度名称：
+- network_layer_cognition：1-5分，对OSI/TCP-IP分层的理解程度
+- protocol_flow_memory：1-5分，对协议流程步骤的记忆与理解
+- packet_format_understanding：1-5分，对报文格式字段的掌握
+- protocol_relationship：1-5分，对各协议间关系的理解
+- fault_diagnosis_logic：1-5分，网络故障排查的逻辑能力
+- hands_on_ability：1-5分，实际操作/代码实现能力
+- cognitive_style：visual/textual/practical/analogical 中的一种
+- misconception_patterns：发现的误解模式描述（字符串）

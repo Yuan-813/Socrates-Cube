@@ -1,51 +1,25 @@
-"""
-/api/v1/path 路由：学习路径规划与进度追踪
-"""
+"""Learning path routes."""
 from __future__ import annotations
 
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import List, Optional
 
-from ...agents.path_planner import PathPlannerAgent
-from ...agents.profiler import ProfilerAgent
+from ..agents.path_planner import PathPlannerAgent
+from ..agents.profiler import ProfilerAgent
+from ..db.repositories import LearningPathRepository, ProfileRepository
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/path", tags=["path"])
-
 _planner = PathPlannerAgent()
 _profiler = ProfilerAgent()
 
 
-@router.get("/{user_id}")
-def get_user_path(user_id: str):
-    """获取用户的推荐学习路径（基于当前画像自动规划）"""
-    try:
-        profile = _profiler.get_profile(user_id)
-        path = _planner.plan(user_id, profile)
-        return path
-    except Exception as e:
-        logger.error("路径规划失败 user=%s: %s", user_id, e)
-        raise HTTPException(status_code=500, detail="路径规划失败")
-
-
 class PlanRequest(BaseModel):
-    target_node_ids: Optional[List[str]] = None
+    target_node_ids: Optional[list[str]] = None
     max_nodes: int = Field(default=10, ge=1, le=20)
-
-
-@router.post("/plan")
-def plan_path(req: PlanRequest, user_id: str = "student-001"):
-    """指定目标知识点，重新规划学习路径"""
-    try:
-        profile = _profiler.get_profile(user_id)
-        path = _planner.plan(user_id, profile, req.target_node_ids, req.max_nodes)
-        return path
-    except Exception as e:
-        logger.error("路径规划失败: %s", e)
-        raise HTTPException(status_code=500, detail="路径规划失败")
 
 
 class ProgressUpdateRequest(BaseModel):
@@ -54,23 +28,40 @@ class ProgressUpdateRequest(BaseModel):
     mastery: Optional[float] = Field(default=None, ge=0.0, le=1.0)
 
 
+@router.get("/{user_id}")
+def get_user_path(user_id: str):
+    try:
+        path = _planner.plan(user_id, _profiler.get_profile(user_id))
+        LearningPathRepository.save(path)
+        return path
+    except Exception as exc:
+        logger.error("path planning failed user=%s: %s", user_id, exc)
+        raise HTTPException(status_code=500, detail="path planning failed") from exc
+
+
+@router.post("/plan")
+def plan_path(req: PlanRequest, user_id: str = "student-001"):
+    try:
+        path = _planner.plan(user_id, _profiler.get_profile(user_id), req.target_node_ids, req.max_nodes)
+        LearningPathRepository.save(path)
+        return path
+    except Exception as exc:
+        logger.error("path planning failed: %s", exc)
+        raise HTTPException(status_code=500, detail="path planning failed") from exc
+
+
 @router.post("/{user_id}/progress")
 def update_node_progress(user_id: str, req: ProgressUpdateRequest):
-    """更新用户某知识点的学习进度"""
-    from ...db.repositories import ProfileRepository
-    import json
-
     try:
         profile = _profiler.get_profile(user_id)
         mastery_map = profile.get("mastery_map", {})
         if req.mastery is not None:
             mastery_map[req.node_id] = req.mastery
             profile["mastery_map"] = mastery_map
-            # 更新弱点列表
             profile["weak_points"] = [nid for nid, m in mastery_map.items() if m < 0.5]
             profile["strong_points"] = [nid for nid, m in mastery_map.items() if m >= 0.8]
-            ProfileRepository.upsert(user_id, json.dumps(profile, ensure_ascii=False))
+            ProfileRepository.upsert(user_id, profile)
         return {"user_id": user_id, "node_id": req.node_id, "status": "updated"}
-    except Exception as e:
-        logger.error("进度更新失败: %s", e)
-        raise HTTPException(status_code=500, detail="进度更新失败")
+    except Exception as exc:
+        logger.error("progress update failed user=%s: %s", user_id, exc)
+        raise HTTPException(status_code=500, detail="progress update failed") from exc

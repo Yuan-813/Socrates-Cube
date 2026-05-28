@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..core.llm_client import llm_client
+from ..db.repositories import ResourceRepository
+from .cognitive_engine import AwaitableDict, CognitiveAgentMixin
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +29,7 @@ def _load_prompt(name: str) -> str:
         return ""
 
 
-class ResourceGeneratorAgent:
+class ResourceGeneratorAgent(CognitiveAgentMixin):
     """
     学习资源生成代理，支持：
     - doc：知识点总结文档（含 Markdown 格式）
@@ -78,12 +80,34 @@ class ResourceGeneratorAgent:
 
         logger.info("[ResourceGen] 生成 %s 类型资源，知识点: %s", resource_type, knowledge_point)
 
+        trace = self.make_trace(f"generate:{resource_type}:{knowledge_point}")
+        trace.add_step(
+            "plan",
+            f"resource_type={resource_type}, difficulty={difficulty}",
+            "select_prompt_and_context",
+            0.85,
+        )
+
         if resource_type == "doc":
-            return self._generate_doc(knowledge_point, context_docs, difficulty)
+            resource = self._generate_doc(knowledge_point, context_docs, difficulty)
         elif resource_type == "exercise":
-            return self._generate_exercise(knowledge_point, context_docs, difficulty)
+            resource = self._generate_exercise(knowledge_point, context_docs, difficulty)
         else:
-            return self._generate_code(knowledge_point, context_docs, difficulty)
+            resource = self._generate_code(knowledge_point, context_docs, difficulty)
+
+        checks = {
+            "has_content": len(resource.get("content", "")) >= 30,
+            "has_title": bool(resource.get("title")),
+            "type_matched": resource.get("resource_type") == resource_type,
+        }
+        reflection = self.reflect(trace, checks)
+        resource["metadata"]["agent_trace"] = trace.to_dict()
+        resource["quality_score"] = round(0.6 + 0.4 * reflection["confidence"], 3)
+        try:
+            ResourceRepository.save(resource)
+        except Exception as exc:
+            logger.warning("[ResourceGen] resource persistence skipped: %s", exc)
+        return AwaitableDict(resource)
 
     # ------------------------------------------------------------------
     # 类型1：知识文档
@@ -97,8 +121,9 @@ class ResourceGeneratorAgent:
     ) -> Dict[str, Any]:
         context = self._format_context(docs)
 
-        if self._doc_prompt:
-            prompt = self._doc_prompt.format(
+        doc_prompt = getattr(self, "_doc_prompt", "")
+        if doc_prompt:
+            prompt = doc_prompt.format(
                 knowledge_point=knowledge_point,
                 context_docs=context,
                 difficulty=difficulty,
@@ -111,7 +136,7 @@ class ResourceGeneratorAgent:
                 "要求：结构清晰，包含定义、核心原理、要点总结，Markdown格式输出。"
             )
 
-        content = llm_client.chat(prompt, max_tokens=1000)
+        content = self._chat(prompt, max_tokens=1000)
         title = f"【知识文档】{knowledge_point}"
 
         return self._build_resource("doc", knowledge_point, title, content, {"difficulty": difficulty})
@@ -128,8 +153,9 @@ class ResourceGeneratorAgent:
     ) -> Dict[str, Any]:
         context = self._format_context(docs)
 
-        if self._exercise_prompt:
-            prompt = self._exercise_prompt.format(
+        exercise_prompt = getattr(self, "_exercise_prompt", "")
+        if exercise_prompt:
+            prompt = exercise_prompt.format(
                 knowledge_point=knowledge_point,
                 context_docs=context,
                 difficulty=difficulty,
@@ -141,7 +167,7 @@ class ResourceGeneratorAgent:
                 "要求：包含选择题1道、判断题1道、简答题1道，每题附标准答案和解析。"
             )
 
-        content = llm_client.chat(prompt, max_tokens=800)
+        content = self._chat(prompt, max_tokens=800)
         title = f"【练习题】{knowledge_point}"
 
         return self._build_resource("exercise", knowledge_point, title, content, {
@@ -161,8 +187,9 @@ class ResourceGeneratorAgent:
     ) -> Dict[str, Any]:
         context = self._format_context(docs)
 
-        if self._code_prompt:
-            prompt = self._code_prompt.format(
+        code_prompt = getattr(self, "_code_prompt", "")
+        if code_prompt:
+            prompt = code_prompt.format(
                 knowledge_point=knowledge_point,
                 context_docs=context,
                 difficulty=difficulty,
@@ -174,7 +201,7 @@ class ResourceGeneratorAgent:
                 "要求：代码可运行，包含详细注释，展示关键状态变化。"
             )
 
-        content = llm_client.chat(prompt, max_tokens=800)
+        content = self._chat(prompt, max_tokens=800)
         title = f"【代码示例】{knowledge_point}"
 
         return self._build_resource("code", knowledge_point, title, content, {
@@ -185,6 +212,10 @@ class ResourceGeneratorAgent:
     # ------------------------------------------------------------------
     # 工具方法
     # ------------------------------------------------------------------
+
+    def _chat(self, prompt: str, max_tokens: int) -> str:  # type: ignore[no-redef]
+        client = getattr(self, "llm", llm_client)
+        return client.chat(prompt, max_tokens=max_tokens)
 
     @staticmethod
     def _format_context(docs: Optional[List[Dict]]) -> str:

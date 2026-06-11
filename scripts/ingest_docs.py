@@ -1,164 +1,146 @@
-"""
-文档入库脚本 - 将 data/cleaned/ 下的 Markdown 课程文本
-切分后批量写入 ChromaDB 的 course_docs 集合
-"""
-import os
-import sys
-import re
-import json
-import hashlib
+"""Ingest cleaned markdown and misconception data into the KB search index."""
+from __future__ import annotations
+
 import argparse
+import hashlib
+import json
 import logging
+import re
+import sys
+from pathlib import Path
 
-# 确保项目 src 在 Python 路径内
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(ROOT, 'src'))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s  %(message)s')
+from src.loopse.kb.vector_store import vector_store  # noqa: E402
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
-CLEANED_DIR = os.path.join(ROOT, 'data', 'cleaned')
-MISCONCEPTIONS_FILE = os.path.join(ROOT, 'data', 'raw', 'misconceptions.json')
+CLEANED_DIR = ROOT / "data" / "cleaned"
+MISCONCEPTIONS_FILE = ROOT / "data" / "raw" / "misconceptions.json"
+CHUNK_SIZE = 900
+OVERLAP = 140
 
-CHUNK_SIZE = 400   # 每块目标字符数
-OVERLAP    = 80    # 块间重叠字符数
 
-
-# ------------------------------------------------------------------ #
-# 文本切分
-# ------------------------------------------------------------------ #
-def _split_by_heading(text: str) -> list[str]:
-    """按二级标题先粗切，再按 CHUNK_SIZE 细分"""
-    sections = re.split(r'\n(?=##\s)', text)
+def _split_text(text: str) -> list[str]:
+    sections = re.split(r"\n(?=#{1,3}\s)", text)
     chunks: list[str] = []
-    for sec in sections:
-        sec = sec.strip()
-        if not sec:
+    for section in sections:
+        section = section.strip()
+        if not section:
             continue
-        if len(sec) <= CHUNK_SIZE:
-            chunks.append(sec)
-        else:
-            # 滑动窗口细切
-            start = 0
-            while start < len(sec):
-                end = min(start + CHUNK_SIZE, len(sec))
-                chunks.append(sec[start:end])
-                start += CHUNK_SIZE - OVERLAP
-    return [c for c in chunks if len(c.strip()) > 20]
+        if len(section) <= CHUNK_SIZE:
+            chunks.append(section)
+            continue
+        start = 0
+        while start < len(section):
+            end = min(start + CHUNK_SIZE, len(section))
+            chunks.append(section[start:end].strip())
+            if end >= len(section):
+                break
+            start = max(0, end - OVERLAP)
+    return [chunk for chunk in chunks if len(chunk) >= 80]
 
 
-def _doc_id(source: str, idx: int) -> str:
-    raw = f"{source}_{idx}"
-    return hashlib.md5(raw.encode()).hexdigest()[:16]
+def _doc_id(source: str, index: int) -> str:
+    return hashlib.sha1(f"{source}:{index}".encode("utf-8")).hexdigest()[:20]
 
 
-# ------------------------------------------------------------------ #
-# 入库：课程文档
-# ------------------------------------------------------------------ #
-def ingest_course_docs(collection, dry_run: bool = False) -> int:
-    total = 0
-    md_files = [f for f in os.listdir(CLEANED_DIR) if f.endswith('.md')]
-    if not md_files:
-        log.warning('data/cleaned/ 下没有找到 .md 文件，跳过课程文档入库')
+def _collection_for_file(path: Path) -> str:
+    text = path.read_text(encoding="utf-8", errors="ignore")[:800]
+    match = re.search(r"Collection:\s*(\w+)", text)
+    if match:
+        return match.group(1)
+    return "course_docs"
+
+
+def ingest_course_docs(dry_run: bool = False) -> dict[str, int]:
+    counts = {"course_docs": 0, "protocol_specs": 0}
+    if not CLEANED_DIR.exists():
+        log.warning("data/cleaned does not exist")
+        return counts
+
+    for path in sorted(CLEANED_DIR.glob("*.md")):
+        raw = path.read_text(encoding="utf-8", errors="ignore")
+        chunks = _split_text(raw)
+        collection = _collection_for_file(path)
+        if collection not in counts:
+            collection = "course_docs"
+        log.info("%s -> %s chunks=%d", path.name, collection, len(chunks))
+        if not dry_run and chunks:
+            ids = [_doc_id(path.name, index) for index in range(len(chunks))]
+            metadatas = [
+                {
+                    "source": path.name,
+                    "chapter": path.stem,
+                    "chunk_index": index,
+                    "collection": collection,
+                }
+                for index in range(len(chunks))
+            ]
+            vector_store.add_documents(collection, chunks, metadatas, ids)
+        counts[collection] += len(chunks)
+    return counts
+
+
+def ingest_misconceptions(dry_run: bool = False) -> int:
+    if not MISCONCEPTIONS_FILE.exists():
+        log.warning("misconceptions file missing: %s", MISCONCEPTIONS_FILE)
         return 0
-
-    for fname in sorted(md_files):
-        fpath = os.path.join(CLEANED_DIR, fname)
-        with open(fpath, encoding='utf-8') as f:
-            raw = f.read()
-
-        chapter = fname.replace('.md', '')
-        chunks = _split_by_heading(raw)
-        log.info(f'  {fname}: {len(chunks)} 个文本块')
-
-        for i, chunk in enumerate(chunks):
-            doc_id = _doc_id(fname, i)
-            meta = {'source': fname, 'chapter': chapter, 'chunk_index': i}
-            if not dry_run:
-                collection.upsert(
-                    ids=[doc_id],
-                    documents=[chunk],
-                    metadatas=[meta]
-                )
-            total += 1
-
-    return total
-
-
-# ------------------------------------------------------------------ #
-# 入库：误解条目
-# ------------------------------------------------------------------ #
-def ingest_misconceptions(collection, dry_run: bool = False) -> int:
-    if not os.path.exists(MISCONCEPTIONS_FILE):
-        log.warning('misconceptions.json 不存在，跳过误解库入库')
-        return 0
-
-    with open(MISCONCEPTIONS_FILE, encoding='utf-8') as f:
-        items = json.load(f)
-
-    log.info(f'误解库条目数: {len(items)}')
+    items = json.loads(MISCONCEPTIONS_FILE.read_text(encoding="utf-8"))
+    docs = []
+    ids = []
+    metas = []
     for item in items:
-        doc_id = item.get('id', _doc_id('misc', hash(str(item))))
-        text = (
-            f"误解：{item.get('misconception', '')}\n"
-            f"正确理解：{item.get('correct_concept', item.get('correct_answer', ''))}"
+        ids.append(item.get("id") or _doc_id("misconception", len(ids)))
+        docs.append(
+            "\n".join(
+                [
+                    f"知识点：{item.get('knowledge_point') or item.get('knowledge_node', '')}",
+                    f"常见误区：{item.get('misconception', '')}",
+                    f"错误类型：{item.get('error_type', '')}",
+                    f"正确理解：{item.get('correct_answer') or item.get('correct_concept', '')}",
+                ]
+            )
         )
-        meta = {
-            'knowledge_point': item.get('knowledge_point', ''),
-            'error_type': item.get('error_type', ''),
-            'chapter': item.get('chapter', ''),
-        }
-        if not dry_run:
-            collection.upsert(ids=[doc_id], documents=[text], metadatas=[meta])
+        metas.append(
+            {
+                "knowledge_point": item.get("knowledge_point") or item.get("knowledge_node", ""),
+                "error_type": item.get("error_type", ""),
+                "chapter": item.get("chapter", ""),
+            }
+        )
+    if not dry_run and docs:
+        vector_store.add_documents("misconceptions", docs, metas, ids)
+    return len(docs)
 
-    return len(items)
 
-
-# ------------------------------------------------------------------ #
-# 主入口
-# ------------------------------------------------------------------ #
-def main():
-    parser = argparse.ArgumentParser(description='将课程文档和误解库写入 ChromaDB')
-    parser.add_argument('--dry-run', action='store_true', help='只切分不写库，用于调试')
-    parser.add_argument('--reset', action='store_true', help='清空集合后重新入库')
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--reset", action="store_true")
     args = parser.parse_args()
 
-    if args.dry_run:
-        log.info('=== DRY RUN 模式，不实际写入 ===')
-        course_chunks = 0
-        for fname in sorted(os.listdir(CLEANED_DIR)):
-            if not fname.endswith('.md'):
-                continue
-            with open(os.path.join(CLEANED_DIR, fname), encoding='utf-8') as f:
-                raw = f.read()
-            chunks = _split_by_heading(raw)
-            log.info(f'  {fname}: {len(chunks)} 个文本块，示例:\n    {chunks[0][:80]}...')
-            course_chunks += len(chunks)
-        log.info(f'合计 {course_chunks} 个课程文本块（未写库）')
-        return
+    if args.reset and not args.dry_run:
+        vector_store.reset()
 
-    # 正式写入
-    from loopse.kb.vector_store import vector_store
-
-    course_col = vector_store.course_docs
-    misc_col   = vector_store.misconceptions
-
-    if args.reset:
-        log.info('--reset: 清空现有集合...')
-        for col in (course_col, misc_col):
-            existing = col.get()
-            if existing['ids']:
-                col.delete(ids=existing['ids'])
-        log.info('清空完成')
-
-    log.info('--- 开始入库：课程文档 ---')
-    n_docs = ingest_course_docs(course_col)
-
-    log.info('--- 开始入库：误解库 ---')
-    n_misc = ingest_misconceptions(misc_col)
-
-    log.info(f'=== 入库完成：课程文档 {n_docs} 块 | 误解条目 {n_misc} 条 ===')
+    doc_counts = ingest_course_docs(dry_run=args.dry_run)
+    misc_count = ingest_misconceptions(dry_run=args.dry_run)
+    log.info(
+        "KB ingest complete: course_docs=%d protocol_specs=%d misconceptions=%d",
+        doc_counts["course_docs"],
+        doc_counts["protocol_specs"],
+        misc_count,
+    )
+    if not args.dry_run:
+        log.info(
+            "Index counts: course_docs=%d protocol_specs=%d misconceptions=%d",
+            vector_store.count("course_docs"),
+            vector_store.count("protocol_specs"),
+            vector_store.count("misconceptions"),
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

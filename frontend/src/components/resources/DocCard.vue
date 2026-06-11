@@ -38,7 +38,7 @@ const props = defineProps<{ resource: LearningResource }>()
 const expanded = ref(false)
 const renderedContent = computed(() => renderMarkdown(props.resource.content))
 const formattedTime = computed(() => {
-  const d = new Date(props.resource.created_at)
+  const d = new Date(props.resource.created_at || Date.now())
   return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
 })
 </script>

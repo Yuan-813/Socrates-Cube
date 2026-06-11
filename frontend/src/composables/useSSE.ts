@@ -98,6 +98,61 @@ export function useChatSSE() {
   return { isStreaming, lastError, send, abort }
 }
 
+export function useFetchSSE() {
+  let abortController: AbortController | null = null
+
+  async function connect(
+    url: string,
+    options: {
+      body?: unknown
+      onMessage?: (chunk: string) => void
+      onDone?: () => void
+      onError?: (error: Error) => void
+    } = {},
+  ) {
+    abortController = new AbortController()
+    try {
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(options.body ?? {}),
+        signal: abortController.signal,
+      })
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+      if (!resp.body) throw new Error('empty response body')
+
+      const reader = resp.body.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        const parts = buf.split('\n\n')
+        buf = parts.pop() ?? ''
+        for (const part of parts) {
+          const line = part.trim()
+          if (!line.startsWith('data:')) continue
+          const payload = JSON.parse(line.slice(5).trim()) as SSEPayload
+          if (payload.event === 'token') {
+            options.onMessage?.((payload.data as { token?: string })?.token ?? '')
+          }
+        }
+      }
+      options.onDone?.()
+    } catch (error) {
+      options.onError?.(error instanceof Error ? error : new Error(String(error)))
+    }
+  }
+
+  function abort() {
+    abortController?.abort()
+    abortController = null
+  }
+
+  return { connect, abort }
+}
+
 // ------------------------------------------------------------------
 // SSE 事件分发处理器
 // ------------------------------------------------------------------

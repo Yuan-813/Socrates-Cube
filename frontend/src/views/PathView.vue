@@ -10,7 +10,7 @@ const userStore = useUserStore()
 
 onMounted(() => {
   userStore.fetchProfile()
-  pathStore.fetchPath()
+  pathStore.fetchPath(userStore.userId)
 })
 
 function closeModal() {

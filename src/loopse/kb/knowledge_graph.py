@@ -1,30 +1,25 @@
-"""
-知识图谱加载与检索模块
-负责从 JSON 文件中加载知识节点、边关系，并提供拓扑排序、依赖分析等功能
-"""
+"""Knowledge graph loading, dependency analysis and fuzzy search."""
 from __future__ import annotations
 
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
-
 _DEFAULT_GRAPH_PATH = Path("data/knowledge_graph.json")
 
 
 class KnowledgeNode:
-    """单个知识点节点"""
-
     def __init__(self, data: dict):
         self.id: str = data["id"]
         self.name: str = data["name"]
-        self.chapter: str = data["chapter"]
-        self.type: str = data["type"]
-        self.difficulty: int = data.get("difficulty", 1)
-        self.estimated_time: int = data.get("estimated_time", 30)
-        self.keywords: List[str] = data.get("keywords", [])
+        self.chapter: str = data.get("chapter", "unknown")
+        self.type: str = data.get("type", "concept")
+        self.difficulty: int = int(data.get("difficulty", 1))
+        self.estimated_time: int = int(data.get("estimated_time", 30))
+        self.keywords: list[str] = data.get("keywords", [])
         self.description: str = data.get("description", "")
 
     def to_dict(self) -> dict:
@@ -41,159 +36,166 @@ class KnowledgeNode:
 
 
 class KnowledgeGraph:
-    """
-    知识图谱：管理知识点节点、有向依赖边，提供拓扑排序与前置分析。
-    """
-
     def __init__(self, graph_path: Path = _DEFAULT_GRAPH_PATH):
-        self._nodes: Dict[str, KnowledgeNode] = {}
-        # edges[a] = {b, ...} 表示 b 是 a 的后继（a 是 b 的前置条件）
-        self._successors: Dict[str, Set[str]] = {}
-        # predecessors[b] = {a, ...} 表示 a 是 b 的前置条件
-        self._predecessors: Dict[str, Set[str]] = {}
+        self._nodes: dict[str, KnowledgeNode] = {}
+        self._successors: dict[str, set[str]] = {}
+        self._predecessors: dict[str, set[str]] = {}
         self._load(graph_path)
 
     def _load(self, path: Path) -> None:
         try:
-            with open(path, "r", encoding="utf-8") as f:
-                raw = json.load(f)
+            raw = json.loads(path.read_text(encoding="utf-8"))
         except FileNotFoundError:
-            logger.warning("knowledge_graph.json not found at %s, graph is empty", path)
+            logger.warning("knowledge graph not found: %s", path)
+            return
+        except json.JSONDecodeError as exc:
+            logger.error("knowledge graph JSON invalid: %s", exc)
             return
 
-        for nd in raw.get("nodes", []):
-            node = KnowledgeNode(nd)
+        for item in raw.get("nodes", []):
+            node = KnowledgeNode(item)
             self._nodes[node.id] = node
-            self._successors[node.id] = set()
-            self._predecessors[node.id] = set()
+            self._successors.setdefault(node.id, set())
+            self._predecessors.setdefault(node.id, set())
 
         for edge in raw.get("edges", []):
-            src, dst = edge["from"], edge["to"]
+            src = edge.get("from")
+            dst = edge.get("to")
             if src in self._nodes and dst in self._nodes:
                 self._successors.setdefault(src, set()).add(dst)
                 self._predecessors.setdefault(dst, set()).add(src)
 
-        logger.info("知识图谱加载完成：%d 个节点，%d 条边",
-                    len(self._nodes),
-                    sum(len(v) for v in self._successors.values()))
-
-    # ------------------------------------------------------------------
-    # 基础访问
-    # ------------------------------------------------------------------
+        logger.info(
+            "knowledge graph loaded: %d nodes, %d edges",
+            len(self._nodes),
+            sum(len(items) for items in self._successors.values()),
+        )
 
     def get_node(self, node_id: str) -> Optional[KnowledgeNode]:
         return self._nodes.get(node_id)
 
-    def get_all_nodes(self) -> List[KnowledgeNode]:
+    def get_all_nodes(self) -> list[KnowledgeNode]:
         return list(self._nodes.values())
 
-    def get_prerequisites(self, node_id: str) -> List[KnowledgeNode]:
-        """直接前置节点（一跳）"""
-        return [self._nodes[nid] for nid in self._predecessors.get(node_id, set())
-                if nid in self._nodes]
+    def get_prerequisites(self, node_id: str) -> list[KnowledgeNode]:
+        return [self._nodes[nid] for nid in self._predecessors.get(node_id, set()) if nid in self._nodes]
 
-    # ------------------------------------------------------------------
-    # 深度递归：全量前置依赖
-    # ------------------------------------------------------------------
+    def get_all_prerequisites(self, node_id: str) -> list[KnowledgeNode]:
+        visited: set[str] = set()
+        result: list[KnowledgeNode] = []
 
-    def get_all_prerequisites(self, node_id: str) -> List[KnowledgeNode]:
-        """DFS 获取指定节点的所有前置节点（传递闭包，不含自身）"""
-        visited: Set[str] = set()
-        result: List[KnowledgeNode] = []
-
-        def _dfs(nid: str):
+        def dfs(nid: str) -> None:
             for pred_id in self._predecessors.get(nid, set()):
-                if pred_id not in visited:
-                    visited.add(pred_id)
-                    if pred_id in self._nodes:
-                        result.append(self._nodes[pred_id])
-                    _dfs(pred_id)
+                if pred_id in visited:
+                    continue
+                visited.add(pred_id)
+                node = self._nodes.get(pred_id)
+                if node:
+                    result.append(node)
+                dfs(pred_id)
 
-        _dfs(node_id)
+        dfs(node_id)
         return result
 
-    # ------------------------------------------------------------------
-    # 拓扑排序（Kahn 算法）
-    # ------------------------------------------------------------------
-
-    def topological_sort(self, node_ids: Optional[List[str]] = None) -> List[KnowledgeNode]:
-        """
-        对给定节点子集做拓扑排序（学习顺序）。
-        若 node_ids 为 None，则对全图做排序。
-        """
-        if node_ids is None:
-            target_ids = set(self._nodes.keys())
-        else:
-            target_ids = set(node_ids)
-
-        # 计算子图内的入度
-        in_degree: Dict[str, int] = {nid: 0 for nid in target_ids}
+    def topological_sort(self, node_ids: Optional[list[str]] = None) -> list[KnowledgeNode]:
+        target_ids = set(self._nodes.keys()) if node_ids is None else {nid for nid in node_ids if nid in self._nodes}
+        in_degree = {nid: 0 for nid in target_ids}
         for nid in target_ids:
             for pred in self._predecessors.get(nid, set()):
                 if pred in target_ids:
                     in_degree[nid] += 1
 
-        queue = [nid for nid, deg in in_degree.items() if deg == 0]
-        queue.sort(key=lambda x: (self._nodes[x].chapter, self._nodes[x].difficulty))
-        sorted_nodes: List[KnowledgeNode] = []
-
+        queue = sorted(
+            [nid for nid, degree in in_degree.items() if degree == 0],
+            key=lambda nid: (self._nodes[nid].chapter, self._nodes[nid].difficulty, nid),
+        )
+        sorted_nodes: list[KnowledgeNode] = []
         while queue:
-            cur = queue.pop(0)
-            if cur in self._nodes:
-                sorted_nodes.append(self._nodes[cur])
-            for succ in self._successors.get(cur, set()):
-                if succ in in_degree:
-                    in_degree[succ] -= 1
-                    if in_degree[succ] == 0:
-                        queue.append(succ)
-            queue.sort(key=lambda x: (self._nodes[x].chapter, self._nodes[x].difficulty))
-
+            current = queue.pop(0)
+            sorted_nodes.append(self._nodes[current])
+            for succ in self._successors.get(current, set()):
+                if succ not in in_degree:
+                    continue
+                in_degree[succ] -= 1
+                if in_degree[succ] == 0:
+                    queue.append(succ)
+            queue.sort(key=lambda nid: (self._nodes[nid].chapter, self._nodes[nid].difficulty, nid))
         return sorted_nodes
-
-    # ------------------------------------------------------------------
-    # 找到掌握度不足的前置节点
-    # ------------------------------------------------------------------
 
     def find_weak_prerequisites(
         self,
-        target_node_ids: List[str],
-        mastery_map: Dict[str, float],
+        target_node_ids: list[str],
+        mastery_map: dict[str, float],
         threshold: float = 0.6,
-    ) -> List[KnowledgeNode]:
-        """
-        对目标节点集合的所有前置依赖，过滤出掌握度低于阈值的节点。
-        mastery_map: {node_id: 0.0~1.0}
-        """
-        all_prereqs: Set[str] = set()
-        for nid in target_node_ids:
-            for prereq in self.get_all_prerequisites(nid):
-                all_prereqs.add(prereq.id)
-            all_prereqs.discard(nid)
-
+    ) -> list[KnowledgeNode]:
+        prereq_ids: set[str] = set()
+        for node_id in target_node_ids:
+            for prereq in self.get_all_prerequisites(node_id):
+                prereq_ids.add(prereq.id)
         weak = []
-        for nid in all_prereqs:
-            mastery = mastery_map.get(nid, 0.0)
-            if mastery < threshold:
-                node = self._nodes.get(nid)
+        for node_id in prereq_ids:
+            if self.estimate_mastery(node_id, mastery_map) < threshold:
+                node = self._nodes.get(node_id)
                 if node:
                     weak.append(node)
         return weak
 
-    # ------------------------------------------------------------------
-    # 关键词搜索
-    # ------------------------------------------------------------------
-
-    def search_by_keyword(self, keyword: str) -> List[KnowledgeNode]:
-        """模糊匹配关键词，返回相关节点列表"""
-        kw_lower = keyword.lower()
-        result = []
+    def search_by_keyword(self, keyword: str) -> list[KnowledgeNode]:
+        tokens = self._tokenize(keyword)
+        if not tokens:
+            return []
+        scored: list[tuple[int, KnowledgeNode]] = []
         for node in self._nodes.values():
-            if (kw_lower in node.name.lower()
-                    or kw_lower in node.description.lower()
-                    or any(kw_lower in k.lower() for k in node.keywords)):
-                result.append(node)
-        return result
+            name = node.name.lower()
+            haystack = " ".join([node.name, node.description, *node.keywords]).lower()
+            score = 0
+            for token in tokens:
+                if token in name:
+                    score += 4
+                elif token in haystack:
+                    score += 1
+            if score:
+                scored.append((score, node))
+        scored.sort(key=lambda item: (-item[0], item[1].difficulty, item[1].id))
+        return [node for _, node in scored]
+
+    def estimate_mastery(self, node_id: str, mastery_map: Dict[str, float]) -> float:
+        direct = mastery_map.get(node_id)
+        prereqs = self.get_prerequisites(node_id)
+        if direct is not None:
+            if not prereqs:
+                return round(float(direct), 3)
+            prereq_avg = sum(float(mastery_map.get(p.id, 0.35)) for p in prereqs) / len(prereqs)
+            return round(0.75 * float(direct) + 0.25 * prereq_avg, 3)
+        if not prereqs:
+            return 0.35
+        return round(sum(float(mastery_map.get(p.id, 0.35)) for p in prereqs) / len(prereqs) * 0.85, 3)
+
+    @staticmethod
+    def _tokenize(text: str) -> list[str]:
+        text = text.lower()
+        latin = re.findall(r"[a-z0-9][a-z0-9_\-./]{1,}", text)
+        known_terms = [
+            "三次握手",
+            "四次挥手",
+            "滑动窗口",
+            "拥塞控制",
+            "流量控制",
+            "子网",
+            "路由",
+            "交换",
+            "可靠传输",
+            "dns",
+            "http",
+            "tcp",
+            "udp",
+            "ip",
+            "tls",
+            "quic",
+        ]
+        terms = [term for term in known_terms if term in text]
+        cjk = re.findall(r"[\u4e00-\u9fff]{2,}", text)
+        return list(dict.fromkeys(latin + terms + cjk))
 
 
-# 全局单例
 knowledge_graph = KnowledgeGraph()

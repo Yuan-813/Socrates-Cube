@@ -17,7 +17,7 @@ onMounted(async () => {
   }
 })
 
-const stats = ref([
+const stats = ref<Array<{ label: string; value: string; total: string; color: string; bg?: string; percent: number; icon: string }>>([
   { label: '已完成知识点', value: '12', total: '48', color: 'blue', percent: 25, icon: 'Collection' },
   { label: '能力画像维度', value: '8', total: '8', color: 'emerald', percent: 60, icon: 'TrendCharts' },
   { label: '学习时长', value: '3.5', total: '小时', color: 'amber', percent: 40, icon: 'Timer' },

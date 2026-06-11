@@ -2,6 +2,12 @@
 // 学生画像
 // ──────────────────────────────────────────────────────
 export interface StudentProfile {
+  userId?: string
+  updatedAt?: string
+  dimensions?: Array<{ name: string; label: string; level: number; description: string }>
+  cognitiveStyle?: string
+  learningProgress?: Record<string, unknown>
+  commonMistakes?: Record<string, unknown>
   // 8维能力评分 (0.1 ~ 1.0)
   conceptual_understanding: number
   protocol_analysis: number
@@ -33,15 +39,26 @@ export const PROFILE_DIMENSION_LABELS: Record<string, string> = {
 // 诊断结果
 // ──────────────────────────────────────────────────────
 export interface DiagnosisResult {
-  is_correct: boolean
-  confidence: number
-  surface_error: string | null
-  error_type: 'factual' | 'conceptual' | 'calculation' | 'none'
-  root_causes: string[]
-  missing_prerequisites: string[]
-  pattern: string | null
-  intervention_suggestion: string
-  related_node_ids: string[]
+  diagnosisId?: string
+  sessionId?: string
+  trigger?: string
+  surfaceError?: string
+  rootCause?: {
+    weakKnowledge: string
+    confidence: number
+    evidence: string[]
+  }
+  misconceptionPattern?: string
+  suggestedResourceTypes?: string[]
+  is_correct?: boolean
+  confidence?: number
+  surface_error?: string | null
+  error_type?: 'factual' | 'conceptual' | 'calculation' | 'none' | string
+  root_causes?: string[]
+  missing_prerequisites?: string[]
+  pattern?: string | null
+  intervention_suggestion?: string
+  related_node_ids?: string[]
 }
 
 // ──────────────────────────────────────────────────────
@@ -50,19 +67,31 @@ export interface DiagnosisResult {
 export type ResourceType = 'doc' | 'exercise' | 'code'
 
 export interface LearningResource {
-  resource_id: string
-  resource_type: ResourceType
-  knowledge_point: string
+  id?: string
+  type?: string
+  difficulty?: number
+  tags?: string[]
+  resource_id?: string
+  resource_type?: ResourceType
+  knowledge_point?: string
   title: string
   content: string
-  metadata: Record<string, unknown>
-  created_at: string
+  metadata?: Record<string, unknown>
+  created_at?: string
 }
 
 // ──────────────────────────────────────────────────────
 // 学习路径
 // ──────────────────────────────────────────────────────
 export type PathNodeStatus = 'completed' | 'in_progress' | 'pending' | 'locked'
+
+export interface LearningPathNode {
+  id: string
+  title: string
+  status: 'completed' | 'current' | 'locked'
+  estimatedTime: number
+  reason?: string
+}
 
 export interface PathNode {
   node_id: string
@@ -95,9 +124,12 @@ export interface LearningPath {
 // 代理日志
 // ──────────────────────────────────────────────────────
 export interface AgentLog {
-  log_id: string
-  session_id: string
-  agent_name: string
+  logId?: string
+  sessionId?: string
+  agentName?: string
+  log_id?: string
+  session_id?: string
+  agent_name?: string
   action: string
   state: string
   timestamp: string

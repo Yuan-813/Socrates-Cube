@@ -1,93 +1,118 @@
 <template>
-  <div class="learning-path">
-    <!-- 头部统计 -->
-    <div v-if="pathStore.path" class="flex items-center justify-between mb-4">
-      <div>
-        <h4 class="text-sm font-semibold text-gray-700">{{ pathStore.path.title }}</h4>
-        <p class="text-xs text-gray-400 mt-0.5">
-          预计 {{ Math.round(pathStore.path.total_estimated_time / 60) }} 小时 ·
+  <div class="flex h-full flex-col">
+    <div v-if="pathStore.path" class="mb-4 flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <h4 class="truncate text-sm font-semibold text-gray-800">
+          {{ pathStore.path.title }}
+        </h4>
+        <p class="mt-1 text-xs text-gray-500">
+          预计 {{ Math.max(1, Math.round(pathStore.path.total_estimated_time / 60)) }} 小时 ·
           {{ pathStore.completedCount }}/{{ pathStore.totalCount }} 已完成
         </p>
       </div>
       <div class="text-right">
-        <div class="text-xl font-bold text-indigo-600">{{ pathStore.progressPercent }}%</div>
+        <div class="text-xl font-bold text-sky-600">{{ pathStore.progressPercent }}%</div>
         <div class="text-xs text-gray-400">整体进度</div>
       </div>
     </div>
 
-    <!-- 进度条 -->
-    <div class="h-1.5 bg-gray-100 rounded-full mb-4 overflow-hidden">
+    <div class="mb-4 h-1.5 overflow-hidden rounded-full bg-gray-100">
       <div
-        class="h-full bg-indigo-500 rounded-full transition-all duration-500"
+        class="h-full rounded-full bg-sky-500 transition-all duration-500"
         :style="{ width: pathStore.progressPercent + '%' }"
       />
     </div>
 
-    <!-- 节点时间轴 -->
-    <div v-if="pathStore.path" class="space-y-2 max-h-80 overflow-y-auto pr-1">
-      <div
+    <div v-if="pathStore.path" class="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+      <button
         v-for="(node, idx) in pathStore.path.nodes"
-        :key="node.node_id"
-        class="flex gap-3 cursor-pointer group"
-        @click="pathStore.selectNode(node)"
+        :key="`${node.node_id}-${idx}`"
+        type="button"
+        class="group flex w-full gap-3 rounded-md text-left outline-none transition-colors hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-sky-400"
+        @click="openNode(node)"
       >
-        <!-- 竖线 + 节点圆 -->
-        <div class="flex flex-col items-center">
-          <div class="w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold shrink-0"
-            :class="nodeCircleClass(node.status)">
+        <div class="flex flex-col items-center pl-1">
+          <div
+            class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold"
+            :class="nodeCircleClass(node.status)"
+          >
             <span v-if="node.status === 'completed'">✓</span>
-            <span v-else-if="node.status === 'in_progress'">▶</span>
-            <span v-else-if="node.status === 'locked'">🔒</span>
+            <span v-else-if="node.status === 'in_progress'">•</span>
+            <span v-else-if="node.status === 'locked'">锁</span>
             <span v-else>{{ idx + 1 }}</span>
           </div>
-          <div v-if="idx < pathStore.path!.nodes.length - 1"
-            class="w-0.5 flex-1 mt-1"
-            :class="node.status === 'completed' ? 'bg-indigo-300' : 'bg-gray-200'" />
+          <div
+            v-if="idx < pathStore.path.nodes.length - 1"
+            class="mt-1 w-0.5 flex-1"
+            :class="node.status === 'completed' ? 'bg-sky-300' : 'bg-gray-200'"
+          />
         </div>
 
-        <!-- 节点内容 -->
-        <div class="flex-1 pb-3 group-hover:bg-gray-50 rounded-lg px-2 transition-colors">
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-medium text-gray-700">{{ node.node_name }}</span>
+        <div class="min-w-0 flex-1 pb-3 pr-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-semibold text-gray-800">{{ node.node_name }}</span>
             <span class="text-xs text-gray-400">{{ node.chapter }}</span>
-            <span v-if="node.is_target"
-              class="text-xs px-1 py-0.5 rounded bg-indigo-100 text-indigo-600">目标</span>
+            <span
+              v-if="node.is_target"
+              class="rounded bg-sky-100 px-1.5 py-0.5 text-xs text-sky-700"
+            >
+              目标
+            </span>
           </div>
-          <div class="flex items-center gap-3 mt-0.5">
-            <span class="text-xs text-gray-400">{{ node.estimated_time }}分钟</span>
-            <div class="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden max-w-16">
-              <div class="h-full bg-indigo-400 rounded-full"
-                :style="{ width: (node.current_mastery * 100) + '%' }" />
+          <p class="mt-1 line-clamp-2 text-xs leading-5 text-gray-500">
+            {{ node.recommendation_reason }}
+          </p>
+          <div class="mt-2 flex items-center gap-2">
+            <span class="w-12 text-xs text-gray-400">{{ node.estimated_time }} 分钟</span>
+            <div class="h-1 flex-1 overflow-hidden rounded-full bg-gray-100">
+              <div
+                class="h-full rounded-full bg-sky-400"
+                :style="{ width: Math.round(node.current_mastery * 100) + '%' }"
+              />
             </div>
-            <span class="text-xs text-gray-400">{{ Math.round(node.current_mastery * 100) }}%</span>
+            <span class="w-8 text-right text-xs text-gray-400">
+              {{ Math.round(node.current_mastery * 100) }}%
+            </span>
           </div>
         </div>
-      </div>
+      </button>
     </div>
 
-    <!-- 空状态 -->
-    <div v-else class="text-center py-8 text-gray-400 text-sm">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 mx-auto mb-2 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-      </svg>
+    <div v-else class="flex flex-1 flex-col items-center justify-center text-center text-sm text-gray-400">
+      <div class="mb-3 text-3xl">⌁</div>
       <p>学习路径生成中</p>
-      <p class="text-xs mt-1">继续对话后将自动规划</p>
+      <p class="mt-1 text-xs">继续对话后将自动规划</p>
     </div>
+
+    <PathReasonModal
+      :node="pathStore.selectedNode"
+      :visible="pathStore.selectedNode !== null"
+      @close="pathStore.selectNode(null)"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { PathNodeStatus } from '../../types'
+import type { PathNode, PathNodeStatus } from '../../types'
 import { usePathStore } from '../../stores/pathStore'
+import PathReasonModal from './PathReasonModal.vue'
 
 const pathStore = usePathStore()
 
+function openNode(node: PathNode) {
+  pathStore.selectNode(node)
+}
+
 function nodeCircleClass(status: PathNodeStatus): string {
   switch (status) {
-    case 'completed': return 'border-indigo-500 bg-indigo-500 text-white'
-    case 'in_progress': return 'border-indigo-400 bg-indigo-50 text-indigo-600'
-    case 'locked': return 'border-gray-200 bg-gray-50 text-gray-400'
-    default: return 'border-gray-300 bg-white text-gray-500'
+    case 'completed':
+      return 'border-sky-500 bg-sky-500 text-white'
+    case 'in_progress':
+      return 'border-sky-400 bg-sky-50 text-sky-700'
+    case 'locked':
+      return 'border-gray-200 bg-gray-50 text-gray-400'
+    default:
+      return 'border-gray-300 bg-white text-gray-500'
   }
 }
 </script>

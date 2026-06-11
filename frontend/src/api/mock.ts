@@ -2,6 +2,18 @@ import type { StudentProfile, DiagnosisResult, LearningResource, LearningPathNod
 
 export const mockProfile: StudentProfile = {
   userId: 'student-001',
+  conceptual_understanding: 0.5,
+  protocol_analysis: 0.5,
+  calculation_ability: 0.5,
+  error_diagnosis: 0.5,
+  system_design: 0.5,
+  knowledge_connection: 0.5,
+  expression_clarity: 0.5,
+  self_correction: 0.5,
+  mastery_map: {},
+  weak_points: [],
+  strong_points: [],
+  turn_count: 0,
   updatedAt: '2024-05-09T14:30:00Z',
   dimensions: [
     { name: 'network_layer', label: '网络分层认知', level: 2, description: '对OSI七层/TCP/IP四层结构掌握度偏低' },

@@ -1,239 +1,85 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { DiagnosisResult } from '@/types'
 
 const diagnosis = ref<DiagnosisResult>({
-  diagnosisId: 'diag-001',
-  sessionId: 'session-001',
-  trigger: '学生回答：HTTP直接基于IP传输',
-  surfaceError: '协议层次错位',
-  rootCause: {
-    weakKnowledge: 'TCP/IP 分层封装机制',
-    confidence: 0.92,
-    evidence: ['教材第4章第2节', 'RFC 793 摘要段落3'],
-  },
-  misconceptionPattern: '层次穿越型',
-  suggestedResourceTypes: ['分层封装动画', '封装过程代码演示', '对比练习'],
+  is_correct: false,
+  confidence: 0.86,
+  surface_error: '把 HTTP 与 TCP/IP 层次关系混淆',
+  error_type: 'conceptual',
+  root_causes: ['TCP/IP 分层封装机制理解不充分', '应用层与传输层职责边界不清'],
+  missing_prerequisites: ['kn_001', 'kn_005'],
+  pattern: '层次穿越型',
+  intervention_suggestion: '用 HTTP -> TCP -> IP -> Ethernet 的封装链路进行对比追问。',
+  related_node_ids: ['kn_001', 'kn_005'],
 })
 
-const layers = [
-  { name: '应用层', desc: 'HTTP / FTP / DNS', color: '#f59e0b' },
-  { name: '传输层', desc: 'TCP / UDP', color: '#3b82f6' },
-  { name: '网络层', desc: 'IP / ICMP', color: '#10b981' },
-  { name: '数据链路层', desc: 'Ethernet / PPP', color: '#8b5cf6' },
-]
+const confidencePercent = computed(() => Math.round((diagnosis.value.confidence ?? 0) * 100))
 </script>
 
 <template>
-  <div class="diagnosis-panel space-y-6">
-    <!-- 触发信息 -->
-    <div class="diagnosis-section">
-      <div class="section-header">
-        <el-icon size="20" class="text-amber-500"><Warning /></el-icon>
-        <span class="font-semibold text-slate-800">诊断触发</span>
+  <div class="space-y-6">
+    <section class="rounded-lg border border-amber-200 bg-amber-50 p-4">
+      <div class="mb-2 flex items-center gap-2 font-semibold text-amber-800">
+        <el-icon><Warning /></el-icon>
+        <span>诊断触发</span>
       </div>
-      <div class="section-body bg-amber-50 border-amber-200">
-        <p class="text-slate-700">{{ diagnosis.trigger }}</p>
-      </div>
+      <p class="text-sm leading-6 text-amber-900">
+        {{ diagnosis.trigger || '系统检测到回答中可能存在概念边界或协议流程误区。' }}
+      </p>
+    </section>
+
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <section class="rounded-lg border border-gray-200 bg-white p-4">
+        <div class="mb-3 text-xs font-semibold uppercase text-gray-400">第一层</div>
+        <h3 class="mb-2 font-semibold text-gray-900">表层错误识别</h3>
+        <el-tag :type="diagnosis.is_correct ? 'success' : 'danger'" effect="dark">
+          {{ diagnosis.is_correct ? '理解正确' : diagnosis.surface_error }}
+        </el-tag>
+        <p class="mt-3 text-sm leading-6 text-gray-600">
+          错误类型：{{ diagnosis.error_type || 'none' }}
+        </p>
+      </section>
+
+      <section class="rounded-lg border border-gray-200 bg-white p-4">
+        <div class="mb-3 text-xs font-semibold uppercase text-gray-400">第二层</div>
+        <h3 class="mb-2 font-semibold text-gray-900">根因分析</h3>
+        <el-progress :percentage="confidencePercent" color="#3b82f6" />
+        <ul class="mt-3 space-y-2 text-sm text-gray-600">
+          <li v-for="cause in diagnosis.root_causes || []" :key="cause">• {{ cause }}</li>
+        </ul>
+      </section>
+
+      <section class="rounded-lg border border-gray-200 bg-white p-4">
+        <div class="mb-3 text-xs font-semibold uppercase text-gray-400">第三层</div>
+        <h3 class="mb-2 font-semibold text-gray-900">误区模式匹配</h3>
+        <el-tag type="warning" effect="dark">{{ diagnosis.pattern || '无明确模式' }}</el-tag>
+        <p class="mt-3 text-sm leading-6 text-gray-600">
+          {{ diagnosis.intervention_suggestion }}
+        </p>
+      </section>
     </div>
 
-    <!-- 三层诊断 -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <!-- 第一层：表面错误 -->
-      <div class="diagnosis-card layer-1">
-        <div class="card-header">
-          <div class="layer-badge">第一层</div>
-          <span class="font-medium text-slate-800">表面错误识别</span>
+    <section class="rounded-lg border border-gray-200 bg-white p-5">
+      <h3 class="mb-4 font-semibold text-gray-900">TCP/IP 分层封装示意</h3>
+      <div class="space-y-2">
+        <div class="rounded border-l-4 border-amber-400 bg-gray-50 px-4 py-3">
+          <div class="font-medium text-amber-700">应用层</div>
+          <div class="text-sm text-gray-500">HTTP / DNS / FTP</div>
         </div>
-        <div class="card-body">
-          <el-tag type="danger" size="large" effect="dark">
-            {{ diagnosis.surfaceError }}
-          </el-tag>
-          <p class="text-sm text-slate-600 mt-3">
-            系统识别出学生在回答中存在明显的协议层次概念混淆。
-          </p>
+        <div class="rounded border-l-4 border-blue-400 bg-gray-50 px-4 py-3">
+          <div class="font-medium text-blue-700">传输层</div>
+          <div class="text-sm text-gray-500">TCP / UDP / QUIC</div>
         </div>
-      </div>
-
-      <!-- 第二层：根因溯源 -->
-      <div class="diagnosis-card layer-2">
-        <div class="card-header">
-          <div class="layer-badge">第二层</div>
-          <span class="font-medium text-slate-800">根因溯源分析</span>
+        <div class="rounded border-l-4 border-emerald-400 bg-gray-50 px-4 py-3">
+          <div class="font-medium text-emerald-700">网络层</div>
+          <div class="text-sm text-gray-500">IP / ICMP</div>
         </div>
-        <div class="card-body">
-          <div class="mb-3">
-            <span class="text-sm text-slate-500">薄弱知识点：</span>
-            <div class="font-semibold text-slate-800 mt-1">{{ diagnosis.rootCause.weakKnowledge }}</div>
-          </div>
-          <div class="mb-3">
-            <span class="text-sm text-slate-500">置信度：</span>
-            <el-progress :percentage="Math.round(diagnosis.rootCause.confidence * 100)" :color="'#3b82f6'" />
-          </div>
-          <div>
-            <span class="text-sm text-slate-500">证据来源：</span>
-            <div class="flex flex-wrap gap-2 mt-2">
-              <el-tag v-for="ev in diagnosis.rootCause.evidence" :key="ev" size="small" type="info">
-                {{ ev }}
-              </el-tag>
-            </div>
-          </div>
+        <div class="rounded border-l-4 border-violet-400 bg-gray-50 px-4 py-3">
+          <div class="font-medium text-violet-700">数据链路层</div>
+          <div class="text-sm text-gray-500">Ethernet / Wi-Fi</div>
         </div>
       </div>
-
-      <!-- 第三层：模式匹配 -->
-      <div class="diagnosis-card layer-3">
-        <div class="card-header">
-          <div class="layer-badge">第三层</div>
-          <span class="font-medium text-slate-800">误解模式匹配</span>
-        </div>
-        <div class="card-body">
-          <el-tag type="warning" size="large" effect="dark">
-            {{ diagnosis.misconceptionPattern }}
-          </el-tag>
-          <p class="text-sm text-slate-600 mt-3">
-            该学生倾向于跳过中间层直接思考，属于典型的"层次穿越型"误解模式。
-          </p>
-          <div class="mt-4">
-            <span class="text-sm text-slate-500">推荐资源类型：</span>
-            <div class="flex flex-wrap gap-2 mt-2">
-              <el-tag v-for="res in diagnosis.suggestedResourceTypes" :key="res" size="small" type="success">
-                {{ res }}
-              </el-tag>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 协议分层可视化 -->
-    <div class="protocol-stack-visual">
-      <h3 class="font-semibold text-slate-800 mb-4">TCP/IP 分层结构示意</h3>
-      <div class="stack-container">
-        <div
-          v-for="layer in layers"
-          :key="layer.name"
-          class="stack-layer"
-          :style="{ borderLeftColor: layer.color }"
-        >
-          <div class="layer-name" :style="{ color: layer.color }">{{ layer.name }}</div>
-          <div class="layer-desc">{{ layer.desc }}</div>
-        </div>
-      </div>
-      <div class="stack-arrow">
-        <el-icon size="24" color="#64748b"><Bottom /></el-icon>
-        <span class="text-sm text-slate-500">数据封装方向（自上而下）</span>
-      </div>
-    </div>
+    </section>
   </div>
 </template>
-
-<style scoped>
-.diagnosis-section {
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 16px;
-  border: 1px solid #e2e8f0;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.section-body {
-  padding: 12px 16px;
-  border-radius: 8px;
-  border: 1px solid;
-}
-
-.diagnosis-card {
-  background-color: #fff;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
-}
-
-.card-header {
-  padding: 12px 16px;
-  background-color: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.layer-badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background-color: #e2e8f0;
-  color: #475569;
-}
-
-.card-body {
-  padding: 16px;
-}
-
-.protocol-stack-visual {
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  border: 1px solid #e2e8f0;
-}
-
-.stack-container {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.stack-layer {
-  display: flex;
-  align-items: center;
-  padding: 14px 20px;
-  background-color: #f8fafc;
-  border-radius: 8px;
-  border-left: 4px solid;
-}
-
-.layer-name {
-  font-weight: 600;
-  font-size: 15px;
-  min-width: 100px;
-}
-
-.layer-desc {
-  color: #64748b;
-  font-size: 13px;
-}
-
-@media (max-width: 768px) {
-  .grid-cols-3 {
-    grid-template-columns: 1fr;
-  }
-  
-  .stack-layer {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-  
-  .layer-name {
-    min-width: auto;
-  }
-}
-
-.stack-arrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px dashed #e2e8f0;
-}
-</style>

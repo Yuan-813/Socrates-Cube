@@ -1,0 +1,20 @@
+{
+  "user_id": "demo_user_001",
+  "layered_model_cognition": 0.45,
+  "protocol_flow_memory": 0.62,
+  "packet_format_understanding": 0.3,
+  "inter_protocol_relation": 0.55,
+  "fault_diagnosis_logic": 0.25,
+  "practical_operation": 0.2,
+  "cognitive_style": 0.72,
+  "misconception_pattern": 0.4,
+  "mastery_map": {
+    "kn_001": 0.7,
+    "kn_002": 0.5,
+    "kn_005": 0.3,
+    "kn_008": 0.6
+  },
+  "weak_points": ["packet_format_understanding", "fault_diagnosis_logic", "practical_operation"],
+  "strong_points": ["cognitive_style", "protocol_flow_memory"],
+  "turn_count": 12
+}

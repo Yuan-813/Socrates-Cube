@@ -1,0 +1,29 @@
+[
+  {
+    "resource_id": "res_doc_001",
+    "resource_type": "doc",
+    "knowledge_point": "OSI七层模型",
+    "title": "OSI参考模型详解",
+    "content": "## OSI七层模型\n\nOSI（Open Systems Interconnection）参考模型将网络通信分为七层：\n\n1. **物理层**：比特流传输，关注电气特性\n2. **数据链路层**：以帧为单位，负责节点间可靠传输（如以太网、PPP）\n3. **网络层**：路由选择与IP寻址（如IP协议、ARP、路由算法）\n4. **传输层**：端到端的可靠/不可靠传输（TCP/UDP）\n5. **会话层**：管理会话建立与终止\n6. **表示层**：数据格式转换与加密\n7. **应用层**：用户直接交互的协议（HTTP、DNS、FTP等）\n\n> 记忆口诀：**物数网传会表应**",
+    "metadata": { "difficulty": 2, "chapter": "第1章" },
+    "created_at": "2025-05-25T10:00:00Z"
+  },
+  {
+    "resource_id": "res_exercise_001",
+    "resource_type": "exercise",
+    "knowledge_point": "TCP三次握手",
+    "title": "TCP连接建立练习题",
+    "content": "## 练习题：TCP三次握手\n\n**题目：** 简述 TCP 三次握手的过程，并说明为什么需要三次而不是两次？\n\n---\n\n**参考答案：**\n\n**过程：**\n1. 客户端发送 SYN（seq=x）→ 进入 SYN_SENT 状态\n2. 服务端回复 SYN+ACK（seq=y, ack=x+1）→ 进入 SYN_RCVD 状态  \n3. 客户端发送 ACK（ack=y+1）→ 双方进入 ESTABLISHED 状态\n\n**为什么三次：** 两次握手无法确认客户端的接收能力（C→S方向），可能导致历史失效连接被服务端误认为新连接，造成资源浪费。",
+    "metadata": { "difficulty": 3, "chapter": "第5章" },
+    "created_at": "2025-05-25T10:05:00Z"
+  },
+  {
+    "resource_id": "res_code_001",
+    "resource_type": "code",
+    "knowledge_point": "TCP Socket编程",
+    "title": "Python TCP客户端/服务端示例",
+    "content": "## Python TCP Socket 示例\n\n### 服务端\n```python\nimport socket\n\nserver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\nserver.bind(('0.0.0.0', 8888))\nserver.listen(5)\nprint('等待连接...')\n\nconn, addr = server.accept()\nprint(f'连接来自: {addr}')\ndata = conn.recv(1024)\nprint(f'收到: {data.decode()}')\nconn.send(b'ACK: ' + data)\nconn.close()\n```\n\n### 客户端\n```python\nimport socket\n\nclient = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\nclient.connect(('127.0.0.1', 8888))  # 三次握手在 connect() 时完成\nclient.send(b'Hello TCP!')\nresp = client.recv(1024)\nprint(f'服务端回复: {resp.decode()}')\nclient.close()  # 四次挥手在 close() 时触发\n```",
+    "metadata": { "difficulty": 3, "chapter": "第5章", "language": "python" },
+    "created_at": "2025-05-25T10:10:00Z"
+  }
+]

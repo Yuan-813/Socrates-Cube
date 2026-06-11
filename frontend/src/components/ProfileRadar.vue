@@ -1,25 +1,34 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed } from 'vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { RadarChart } from 'echarts/charts'
 import { TitleComponent, TooltipComponent, LegendComponent } from 'echarts/components'
 import VChart from 'vue-echarts'
+import { useUserStore } from '../stores/userStore'
+import { PROFILE_DIMENSION_LABELS } from '../types'
 
 use([CanvasRenderer, RadarChart, TitleComponent, TooltipComponent, LegendComponent])
 
-const dimensions = [
-  { name: '网络分层认知', max: 100 },
-  { name: '协议流程记忆', max: 100 },
-  { name: '报文格式理解', max: 100 },
-  { name: '协议间关系', max: 100 },
-  { name: '故障排查逻辑', max: 100 },
-  { name: '实践操作能力', max: 100 },
-  { name: '认知风格偏好', max: 100 },
-  { name: '常见误解模式', max: 100 },
+const userStore = useUserStore()
+
+const PROFILE_DIMS = [
+  'layered_model_cognition',
+  'protocol_flow_memory',
+  'packet_format_understanding',
+  'inter_protocol_relation',
+  'fault_diagnosis_logic',
+  'practical_operation',
+  'cognitive_style',
+  'misconception_pattern',
 ]
 
-const radarOption = ref({
+const dimensions = PROFILE_DIMS.map(k => ({
+  name: PROFILE_DIMENSION_LABELS[k] ?? k,
+  max: 100,
+}))
+
+const radarOption = computed(() => ({
   tooltip: {},
   legend: {
     data: ['当前能力', '目标水平'],
@@ -29,14 +38,11 @@ const radarOption = ref({
     indicator: dimensions,
     radius: '65%',
     splitNumber: 5,
-    axisName: {
-      color: '#475569',
-      fontSize: 12,
-    },
+    axisName: { color: '#475569', fontSize: 12 },
     splitArea: {
       areaStyle: {
         color: ['#f8fafc', '#f1f5f9', '#e2e8f0', '#cbd5e1', '#94a3b8'],
-        shadowColor: 'rgba(0, 0, 0, 0.1)',
+        shadowColor: 'rgba(0,0,0,0.1)',
         shadowBlur: 10,
       },
     },
@@ -47,55 +53,44 @@ const radarOption = ref({
       type: 'radar',
       data: [
         {
-          value: [45, 60, 30, 55, 25, 20, 70, 40],
+          value: userStore.radarScores,
           name: '当前能力',
-          areaStyle: {
-            color: 'rgba(37, 99, 235, 0.3)',
-          },
-          lineStyle: {
-            color: '#2563eb',
-            width: 2,
-          },
-          itemStyle: {
-            color: '#2563eb',
-          },
+          areaStyle: { color: 'rgba(37,99,235,0.3)' },
+          lineStyle: { color: '#2563eb', width: 2 },
+          itemStyle: { color: '#2563eb' },
         },
         {
           value: [80, 85, 80, 85, 75, 80, 90, 90],
           name: '目标水平',
-          lineStyle: {
-            color: '#10b981',
-            width: 2,
-            type: 'dashed',
-          },
-          itemStyle: {
-            color: '#10b981',
-          },
+          lineStyle: { color: '#10b981', width: 2, type: 'dashed' },
+          itemStyle: { color: '#10b981' },
         },
       ],
     },
   ],
-})
+}))
 
-const dimensionDetails = ref([
-  { name: '网络分层认知', level: 2, desc: '对OSI七层/TCP/IP四层结构掌握度偏低，建议从分层封装动画入手' },
-  { name: '协议流程记忆', level: 3, desc: '三次握手、四次挥手能背诵但理解不深入' },
-  { name: '报文格式理解', level: 1, desc: '头部字段含义混淆，是连接管理薄弱的前置原因' },
-  { name: '协议间关系', level: 3, desc: 'HTTP-TCP-IP依赖关系基本理解，但封装过程不清晰' },
-  { name: '故障排查逻辑', level: 1, desc: '从现象定位根因的推理能力较弱，建议多做故障案例' },
-  { name: '实践操作能力', level: 1, desc: 'Wireshark抓包和Socket编程经验不足' },
-  { name: '认知风格偏好', level: 4, desc: '偏视觉型学习者，适合动画、图解类资源' },
-  { name: '常见误解模式', level: 2, desc: '当前聚类为"层次穿越型"，需重点纠正分层概念' },
-])
+const dimensionDetails = computed(() =>
+  PROFILE_DIMS.map((k, i) => ({
+    name: PROFILE_DIMENSION_LABELS[k] ?? k,
+    score: userStore.radarScores[i],
+  }))
+)
 
-function getLevelColor(level: number): string {
-  const colors = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e']
-  return colors[level - 1] || '#94a3b8'
+function getLevelColor(score: number): string {
+  if (score >= 80) return '#22c55e'
+  if (score >= 60) return '#84cc16'
+  if (score >= 40) return '#eab308'
+  if (score >= 20) return '#f97316'
+  return '#ef4444'
 }
 
-function getLevelLabel(level: number): string {
-  const labels = ['薄弱', '较差', '中等', '良好', '优秀']
-  return labels[level - 1] || '未知'
+function getLevelLabel(score: number): string {
+  if (score >= 80) return '优秀'
+  if (score >= 60) return '良好'
+  if (score >= 40) return '中等'
+  if (score >= 20) return '较差'
+  return '薄弱'
 }
 </script>
 
@@ -115,14 +110,13 @@ function getLevelLabel(level: number): string {
         >
           <div class="flex items-center justify-between">
             <span class="font-medium text-slate-700">{{ dim.name }}</span>
-            <el-tag :color="getLevelColor(dim.level)" effect="dark" size="small">
-              {{ getLevelLabel(dim.level) }}
+            <el-tag :color="getLevelColor(dim.score)" effect="dark" size="small">
+              {{ getLevelLabel(dim.score) }}
             </el-tag>
           </div>
-          <p class="text-xs text-slate-500 mt-1">{{ dim.desc }}</p>
           <el-progress
-            :percentage="dim.level * 20"
-            :color="getLevelColor(dim.level)"
+            :percentage="dim.score"
+            :color="getLevelColor(dim.score)"
             :show-text="false"
             :stroke-width="4"
             class="mt-2"

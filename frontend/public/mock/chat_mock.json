@@ -1,0 +1,73 @@
+[
+  {
+    "event": "agent_start",
+    "agent_name": "Orchestrator",
+    "data": { "message": "识别学习意图并规划多智能体协作流程" }
+  },
+  {
+    "event": "agent_start",
+    "agent_name": "Retriever",
+    "data": { "message": "检索课程资料、RFC 协议文档和误区库" }
+  },
+  {
+    "event": "agent_end",
+    "agent_name": "Retriever",
+    "data": { "message": "命中文档 5 条、协议片段 4 条、图谱节点 2 个" }
+  },
+  {
+    "event": "diagnosis",
+    "agent_name": "Diagnosis",
+    "data": {
+      "is_correct": false,
+      "confidence": 0.86,
+      "surface_error": "把 TCP 三次握手误认为两次握手",
+      "error_type": "factual",
+      "root_causes": ["协议流程记忆不完整", "没有理解第三次 ACK 的作用"],
+      "missing_prerequisites": ["kn_005"],
+      "pattern": "流程遗漏型",
+      "intervention_suggestion": "用失效连接请求的反例追问第三次 ACK 的必要性",
+      "related_node_ids": ["kn_005"]
+    }
+  },
+  {
+    "event": "token",
+    "agent_name": "Orchestrator",
+    "data": { "token": "你抓住了连接建立的核心，但我们可以追问一步：" }
+  },
+  {
+    "event": "token",
+    "agent_name": "Orchestrator",
+    "data": { "token": "如果旧的 SYN 报文迟到，只有两次握手会发生什么？" }
+  },
+  {
+    "event": "resource",
+    "agent_name": "ResourceGenerator",
+    "data": {
+      "resource_id": "mock-resource-001",
+      "resource_type": "exercise",
+      "knowledge_point": "TCP 三次握手",
+      "title": "TCP 三次握手纠错练习",
+      "content": "判断：TCP 两次握手即可避免历史连接请求造成的半开连接。请说明理由。",
+      "metadata": { "difficulty": 3 },
+      "created_at": "2026-06-11T00:00:00"
+    }
+  },
+  {
+    "event": "path_update",
+    "agent_name": "PathPlanner",
+    "data": {
+      "path_id": "mock-path-001",
+      "user_id": "student-001",
+      "title": "TCP 连接管理学习路径",
+      "description": "围绕连接建立、可靠传输和拥塞控制安排。",
+      "total_estimated_time": 120,
+      "generated_at": "2026-06-11T00:00:00",
+      "nodes": []
+    }
+  },
+  {
+    "event": "done",
+    "agent_name": "Orchestrator",
+    "data": { "session_id": "mock-session", "total_time_ms": 1800 }
+  }
+]

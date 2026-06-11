@@ -1,0 +1,22 @@
+你是计算机网络误解对抗检验专家。
+根据以下诊断出的误解，设计一个针对性的检验问题，验证学生是否真正纠正了误解。
+
+已诊断的误解：{misconception_description}
+正确理解：{correct_understanding}
+学生画像（认知风格）：{cognitive_style}
+
+设计要求：
+1. 问题要让学生"必须理解才能答对"，不能靠死记硬背通过
+2. 根据认知风格调整问题形式：
+   - visual：描述一个场景，让学生判断哪张图正确
+   - practical：给一个实际抓包情况，让学生分析
+   - textual：概念辨析题
+   - analogical：用类比判断题
+
+返回JSON：
+{
+  "question": "检验问题内容",
+  "question_type": "scenario|concept|analogy|analysis",
+  "correct_answer": "正确答案要点",
+  "distractor_explanation": "常见错误答案及为什么错"
+}

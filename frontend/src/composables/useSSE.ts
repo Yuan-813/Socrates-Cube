@@ -1,171 +1,206 @@
 import { ref } from 'vue'
-
-export interface SSEOptions {
-  onMessage?: (chunk: string) => void
-  onDone?: () => void
-  onError?: (err: Error) => void
-}
-
-export interface FetchSSEOptions extends SSEOptions {
-  method?: 'GET' | 'POST'
-  headers?: Record<string, string>
-  body?: string | object
-}
+import type { SSEPayload, DiagnosisResult, LearningPath, LearningResource } from '../types'
+import { useChatStore } from '../stores/chatStore'
+import { useUserStore } from '../stores/userStore'
+import { useResourceStore } from '../stores/resourceStore'
+import { usePathStore } from '../stores/pathStore'
 
 /**
- * 使用 EventSource 的 SSE（GET 请求，无请求体）
+ * useChatSSE：与后端 /api/v1/chat/stream 对话，处理全部 SSE 事件
  */
-export function useSSE() {
-  const isConnected = ref(false)
+export function useChatSSE() {
   const isStreaming = ref(false)
-  const lastError = ref<Error | null>(null)
-  let eventSource: EventSource | null = null
-
-  function connect(url: string, options: SSEOptions = {}) {
-    disconnect()
-    lastError.value = null
-    isStreaming.value = true
-
-    eventSource = new EventSource(url)
-
-    eventSource.onopen = () => {
-      isConnected.value = true
-    }
-
-    eventSource.onmessage = (event) => {
-      if (event.data === '[DONE]') {
-        options.onDone?.()
-        disconnect()
-        return
-      }
-      options.onMessage?.(event.data)
-    }
-
-    eventSource.onerror = () => {
-      lastError.value = new Error('SSE 连接异常')
-      options.onError?.(lastError.value)
-      disconnect()
-    }
-
-    return eventSource
-  }
-
-  function disconnect() {
-    if (eventSource) {
-      eventSource.close()
-      eventSource = null
-    }
-    isConnected.value = false
-    isStreaming.value = false
-  }
-
-  return {
-    isConnected,
-    isStreaming,
-    lastError,
-    connect,
-    disconnect,
-  }
-}
-
-/**
- * 使用 fetch + ReadableStream 的 SSE（支持 POST 请求体）
- * 适用于需要通过请求体发送上下文的场景
- */
-export function useFetchSSE() {
-  const isConnected = ref(false)
-  const isStreaming = ref(false)
-  const lastError = ref<Error | null>(null)
+  const lastError = ref<string | null>(null)
   let abortController: AbortController | null = null
 
-  async function connect(url: string, options: FetchSSEOptions = {}) {
-    disconnect()
-    lastError.value = null
-    isStreaming.value = true
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
+  async function send(
+    message: string,
+    userId: string,
+    sessionId: string,
+  ): Promise<void> {
+    if (isStreaming.value) abort()
+
+    const chatStore = useChatStore()
+    const userStore = useUserStore()
+    const resourceStore = useResourceStore()
+    const pathStore = usePathStore()
+
+    isStreaming.value = true
+    lastError.value = null
     abortController = new AbortController()
+    chatStore.setStreaming(true)
+
+    // 预先插入空 assistant 消息，准备追加 token
+    chatStore.addMessage(sessionId, {
+      id: `msg-${Date.now()}`,
+      role: 'assistant',
+      content: '',
+      timestamp: Date.now(),
+      isStreaming: true,
+    })
 
     try {
-      const body = typeof options.body === 'object'
-        ? JSON.stringify(options.body)
-        : options.body
-
-      const response = await fetch(url, {
-        method: options.method || 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'text/event-stream',
-          ...options.headers,
-        },
-        body,
+      const resp = await fetch(`${BASE_URL}/api/v1/chat/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, user_id: userId, session_id: sessionId }),
         signal: abortController.signal,
       })
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+      if (!resp.body) throw new Error('响应体为空')
 
-      if (!response.body) {
-        throw new Error('ReadableStream 不支持')
-      }
-
-      isConnected.value = true
-      const reader = response.body.getReader()
+      const reader = resp.body.getReader()
       const decoder = new TextDecoder()
-      let buffer = ''
+      let buf = ''
 
       while (true) {
         const { done, value } = await reader.read()
-        if (done) {
-          options.onDone?.()
-          disconnect()
-          break
-        }
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
 
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() || ''
+        const parts = buf.split('\n\n')
+        buf = parts.pop() ?? ''
 
-        for (const line of lines) {
-          const trimmed = line.trim()
-          if (trimmed.startsWith('data:')) {
-            const data = trimmed.slice(5).trim()
-            if (data === '[DONE]') {
-              options.onDone?.()
-              disconnect()
-              return
-            }
-            if (data) {
-              options.onMessage?.(data)
-            }
+        for (const part of parts) {
+          const line = part.trim()
+          if (!line.startsWith('data:')) continue
+          const jsonStr = line.slice(5).trim()
+          if (!jsonStr) continue
+          try {
+            const payload: SSEPayload = JSON.parse(jsonStr)
+            _handleEvent(payload, sessionId, chatStore, userStore, resourceStore, pathStore)
+          } catch {
+            // 忽略非JSON行
           }
         }
       }
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
-        // 正常断开，不视为错误
-        return
+    } catch (e: unknown) {
+      if (e instanceof Error && e.name !== 'AbortError') {
+        lastError.value = e.message
       }
-      lastError.value = err instanceof Error ? err : new Error(String(err))
-      options.onError?.(lastError.value)
-      disconnect()
+    } finally {
+      chatStore.finalizeStreaming(sessionId)
+      chatStore.setStreaming(false)
+      isStreaming.value = false
+      abortController = null
     }
   }
 
-  function disconnect() {
-    if (abortController) {
-      abortController.abort()
-      abortController = null
-    }
-    isConnected.value = false
+  function abort() {
+    abortController?.abort()
+    abortController = null
     isStreaming.value = false
   }
 
-  return {
-    isConnected,
-    isStreaming,
-    lastError,
-    connect,
-    disconnect,
+  return { isStreaming, lastError, send, abort }
+}
+
+export function useFetchSSE() {
+  let abortController: AbortController | null = null
+
+  async function connect(
+    url: string,
+    options: {
+      body?: unknown
+      onMessage?: (chunk: string) => void
+      onDone?: () => void
+      onError?: (error: Error) => void
+    } = {},
+  ) {
+    abortController = new AbortController()
+    try {
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(options.body ?? {}),
+        signal: abortController.signal,
+      })
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+      if (!resp.body) throw new Error('empty response body')
+
+      const reader = resp.body.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        const parts = buf.split('\n\n')
+        buf = parts.pop() ?? ''
+        for (const part of parts) {
+          const line = part.trim()
+          if (!line.startsWith('data:')) continue
+          const payload = JSON.parse(line.slice(5).trim()) as SSEPayload
+          if (payload.event === 'token') {
+            options.onMessage?.((payload.data as { token?: string })?.token ?? '')
+          }
+        }
+      }
+      options.onDone?.()
+    } catch (error) {
+      options.onError?.(error instanceof Error ? error : new Error(String(error)))
+    }
+  }
+
+  function abort() {
+    abortController?.abort()
+    abortController = null
+  }
+
+  return { connect, abort }
+}
+
+// ------------------------------------------------------------------
+// SSE 事件分发处理器
+// ------------------------------------------------------------------
+function _handleEvent(
+  payload: SSEPayload,
+  sessionId: string,
+  chatStore: ReturnType<typeof useChatStore>,
+  userStore: ReturnType<typeof useUserStore>,
+  resourceStore: ReturnType<typeof useResourceStore>,
+  pathStore: ReturnType<typeof usePathStore>,
+) {
+  switch (payload.event) {
+    case 'agent_start':
+      chatStore.updateAgentStatus(payload.agent_name, 'running', (payload.data as { message?: string })?.message ?? '')
+      break
+
+    case 'agent_end': {
+      const d = payload.data as { message?: string; profile_summary?: object }
+      chatStore.updateAgentStatus(payload.agent_name, 'done', d?.message ?? '')
+      // Profiler 结束时顺便更新画像摘要
+      if (payload.agent_name === 'Profiler' && d?.profile_summary) {
+        userStore.updateFromSSE(d.profile_summary as Parameters<typeof userStore.updateFromSSE>[0])
+      }
+      break
+    }
+
+    case 'token':
+      chatStore.appendStreamToken(sessionId, (payload.data as { token: string }).token)
+      break
+
+    case 'diagnosis':
+      chatStore.setDiagnosisResult(payload.data as DiagnosisResult)
+      break
+
+    case 'resource':
+      resourceStore.addResource(payload.data as LearningResource)
+      break
+
+    case 'path_update':
+      pathStore.updateFromSSE(payload.data as LearningPath)
+      break
+
+    case 'error':
+      console.error('[SSE error]', payload.data)
+      break
+
+    default:
+      break
   }
 }
+

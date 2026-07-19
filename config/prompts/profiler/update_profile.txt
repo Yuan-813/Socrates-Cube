@@ -10,7 +10,7 @@
 {new_dialogue}
 
 只返回JSON，格式：
-{"dimension_name": new_value_or_null, ...}
+{{"dimension_name": new_value_or_null, ...}}
 
 可更新的维度名称：
 - network_layer_cognition：1-5分，对OSI/TCP-IP分层的理解程度

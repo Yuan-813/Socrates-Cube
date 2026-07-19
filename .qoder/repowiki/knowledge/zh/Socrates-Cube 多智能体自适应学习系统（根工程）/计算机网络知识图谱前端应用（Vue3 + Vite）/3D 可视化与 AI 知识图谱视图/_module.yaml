@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: frontend_app/visualization_3d
+title: 3D 可视化与 AI 知识图谱视图
+scope:
+    - frontend/src/views/Device3DView.vue
+    - frontend/src/views/Hardware3DView.vue
+    - frontend/src/views/AIKGView.vue
+    - frontend/src/utils/kgMap.ts
+    - frontend/src/utils/animationConfig.ts
+source_files: []
+depends_on: []
+related_to: []

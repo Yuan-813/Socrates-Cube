@@ -20,20 +20,34 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 TOPICS = [
-    ("kn_001", "TCP/IP 分层模型", "第1章", "concept", ["TCP/IP", "分层", "网络体系结构"]),
-    ("kn_002", "HTTP 与 TCP 的关系", "第1章", "concept", ["HTTP", "TCP", "应用层"]),
-    ("kn_003", "IP 地址与子网划分", "第3章", "skill", ["IP", "子网", "CIDR"]),
-    ("kn_004", "路由选择基础", "第4章", "concept", ["路由", "转发表", "下一跳"]),
-    ("kn_005", "TCP 三次握手", "第5章", "protocol", ["TCP", "SYN", "ACK", "三次握手"]),
-    ("kn_006", "TCP 四次挥手", "第5章", "protocol", ["TCP", "FIN", "TIME_WAIT"]),
-    ("kn_007", "滑动窗口与流量控制", "第5章", "protocol", ["滑动窗口", "rwnd", "流量控制"]),
-    ("kn_008", "拥塞控制", "第5章", "protocol", ["慢启动", "拥塞避免", "cwnd"]),
-    ("kn_009", "DNS 解析流程", "第2章", "protocol", ["DNS", "递归查询", "迭代查询"]),
-    ("kn_010", "可靠传输机制", "第5章", "concept", ["ARQ", "超时重传", "序号"]),
+    ("kp_001", "计算机网络概述",       "第1章", "concept",  ["计算机网络", "体系结构", "性能指标"]),
+    ("kp_002", "OSI七层模型",          "第1章", "concept",  ["OSI", "七层", "分层模型"]),
+    ("kp_003", "TCP/IP体系结构",       "第1章", "concept",  ["TCP/IP", "四层", "协议栈"]),
+    ("kp_004", "物理层基本概念",       "第2章", "concept",  ["物理层", "信道", "编码"]),
+    ("kp_005", "数据链路层基本概念",   "第3章", "concept",  ["数据链路层", "帧", "差错控制"]),
+    ("kp_006", "局域网技术",           "第3章", "concept",  ["以太网", "CSMA/CD", "MAC地址"]),
+    ("kp_007", "网络层基本概念",       "第4章", "concept",  ["网络层", "路由", "IP协议"]),
+    ("kp_008", "IP地址与子网划分",   "第4章", "skill",    ["IP地址", "子网掩码", "CIDR"]),
+    ("kp_009", "ARP协议",               "第4章", "protocol", ["ARP", "MAC地址解析", "地址映射"]),
+    ("kp_010", "路由选择协议",         "第4章", "protocol", ["路由协议", "RIP", "OSPF", "BGP"]),
+    ("kp_011", "运输层基本概念",       "第5章", "concept",  ["运输层", "端口", "套接字"]),
+    ("kp_012", "UDP协议",               "第5章", "protocol", ["UDP", "无连接", "实时传输"]),
+    ("kp_013", "TCP协议基础",           "第5章", "protocol", ["TCP", "可靠传输", "序号"]),
+    ("kp_014", "TCP三次握手与四次挥手", "第5章", "protocol", ["TCP", "SYN", "FIN", "握手"]),
+    ("kp_015", "TCP流量控制与拥塞控制", "第5章", "protocol", ["滑动窗口", "慢启动", "拥塞避免"]),
+    ("kp_016", "应用层基本概念",       "第6章", "concept",  ["应用层", "客户服务器", "P2P"]),
+    ("kp_017", "DNS协议",               "第6章", "protocol", ["DNS", "域名解析", "递归查询"]),
+    ("kp_018", "HTTP与HTTPS",             "第6章", "protocol", ["HTTP", "HTTPS", "TLS", "请求响应"]),
+    ("kp_019", "网络安全基础",         "第7章", "concept",  ["加密", "认证", "TLS", "防火墙"]),
+    ("kp_020", "综合应用与故障排查",   "第7章", "skill",    ["故障排查", "抓包", "网络测试"]),
 ]
 RESOURCE_TYPES = ["doc", "exercise", "code"]
 QUESTION_TYPES = ["choice", "judge", "short_answer", "calculation"]
-PATTERNS = ["握手次数混淆", "层次归属错误", "窗口含义混淆", "地址位数计算错误", "ACK/SEQ 推导错误"]
+PATTERNS = [
+    "握手次数混淡", "层次归属错误", "窗口含义混淡",
+    "地址位数计算错误", "ACK/SEQ推导错误", "流程遗漏型",
+    "概念混淡型", "过度简化型", "理解不完整型", "因果倒置型",
+]
 
 
 def _now(offset_days: int = 0) -> str:
@@ -73,7 +87,7 @@ def _topic(index: int) -> tuple[str, str, str, str, list[str]]:
     return TOPICS[index % len(TOPICS)]
 
 
-def init_database(db_path: str = "edu_agent.db", rows: int = 3000) -> None:
+def init_database(db_path: str = "edu_agent.db", rows: int = 6000) -> None:
     os.environ["DB_PATH"] = db_path
     from src.loopse.db.connection import init_db
 
@@ -138,23 +152,47 @@ def init_database(db_path: str = "edu_agent.db", rows: int = 3000) -> None:
 
     profiles = []
     for i in range(rows):
+        # 三段式学生画像分布: 初学40%, 中等45%, 高手15%
+        tier = rng.choices(['beginner', 'intermediate', 'advanced'], weights=[0.40, 0.45, 0.15])[0]
+        if tier == 'beginner':
+            lo, hi = 0.20, 0.55
+            turn_range = (2, 25)
+        elif tier == 'intermediate':
+            lo, hi = 0.45, 0.80
+            turn_range = (15, 55)
+        else:
+            lo, hi = 0.65, 0.95
+            turn_range = (40, 90)
+
         mastery = {}
-        for j in range(6):
+        for j in range(8):  # 每个学生覆盖8个KP节点
             node_id, *_ = _topic(i + j)
-            mastery[node_id] = round(rng.uniform(0.25, 0.95), 3)
+            mastery[node_id] = round(rng.uniform(lo, hi), 3)
+
+        # 高手学生有几个强项，初学者有清晰弱项
+        if tier == 'advanced':
+            for k in mastery:
+                if rng.random() < 0.3:
+                    mastery[k] = round(rng.uniform(0.85, 0.98), 3)
+        elif tier == 'beginner':
+            for k in mastery:
+                if rng.random() < 0.4:
+                    mastery[k] = round(rng.uniform(0.10, 0.35), 3)
+
         profile = {
-            "conceptual_understanding": round(rng.uniform(0.35, 0.95), 3),
-            "protocol_analysis": round(rng.uniform(0.3, 0.95), 3),
-            "calculation_ability": round(rng.uniform(0.25, 0.9), 3),
-            "error_diagnosis": round(rng.uniform(0.25, 0.9), 3),
-            "system_design": round(rng.uniform(0.25, 0.85), 3),
-            "knowledge_connection": round(rng.uniform(0.25, 0.9), 3),
-            "expression_clarity": round(rng.uniform(0.35, 0.98), 3),
-            "self_correction": round(rng.uniform(0.2, 0.9), 3),
-            "mastery_map": mastery,
-            "weak_points": [k for k, v in mastery.items() if v < 0.5],
+            "conceptual_understanding": round(rng.uniform(lo, hi), 3),
+            "protocol_analysis":        round(rng.uniform(lo, hi - 0.05), 3),
+            "calculation_ability":      round(rng.uniform(lo - 0.05, hi - 0.05), 3),
+            "error_diagnosis":          round(rng.uniform(lo - 0.05, hi - 0.10), 3),
+            "system_design":            round(rng.uniform(lo - 0.10, hi - 0.10), 3),
+            "knowledge_connection":     round(rng.uniform(lo, hi), 3),
+            "expression_clarity":       round(rng.uniform(lo + 0.05, hi + 0.03), 3),
+            "self_correction":          round(rng.uniform(lo - 0.05, hi - 0.05), 3),
+            "mastery_map":   mastery,
+            "weak_points":   [k for k, v in mastery.items() if v < 0.5],
             "strong_points": [k for k, v in mastery.items() if v >= 0.8],
-            "turn_count": rng.randint(0, 80),
+            "turn_count":    rng.randint(*turn_range),
+            "tier":          tier,
         }
         profiles.append((f"user-{i:05d}", json.dumps(profile, ensure_ascii=False), _now()))
     cur.executemany(
@@ -317,6 +355,10 @@ def init_database(db_path: str = "edu_agent.db", rows: int = 3000) -> None:
     )
 
     conn.commit()
+
+    # --- 演示账号预置 ---
+    seed_demo_accounts(conn)
+
     counts = {
         name: cur.execute(f"SELECT COUNT(*) FROM {name}").fetchone()[0]
         for name in [
@@ -338,9 +380,158 @@ def init_database(db_path: str = "edu_agent.db", rows: int = 3000) -> None:
         print(f"{table}: {count}")
 
 
+# ---------------------------------------------------------------------------
+# 演示账号预置：3 个不同认知风格 / 进度的学生
+# ---------------------------------------------------------------------------
+
+DEMO_ACCOUNTS = [
+    {
+        "id": "demo-student-001",
+        "username": "初学者-小王",
+        "profile": {
+            "conceptual_understanding": 0.45,
+            "protocol_analysis": 0.35,
+            "calculation_ability": 0.30,
+            "error_diagnosis": 0.28,
+            "system_design": 0.25,
+            "knowledge_connection": 0.30,
+            "expression_clarity": 0.55,
+            "self_correction": 0.40,
+            "mastery_map": {"kp_001": 0.45, "kp_003": 0.50, "kp_014": 0.30},
+            "weak_points": ["kp_014", "kp_015"],
+            "strong_points": [],
+            "turn_count": 8,
+            "cognitive_style": "visual",
+        },
+    },
+    {
+        "id": "demo-student-002",
+        "username": "进阶-小李",
+        "profile": {
+            "conceptual_understanding": 0.68,
+            "protocol_analysis": 0.65,
+            "calculation_ability": 0.58,
+            "error_diagnosis": 0.55,
+            "system_design": 0.50,
+            "knowledge_connection": 0.60,
+            "expression_clarity": 0.72,
+            "self_correction": 0.62,
+            "mastery_map": {"kp_001": 0.75, "kp_003": 0.70, "kp_014": 0.65, "kp_015": 0.55},
+            "weak_points": ["kp_015", "kp_019"],
+            "strong_points": ["kp_001"],
+            "turn_count": 22,
+            "cognitive_style": "practical",
+        },
+    },
+    {
+        "id": "demo-student-003",
+        "username": "高手-小张",
+        "profile": {
+            "conceptual_understanding": 0.88,
+            "protocol_analysis": 0.85,
+            "calculation_ability": 0.82,
+            "error_diagnosis": 0.80,
+            "system_design": 0.78,
+            "knowledge_connection": 0.85,
+            "expression_clarity": 0.90,
+            "self_correction": 0.85,
+            "mastery_map": {"kp_001": 0.92, "kp_003": 0.88, "kp_014": 0.85, "kp_015": 0.80, "kp_018": 0.75},
+            "weak_points": [],
+            "strong_points": ["kp_001", "kp_003", "kp_014"],
+            "turn_count": 45,
+            "cognitive_style": "textual",
+        },
+    },
+]
+
+DEMO_CHAT_SESSIONS = [
+    {
+        "session_id": "demo-session-001",
+        "user_id": "demo-student-001",
+        "messages": [
+            {"role": "user", "content": "什么是TCP三次握手？", "timestamp": _now(-2)},
+            {"role": "assistant", "content": "TCP三次握手是建立连接的标准流程：SYN → SYN+ACK → ACK", "timestamp": _now(-2)},
+            {"role": "user", "content": "两次握手不行吗？", "timestamp": _now(-1)},
+            {"role": "assistant", "content": "两次握手无法防止历史失效连接，第三次ACK确认客户端的接收能力。", "timestamp": _now(-1)},
+        ],
+    },
+    {
+        "session_id": "demo-session-002",
+        "user_id": "demo-student-002",
+        "messages": [
+            {"role": "user", "content": "HTTP是直接基于IP的吗？", "timestamp": _now(-3)},
+            {"role": "assistant", "content": "不是，HTTP基于TCP，TCP再基于IP。正确的层次是：HTTP → TCP → IP。", "timestamp": _now(-3)},
+            {"role": "user", "content": "滑动窗口和拥塞窗口有什么区别？", "timestamp": _now(-1)},
+            {"role": "assistant", "content": "滑动窗口(rwnd)用于流量控制，由接收方通告；拥塞窗口(cwnd)用于拥塞控制，由发送方根据网络状况调整。", "timestamp": _now(-1)},
+        ],
+    },
+    {
+        "session_id": "demo-session-003",
+        "user_id": "demo-student-003",
+        "messages": [
+            {"role": "user", "content": "TCP拥塞控制的四个阶段是什么？", "timestamp": _now(-2)},
+            {"role": "assistant", "content": "慢启动（指数增长）→拥塞避免（线性增长）→快重传（3个重复ACK）→快恢复（cwnd减半）。", "timestamp": _now(-2)},
+        ],
+    },
+]
+
+
+def seed_demo_accounts(conn: sqlite3.Connection) -> None:
+    """创建 3 个演示账号，预置画像和对话数据。"""
+    cur = conn.cursor()
+
+    # 用户
+    for acc in DEMO_ACCOUNTS:
+        cur.execute(
+            "INSERT OR IGNORE INTO users (id, username, create_time, update_time) VALUES (?, ?, ?, ?)",
+            (acc["id"], acc["username"], _now(-30), _now()),
+        )
+
+    # 画像
+    for acc in DEMO_ACCOUNTS:
+        cur.execute(
+            "INSERT OR REPLACE INTO student_profiles (user_id, profile_json, update_time) VALUES (?, ?, ?)",
+            (acc["id"], json.dumps(acc["profile"], ensure_ascii=False), _now()),
+        )
+
+    # 历史对话
+    for sess in DEMO_CHAT_SESSIONS:
+        cur.execute(
+            "INSERT OR IGNORE INTO chat_sessions (session_id, user_id, messages, create_time, update_time) VALUES (?, ?, ?, ?, ?)",
+            (sess["session_id"], sess["user_id"], json.dumps(sess["messages"], ensure_ascii=False), _now(-3), _now()),
+        )
+
+    # Agent 日志
+    demo_logs = [
+        (str(uuid.uuid4()), "demo-session-001", "Retriever", "hybrid_search", json.dumps({"query": "TCP三次握手"}, ensure_ascii=False), _now(-2), json.dumps({"docs": 5, "misconceptions": 2}, ensure_ascii=False)),
+        (str(uuid.uuid4()), "demo-session-001", "Diagnosis", "three_layer_diagnosis", json.dumps({"message": "两次握手不行吗"}, ensure_ascii=False), _now(-1), json.dumps({"is_correct": False, "error_type": "flow_omission", "surface_error": "TCP三次握手流程遗漏", "pattern": "流程遗漏型", "knowledge_node_ids": ["kp_014"], "acu_ids": ["acu_025"], "misconception_id": "mc_001", "confidence": 0.92}, ensure_ascii=False)),
+        (str(uuid.uuid4()), "demo-session-002", "Diagnosis", "three_layer_diagnosis", json.dumps({"message": "HTTP直接基于IP"}, ensure_ascii=False), _now(-3), json.dumps({"is_correct": False, "error_type": "layer_misplacement", "surface_error": "HTTP层次归属错误", "pattern": "层次归属错误", "knowledge_node_ids": ["kp_018"], "acu_ids": ["acu_038"], "misconception_id": "mc_003", "confidence": 0.88}, ensure_ascii=False)),
+        (str(uuid.uuid4()), "demo-session-002", "PathPlanner", "plan", json.dumps({"user": "demo-student-002"}, ensure_ascii=False), _now(-1), json.dumps({"nodes": 5, "target_node_ids": ["kp_018"]}, ensure_ascii=False)),
+        (str(uuid.uuid4()), "demo-session-003", "Diagnosis", "three_layer_diagnosis", json.dumps({"message": "拥塞控制四阶段"}, ensure_ascii=False), _now(-2), json.dumps({"is_correct": True, "confidence": 0.95}, ensure_ascii=False)),
+    ]
+    cur.executemany(
+        "INSERT OR IGNORE INTO agent_logs (log_id, session_id, agent_name, action, state, timestamp, result) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        demo_logs,
+    )
+
+    conn.commit()
+    print("[Demo] 3 demo accounts seeded:")
+    for acc in DEMO_ACCOUNTS:
+        print(f"  - {acc['username']} ({acc['id']}) style={acc['profile']['cognitive_style']} turns={acc['profile']['turn_count']}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--db", default=os.getenv("DB_PATH", "edu_agent.db"))
     parser.add_argument("--rows", type=int, default=3000, help="Base row count for large tables.")
+    parser.add_argument("--demo-only", action="store_true", help="Only seed demo accounts (skip bulk data).")
     args = parser.parse_args()
-    init_database(args.db, args.rows)
+    if args.demo_only:
+        os.environ["DB_PATH"] = args.db
+        from src.loopse.db.connection import init_db
+        init_db()
+        conn = sqlite3.connect(args.db)
+        seed_demo_accounts(conn)
+        conn.close()
+    else:
+        init_database(args.db, args.rows)

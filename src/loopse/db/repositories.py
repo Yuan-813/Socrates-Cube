@@ -1,13 +1,21 @@
-"""Repository layer used by API and agents."""
+"""Repository layer used by API and agents.
+
+事务保护：get_db_session 包含 commit/rollback/finally close
+日志记录：异常时记录完整错误信息
+异步写入：AgentLogRepository 支持后台线程写入，不阻塞主流程
+"""
 from __future__ import annotations
 
 import json
+import logging
+import threading
 import uuid
 from contextlib import contextmanager
 from datetime import datetime
 from typing import Any, Iterator
 
 from sqlalchemy.orm import Session
+from sqlalchemy import func as sa_func
 
 from src.loopse.db.connection import SessionLocal
 from src.loopse.db.models import (
@@ -20,15 +28,22 @@ from src.loopse.db.models import (
     User,
 )
 
+logger = logging.getLogger(__name__)
+
 
 @contextmanager
 def get_db_session() -> Iterator[Session]:
+    """获取 DB 会话，包含事务提交 / 回滚 / 关闭全流程。
+
+    异常处理：捕获并记录日志后重新抛出，确保上层可感知。
+    """
     db: Session = SessionLocal()
     try:
         yield db
         db.commit()
-    except Exception:
+    except Exception as exc:
         db.rollback()
+        logger.error("[DB] 事务回滚: %s", exc, exc_info=True)
         raise
     finally:
         db.close()
@@ -47,9 +62,13 @@ class UserRepository:
     @staticmethod
     def get_or_create(username: str) -> dict:
         with get_db_session() as db:
-            user = db.query(User).filter(User.username == username).first()
+            # 优先按 id（=username）查找，兴容旧 UUID 写入的历史数据
+            user = db.query(User).filter(
+                (User.id == username) | (User.username == username)
+            ).first()
             if not user:
-                user = User(id=str(uuid.uuid4()), username=username)
+                # 使用 username 作为 id，确保下游的 session/profile 外键不会违约
+                user = User(id=username, username=username)
                 db.add(user)
                 db.flush()
                 db.refresh(user)
@@ -128,18 +147,50 @@ class AgentLogRepository:
         output_state: dict | str,
         duration_ms: int = 0,
     ) -> None:
+        """写入 Agent 日志。
+
+        默认同步写入。如果调用方在异步上下文中且不关心写入结果，
+        可调用 write_async 方法避免阻塞主流程。
+        """
         payload = {"input": input_state, "output": output_state, "duration_ms": duration_ms}
-        with get_db_session() as db:
-            db.add(
-                AgentLog(
-                    log_id=str(uuid.uuid4()),
-                    session_id=session_id,
-                    agent_name=agent_name,
-                    action=action,
-                    state=json.dumps(payload, ensure_ascii=False, default=str),
-                    result=json.dumps(output_state, ensure_ascii=False, default=str),
+        try:
+            with get_db_session() as db:
+                db.add(
+                    AgentLog(
+                        log_id=str(uuid.uuid4()),
+                        session_id=session_id,
+                        agent_name=agent_name,
+                        action=action,
+                        state=json.dumps(payload, ensure_ascii=False, default=str),
+                        result=json.dumps(output_state, ensure_ascii=False, default=str),
+                    )
                 )
-            )
+        except Exception as exc:
+            logger.warning("[DB] AgentLog 写入失败 (非致命): %s", exc)
+
+    @staticmethod
+    def write_async(
+        session_id: str,
+        agent_name: str,
+        action: str,
+        input_state: dict | str,
+        output_state: dict | str,
+        duration_ms: int = 0,
+    ) -> None:
+        """异步写入 Agent 日志，不阻塞主流程。
+
+        使用后台线程执行 DB 写入，异常时仅记录日志不抛出。
+        """
+        def _write():
+            try:
+                AgentLogRepository.write(
+                    session_id, agent_name, action, input_state, output_state, duration_ms
+                )
+            except Exception as exc:
+                logger.warning("[DB] async AgentLog 写入失败: %s", exc)
+
+        thread = threading.Thread(target=_write, daemon=True)
+        thread.start()
 
     @staticmethod
     def get_session_logs(session_id: str) -> list[dict]:
@@ -183,8 +234,15 @@ class ResourceRepository:
 
     @staticmethod
     def list_recent(limit: int = 20) -> list[dict]:
+        """返回最近生成的有效资源（内容长度 >= 100 字符，排除占位符数据）。"""
         with get_db_session() as db:
-            rows = db.query(LearningResource).order_by(LearningResource.create_time.desc()).limit(limit).all()
+            rows = (
+                db.query(LearningResource)
+                .filter(sa_func.length(LearningResource.content) >= 100)
+                .order_by(LearningResource.create_time.desc())
+                .limit(limit)
+                .all()
+            )
             return [
                 {
                     "resource_id": r.resource_id,

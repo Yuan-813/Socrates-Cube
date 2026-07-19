@@ -2,16 +2,114 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   Socrates-Cube Design Tokens — EduBright 明亮教育科技风
+   ============================================================ */
+:root {
+  /* --- 主色系：活力蓝 --- */
+  --color-primary: #3b82f6;
+  --color-primary-light: #60a5fa;
+  --color-primary-dark: #2563eb;
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+
+  /* --- 辅助色系 --- */
+  --color-secondary: #8b5cf6;
+  --color-secondary-light: #a78bfa;
+  --color-accent: #f59e0b;
+  --color-accent-light: #fbbf24;
+  --color-success: #10b981;
+  --color-success-light: #34d399;
+  --color-danger: #ef4444;
+  --color-danger-light: #f87171;
+  --color-warning: #f59e0b;
+  --color-info: #06b6d4;
+
+  /* --- 背景色系（亮色教育风） --- */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8faff;
+  --color-bg-tertiary: #f0f4ff;
+  --color-bg-canvas: #eef2ff;
+  --color-bg-dark: #1e1b4b;
+
+  /* --- 文字色系 --- */
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #ffffff;
+
+  /* --- 边框 --- */
+  --color-border: #e2e8f0;
+  --color-border-light: #f1f5f9;
+  --color-border-focus: #3b82f6;
+
+  /* --- 字体 --- */
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+
+  /* --- 圆角 --- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* --- 阴影 --- */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.09), 0 4px 8px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.06);
+  --shadow-glow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 8px 24px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  /* --- 间距 --- */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+
+  /* --- 8 Agent 主题色 --- */
+  --agent-orchestrator: #3b82f6;
+  --agent-retriever: #10b981;
+  --agent-diagnosis: #ef4444;
+  --agent-profiler: #8b5cf6;
+  --agent-resource: #f59e0b;
+  --agent-path-planner: #06b6d4;
+  --agent-simulator: #ec4899;
+  --agent-challenger: #f97316;
+}
+
+/* ============================================================
+   基础全局样式
+   ============================================================ */
 html, body, #app {
   height: 100%;
   margin: 0;
   padding: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-family-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-secondary);
 }
 
-/* 滚动条美化 */
+/* ============================================================
+   自定义滚动条
+   ============================================================ */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -24,67 +122,139 @@ html, body, #app {
 ::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
   border-radius: 3px;
+  transition: background 0.2s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background-color: #94a3b8;
 }
 
-/* 通用卡片样式 */
+/* ============================================================
+   通用组件
+   ============================================================ */
 .card {
-  @apply bg-white rounded-xl shadow-sm border border-slate-200 p-6;
+  background: #ffffff;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-/* 页面标题 */
 .section-title {
-  @apply text-xl font-bold text-slate-800 mb-4;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 16px;
+  letter-spacing: -0.3px;
 }
 
-/* 描述文本 */
 .section-desc {
-  @apply text-sm text-slate-500 mb-6;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 24px;
 }
 
-/* Element Plus 组件样式微调 */
+/* ============================================================
+   卡片悬停
+   ============================================================ */
+.card-hover {
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card-hover);
+  border-color: #bfdbfe;
+}
+
+/* ============================================================
+   Element Plus 微调
+   ============================================================ */
 .el-button {
   font-weight: 600;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
+  border-radius: var(--radius-md);
 }
 
 .el-input__wrapper {
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 1px #e2e8f0 !important;
+  transition: box-shadow 0.2s;
+}
+
+.el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px #93c5fd !important;
+}
+
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
 }
 
 .el-tag {
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-weight: 500;
 }
 
-/* 选中高亮 */
+.el-dialog {
+  border-radius: var(--radius-xl);
+}
+
+/* ============================================================
+   Agent 标签颜色
+   ============================================================ */
+.agent-tag-orchestrator { background-color: var(--agent-orchestrator); color: white; }
+.agent-tag-retriever { background-color: var(--agent-retriever); color: white; }
+.agent-tag-diagnosis { background-color: var(--agent-diagnosis); color: white; }
+.agent-tag-profiler { background-color: var(--agent-profiler); color: white; }
+.agent-tag-resource { background-color: var(--agent-resource); color: white; }
+.agent-tag-path-planner { background-color: var(--agent-path-planner); color: white; }
+.agent-tag-simulator { background-color: var(--agent-simulator); color: white; }
+.agent-tag-challenger { background-color: var(--agent-challenger); color: white; }
+
+/* ============================================================
+   选中 & 聚焦
+   ============================================================ */
 ::selection {
-  background-color: #bfdbfe;
-  color: #1e40af;
+  background-color: var(--color-primary-200);
+  color: var(--color-primary-dark);
 }
 
-/* 移动端文本适配 */
-@media (max-width: 640px) {
-  .section-title {
-    font-size: 18px;
-  }
-  
-  .card {
-    padding: 16px;
-  }
-}
-
-/* 聚焦环 */
 :focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
-/* 禁用态鼠标 */
 [disabled] {
   cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ============================================================
+   渐变工具类
+   ============================================================ */
+.gradient-text-blue {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-rainbow {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================================
+   移动端适配
+   ============================================================ */
+@media (max-width: 1280px) {
+  .section-title { font-size: 1.1rem; }
+}
+
+@media (max-width: 640px) {
+  .section-title { font-size: 1rem; }
+  .card { padding: 16px; border-radius: 12px; }
 }

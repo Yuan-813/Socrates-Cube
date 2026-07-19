@@ -7,8 +7,8 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from ..agents.path_planner import PathPlannerAgent
-from ..agents.profiler import ProfilerAgent
+from ..agent.path_planner import PathPlannerAgent
+from ..agent.profiler import ProfilerAgent
 from ..db.repositories import LearningPathRepository, ProfileRepository
 
 logger = logging.getLogger(__name__)

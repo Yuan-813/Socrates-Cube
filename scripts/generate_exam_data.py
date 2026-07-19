@@ -1,0 +1,205 @@
+"""生成 data/certificate_exams.json 证书模拟考题库。
+包含三套题库：hcia_mock / ccna_mock / computer_network_exam
+每套 题目结构：{id, type, question, options, answer, knowledge_point, kp_node_id, explanation}
+"""
+import json
+from pathlib import Path
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HCIA-Datacom 模拟题（50题，单选/多选/判断）
+# ─────────────────────────────────────────────────────────────────────────────
+hcia_questions = [
+    {"id":"hcia_001","type":"single","question":"OSI参考模型共分几层？","options":{"A":"5层","B":"6层","C":"7层","D":"4层"},"answer":"C","knowledge_point":"OSI模型","kp_node_id":"kp_002","explanation":"OSI参考模型共7层：物理层、数据链路层、网络层、传输层、会话层、表示层、应用层。"},
+    {"id":"hcia_002","type":"single","question":"IP地址192.168.1.0/24中，主机位有多少位？","options":{"A":"8位","B":"16位","C":"24位","D":"32位"},"answer":"A","knowledge_point":"IP编址","kp_node_id":"kp_008","explanation":"子网掩码/24表示前24位为网络位，剩余8位为主机位。"},
+    {"id":"hcia_003","type":"single","question":"TCP和UDP都属于哪一层协议？","options":{"A":"网络层","B":"数据链路层","C":"传输层","D":"应用层"},"answer":"C","knowledge_point":"传输层协议","kp_node_id":"kp_013"},
+    {"id":"hcia_004","type":"single","question":"下列哪个协议用于将IP地址解析为MAC地址？","options":{"A":"DNS","B":"DHCP","C":"ARP","D":"ICMP"},"answer":"C","knowledge_point":"ARP协议","kp_node_id":"kp_009","explanation":"ARP（Address Resolution Protocol）将IP地址动态解析为MAC地址。"},
+    {"id":"hcia_005","type":"single","question":"OSPF协议属于哪类路由协议？","options":{"A":"距离矢量路由协议","B":"链路状态路由协议","C":"路径矢量路由协议","D":"混合路由协议"},"answer":"B","knowledge_point":"OSPF","kp_node_id":"kp_010","explanation":"OSPF基于Dijkstra算法，是典型的链路状态路由协议。"},
+    {"id":"hcia_006","type":"single","question":"VLAN的作用是什么？","options":{"A":"增加网络带宽","B":"逻辑隔离广播域","C":"加密数据传输","D":"提高路由速度"},"answer":"B","knowledge_point":"VLAN","kp_node_id":"kp_006","explanation":"VLAN将一个物理网络划分为多个逻辑网络，每个VLAN是独立的广播域。"},
+    {"id":"hcia_007","type":"single","question":"下列哪个协议工作在应用层？","options":{"A":"IP","B":"TCP","C":"HTTP","D":"Ethernet"},"answer":"C","knowledge_point":"应用层协议","kp_node_id":"kp_015"},
+    {"id":"hcia_008","type":"single","question":"交换机根据什么进行帧转发决策？","options":{"A":"IP地址","B":"MAC地址","C":"端口号","D":"VLAN ID"},"answer":"B","knowledge_point":"数据链路层","kp_node_id":"kp_005","explanation":"二层交换机维护MAC地址表，根据帧的目的MAC地址决定从哪个端口转发。"},
+    {"id":"hcia_009","type":"single","question":"ping命令使用的是哪个协议？","options":{"A":"TCP","B":"UDP","C":"ICMP","D":"ARP"},"answer":"C","knowledge_point":"ICMP","kp_node_id":"kp_009","explanation":"ping使用ICMP Echo Request和Echo Reply报文测试网络连通性。"},
+    {"id":"hcia_010","type":"single","question":"私有IP地址段10.0.0.0/8共有多少个主机地址？","options":{"A":"254","B":"65534","C":"16777214","D":"16777216"},"answer":"C","knowledge_point":"IP编址","kp_node_id":"kp_008","explanation":"10.0.0.0/8有24位主机位，共2^24-2=16777214个可用主机地址。"},
+    {"id":"hcia_011","type":"single","question":"STP的主要作用是什么？","options":{"A":"负载均衡","B":"防止二层环路","C":"路由选路","D":"VLAN划分"},"answer":"B","knowledge_point":"STP","kp_node_id":"kp_006"},
+    {"id":"hcia_012","type":"single","question":"DHCP服务器使用什么协议向客户端分配IP地址？","options":{"A":"TCP","B":"UDP","C":"ICMP","D":"ARP"},"answer":"B","knowledge_point":"DHCP","kp_node_id":"kp_009","explanation":"DHCP使用UDP，服务器端口67，客户端端口68。"},
+    {"id":"hcia_013","type":"single","question":"BGP是什么类型的路由协议？","options":{"A":"链路状态","B":"距离矢量","C":"路径矢量","D":"混合型"},"answer":"C","knowledge_point":"BGP","kp_node_id":"kp_011"},
+    {"id":"hcia_014","type":"single","question":"NAT技术的主要功能是什么？","options":{"A":"加密数据","B":"地址转换","C":"路由选路","D":"流量整形"},"answer":"B","knowledge_point":"NAT","kp_node_id":"kp_019"},
+    {"id":"hcia_015","type":"single","question":"IPv4地址是几位二进制数？","options":{"A":"16位","B":"32位","C":"64位","D":"128位"},"answer":"B","knowledge_point":"IP编址","kp_node_id":"kp_008"},
+    {"id":"hcia_016","type":"single","question":"路由器工作在OSI的第几层？","options":{"A":"第一层","B":"第二层","C":"第三层","D":"第四层"},"answer":"C","knowledge_point":"网络层","kp_node_id":"kp_007"},
+    {"id":"hcia_017","type":"single","question":"下列哪个是有类路由协议？","options":{"A":"OSPF","B":"BGP","C":"RIP v1","D":"EIGRP"},"answer":"C","knowledge_point":"路由协议","kp_node_id":"kp_010"},
+    {"id":"hcia_018","type":"single","question":"Trunk链路上通过什么标记VLAN信息？","options":{"A":"802.1Q标签","B":"IP头部","C":"MAC地址","D":"MPLS标签"},"answer":"A","knowledge_point":"VLAN","kp_node_id":"kp_006"},
+    {"id":"hcia_019","type":"single","question":"HTTP默认使用哪个端口号？","options":{"A":"80","B":"443","C":"8080","D":"8443"},"answer":"A","knowledge_point":"HTTP","kp_node_id":"kp_015"},
+    {"id":"hcia_020","type":"single","question":"DNS主要用来完成什么任务？","options":{"A":"IP到MAC解析","B":"域名到IP解析","C":"路由选路","D":"地址分配"},"answer":"B","knowledge_point":"DNS","kp_node_id":"kp_015"},
+    {"id":"hcia_021","type":"multi","question":"下列哪些属于OSI第二层（数据链路层）技术？（多选）","options":{"A":"以太网","B":"VLAN","C":"ARP","D":"IP路由","E":"STP"},"answer":"ABE","knowledge_point":"数据链路层","kp_node_id":"kp_005"},
+    {"id":"hcia_022","type":"multi","question":"TCP的可靠性通过哪些机制实现？（多选）","options":{"A":"序列号","B":"确认应答","C":"滑动窗口","D":"校验和","E":"无连接"},"answer":"ABCD","knowledge_point":"TCP可靠性","kp_node_id":"kp_013"},
+    {"id":"hcia_023","type":"multi","question":"常见的私有IP地址段有哪些？（多选）","options":{"A":"10.0.0.0/8","B":"172.16.0.0/12","C":"192.168.0.0/16","D":"100.64.0.0/10"},"answer":"ABC","knowledge_point":"私有IP","kp_node_id":"kp_008"},
+    {"id":"hcia_024","type":"multi","question":"OSPF邻居关系建立需要哪些条件匹配？（多选）","options":{"A":"Area ID","B":"Hello/Dead时间","C":"认证","D":"IP地址","E":"AS号"},"answer":"ABC","knowledge_point":"OSPF","kp_node_id":"kp_010"},
+    {"id":"hcia_025","type":"multi","question":"以下哪些是应用层协议？（多选）","options":{"A":"FTP","B":"SMTP","C":"ICMP","D":"HTTPS","E":"Telnet"},"answer":"ABDE","knowledge_point":"应用层","kp_node_id":"kp_015"},
+    {"id":"hcia_026","type":"judge","question":"TCP是面向连接的可靠传输协议。","options":{"A":"正确","B":"错误"},"answer":"A","knowledge_point":"TCP","kp_node_id":"kp_013"},
+    {"id":"hcia_027","type":"judge","question":"路由器可以隔离广播域，也可以隔离冲突域。","options":{"A":"正确","B":"错误"},"answer":"A","knowledge_point":"路由器功能","kp_node_id":"kp_007"},
+    {"id":"hcia_028","type":"judge","question":"同一VLAN内的主机可以直接通过交换机进行三层通信。","options":{"A":"正确","B":"错误"},"answer":"B","knowledge_point":"VLAN","kp_node_id":"kp_006","explanation":"同VLAN内是二层通信，跨VLAN需要三层设备（路由器或三层交换机）。"},
+    {"id":"hcia_029","type":"judge","question":"ICMP是网络层协议，ping命令使用ICMP。","options":{"A":"正确","B":"错误"},"answer":"A","knowledge_point":"ICMP","kp_node_id":"kp_009"},
+    {"id":"hcia_030","type":"judge","question":"IPv6地址长度为128位。","options":{"A":"正确","B":"错误"},"answer":"A","knowledge_point":"IPv6","kp_node_id":"kp_012"},
+    {"id":"hcia_031","type":"single","question":"以太网帧的最小长度是多少字节？","options":{"A":"46","B":"64","C":"128","D":"1518"},"answer":"B","knowledge_point":"以太网帧","kp_node_id":"kp_005"},
+    {"id":"hcia_032","type":"single","question":"静态路由的管理距离（AD值）通常是多少？","options":{"A":"0","B":"1","C":"90","D":"110"},"answer":"B","knowledge_point":"路由管理距离","kp_node_id":"kp_010"},
+    {"id":"hcia_033","type":"single","question":"三次握手的第二步，服务器发送什么？","options":{"A":"SYN","B":"ACK","C":"SYN+ACK","D":"FIN"},"answer":"C","knowledge_point":"TCP三次握手","kp_node_id":"kp_013"},
+    {"id":"hcia_034","type":"single","question":"HTTPS默认端口是？","options":{"A":"80","B":"443","C":"8080","D":"21"},"answer":"B","knowledge_point":"HTTPS","kp_node_id":"kp_014"},
+    {"id":"hcia_035","type":"single","question":"PPPoE常用于哪种接入场景？","options":{"A":"企业内网","B":"宽带拨号","C":"数据中心","D":"无线局域网"},"answer":"B","knowledge_point":"接入技术","kp_node_id":"kp_001"},
+    {"id":"hcia_036","type":"single","question":"OSPF DR/BDR选举依据是什么？","options":{"A":"IP地址","B":"Router ID和Priority","C":"MAC地址","D":"AS号"},"answer":"B","knowledge_point":"OSPF","kp_node_id":"kp_010"},
+    {"id":"hcia_037","type":"single","question":"下列哪个命令可以查看路由表？","options":{"A":"show arp","B":"show mac-address-table","C":"show ip route","D":"show interface"},"answer":"C","knowledge_point":"路由表","kp_node_id":"kp_010"},
+    {"id":"hcia_038","type":"single","question":"子网掩码255.255.255.192对应的CIDR前缀长度是？","options":{"A":"/24","B":"/25","C":"/26","D":"/28"},"answer":"C","knowledge_point":"子网划分","kp_node_id":"kp_008"},
+    {"id":"hcia_039","type":"single","question":"FTP使用哪两个端口？","options":{"A":"20和21","B":"22和23","C":"25和110","D":"80和443"},"answer":"A","knowledge_point":"FTP","kp_node_id":"kp_016"},
+    {"id":"hcia_040","type":"single","question":"RIP协议最大跳数是多少？","options":{"A":"10","B":"15","C":"16","D":"255"},"answer":"B","knowledge_point":"RIP","kp_node_id":"kp_010","explanation":"RIP最大跳数15，16代表不可达。"},
+    {"id":"hcia_041","type":"multi","question":"以下哪些是OSPF的报文类型？（多选）","options":{"A":"Hello","B":"DBD（数据库描述）","C":"LSR（链路状态请求）","D":"UPDATE","E":"LSAck"},"answer":"ABCE","knowledge_point":"OSPF","kp_node_id":"kp_010"},
+    {"id":"hcia_042","type":"multi","question":"以下关于STP端口状态说法正确的是？（多选）","options":{"A":"Forwarding状态可以转发数据","B":"Blocking状态不转发数据","C":"Learning状态学习MAC","D":"Disabled状态也发送BPDU"},"answer":"ABC","knowledge_point":"STP","kp_node_id":"kp_006"},
+    {"id":"hcia_043","type":"judge","question":"OSPF使用组播地址224.0.0.5和224.0.0.6。","options":{"A":"正确","B":"错误"},"answer":"A","knowledge_point":"OSPF","kp_node_id":"kp_010"},
+    {"id":"hcia_044","type":"judge","question":"TELNET传输数据是明文的，存在安全风险。","options":{"A":"正确","B":"错误"},"answer":"A","knowledge_point":"Telnet","kp_node_id":"kp_016"},
+    {"id":"hcia_045","type":"judge","question":"TCP的慢启动阶段，拥塞窗口每次增加一倍（指数增长）。","options":{"A":"正确","B":"错误"},"answer":"A","knowledge_point":"TCP拥塞控制","kp_node_id":"kp_013"},
+    {"id":"hcia_046","type":"single","question":"PPP协议工作在OSI哪一层？","options":{"A":"物理层","B":"数据链路层","C":"网络层","D":"传输层"},"answer":"B","knowledge_point":"PPP","kp_node_id":"kp_005"},
+    {"id":"hcia_047","type":"single","question":"traceroute命令工作原理基于哪个机制？","options":{"A":"TTL递增","B":"ICMP端口不可达","C":"TCP三次握手","D":"ARP广播"},"answer":"A","knowledge_point":"traceroute","kp_node_id":"kp_009","explanation":"traceroute通过逐步增大TTL值，利用ICMP Time Exceeded报文获取路径上每跳路由器的信息。"},
+    {"id":"hcia_048","type":"single","question":"最长前缀匹配（Longest Prefix Match）用于解决什么问题？","options":{"A":"负载均衡","B":"路由查找冲突","C":"VLAN选择","D":"MAC学习"},"answer":"B","knowledge_point":"路由选路","kp_node_id":"kp_007"},
+    {"id":"hcia_049","type":"judge","question":"ACL可以基于源IP地址、目的IP地址、端口号进行流量过滤。","options":{"A":"正确","B":"错误"},"answer":"A","knowledge_point":"ACL","kp_node_id":"kp_019"},
+    {"id":"hcia_050","type":"judge","question":"UDP不保证数据包的顺序和可靠交付。","options":{"A":"正确","B":"错误"},"answer":"A","knowledge_point":"UDP","kp_node_id":"kp_013"},
+]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CCNA 模拟题（50题）
+# ─────────────────────────────────────────────────────────────────────────────
+ccna_questions = [
+    {"id":"ccna_001","type":"single","question":"Which layer of OSI model is responsible for end-to-end communication?","options":{"A":"Network","B":"Transport","C":"Session","D":"Application"},"answer":"B","knowledge_point":"传输层","kp_node_id":"kp_013"},
+    {"id":"ccna_002","type":"single","question":"What is the default administrative distance of OSPF?","options":{"A":"90","B":"100","C":"110","D":"120"},"answer":"C","knowledge_point":"OSPF","kp_node_id":"kp_010"},
+    {"id":"ccna_003","type":"single","question":"Which command displays the routing table on a Cisco router?","options":{"A":"show ip interfaces","B":"show ip route","C":"show run","D":"show version"},"answer":"B","knowledge_point":"路由表","kp_node_id":"kp_010"},
+    {"id":"ccna_004","type":"single","question":"What is the subnet mask for a /28 prefix?","options":{"A":"255.255.255.0","B":"255.255.255.128","C":"255.255.255.240","D":"255.255.255.224"},"answer":"C","knowledge_point":"子网划分","kp_node_id":"kp_008"},
+    {"id":"ccna_005","type":"single","question":"Which protocol resolves IP addresses to MAC addresses?","options":{"A":"DNS","B":"DHCP","C":"ARP","D":"RARP"},"answer":"C","knowledge_point":"ARP","kp_node_id":"kp_009"},
+    {"id":"ccna_006","type":"single","question":"Which port does SSH use by default?","options":{"A":"21","B":"22","C":"23","D":"25"},"answer":"B","knowledge_point":"SSH","kp_node_id":"kp_014"},
+    {"id":"ccna_007","type":"single","question":"What does VLAN stand for?","options":{"A":"Virtual LAN","B":"Variable LAN","C":"Verified LAN","D":"Virtual Layer Network"},"answer":"A","knowledge_point":"VLAN","kp_node_id":"kp_006"},
+    {"id":"ccna_008","type":"single","question":"Which of the following is NOT a private IP address range?","options":{"A":"10.0.0.0/8","B":"172.16.0.0/12","C":"192.168.0.0/16","D":"172.32.0.0/16"},"answer":"D","knowledge_point":"私有IP","kp_node_id":"kp_008"},
+    {"id":"ccna_009","type":"single","question":"What is the maximum hop count for RIP?","options":{"A":"10","B":"15","C":"16","D":"255"},"answer":"B","knowledge_point":"RIP","kp_node_id":"kp_010"},
+    {"id":"ccna_010","type":"single","question":"Which IEEE standard defines VLAN tagging?","options":{"A":"802.1D","B":"802.1Q","C":"802.11","D":"802.3"},"answer":"B","knowledge_point":"VLAN Tagging","kp_node_id":"kp_006"},
+    {"id":"ccna_011","type":"single","question":"How many usable host addresses does a /30 subnet provide?","options":{"A":"1","B":"2","C":"4","D":"6"},"answer":"B","knowledge_point":"子网划分","kp_node_id":"kp_008"},
+    {"id":"ccna_012","type":"single","question":"What is the purpose of STP?","options":{"A":"Prevent Layer 3 loops","B":"Prevent Layer 2 loops","C":"Load balance traffic","D":"Segment broadcast domains"},"answer":"B","knowledge_point":"STP","kp_node_id":"kp_006"},
+    {"id":"ccna_013","type":"single","question":"Which command enables OSPF on a Cisco router?","options":{"A":"router rip","B":"router ospf 1","C":"ospf enable","D":"ip ospf 1"},"answer":"B","knowledge_point":"OSPF配置","kp_node_id":"kp_010"},
+    {"id":"ccna_014","type":"single","question":"Which protocol is used for secure remote management?","options":{"A":"Telnet","B":"FTP","C":"SSH","D":"SNMP"},"answer":"C","knowledge_point":"SSH","kp_node_id":"kp_014"},
+    {"id":"ccna_015","type":"single","question":"What does NAT stand for?","options":{"A":"Network Address Translation","B":"Network Access Table","C":"Node Address Transfer","D":"Network Allocation Table"},"answer":"A","knowledge_point":"NAT","kp_node_id":"kp_019"},
+    {"id":"ccna_016","type":"single","question":"What is a trunk port?","options":{"A":"Carries traffic for one VLAN","B":"Carries traffic for multiple VLANs","C":"Connects two hosts","D":"Blocks broadcast traffic"},"answer":"B","knowledge_point":"Trunk","kp_node_id":"kp_006"},
+    {"id":"ccna_017","type":"single","question":"Which protocol provides automatic IP address assignment?","options":{"A":"DNS","B":"ARP","C":"DHCP","D":"ICMP"},"answer":"C","knowledge_point":"DHCP","kp_node_id":"kp_009"},
+    {"id":"ccna_018","type":"single","question":"TCP uses a three-way handshake. What are the three steps?","options":{"A":"SYN, ACK, FIN","B":"SYN, SYN-ACK, ACK","C":"SYN, ACK, RST","D":"SYN, DATA, ACK"},"answer":"B","knowledge_point":"TCP三次握手","kp_node_id":"kp_013"},
+    {"id":"ccna_019","type":"single","question":"What is the loopback address in IPv4?","options":{"A":"0.0.0.0","B":"255.255.255.255","C":"127.0.0.1","D":"169.254.0.1"},"answer":"C","knowledge_point":"回环地址","kp_node_id":"kp_008"},
+    {"id":"ccna_020","type":"single","question":"Which type of cable connects similar devices directly?","options":{"A":"Straight-through","B":"Crossover","C":"Rollover","D":"Fiber"},"answer":"B","knowledge_point":"物理连接","kp_node_id":"kp_001"},
+    {"id":"ccna_021","type":"multi","question":"Which of the following are characteristics of UDP? (Select all that apply)","options":{"A":"Connectionless","B":"Best-effort delivery","C":"Uses port numbers","D":"Guaranteed delivery","E":"Lower overhead"},"answer":"ABCE","knowledge_point":"UDP","kp_node_id":"kp_013"},
+    {"id":"ccna_022","type":"multi","question":"Which of the following are Distance Vector routing protocols? (Select two)","options":{"A":"RIP","B":"OSPF","C":"EIGRP","D":"BGP","E":"IS-IS"},"answer":"AC","knowledge_point":"距离矢量路由","kp_node_id":"kp_010"},
+    {"id":"ccna_023","type":"multi","question":"Which of the following are features of OSPF? (Select three)","options":{"A":"Uses Dijkstra algorithm","B":"Link-state protocol","C":"Uses hop count metric","D":"Fast convergence","E":"Maximum 15 hops"},"answer":"ABD","knowledge_point":"OSPF特性","kp_node_id":"kp_010"},
+    {"id":"ccna_024","type":"single","question":"What is the IPv6 loopback address?","options":{"A":"::1","B":"fe80::1","C":"ff02::1","D":"2001::1"},"answer":"A","knowledge_point":"IPv6","kp_node_id":"kp_012"},
+    {"id":"ccna_025","type":"single","question":"Which layer provides MAC addressing?","options":{"A":"Physical","B":"Data Link","C":"Network","D":"Transport"},"answer":"B","knowledge_point":"数据链路层","kp_node_id":"kp_005"},
+    {"id":"ccna_026","type":"judge","question":"Routers operate at Layer 3 of the OSI model.","options":{"A":"True","B":"False"},"answer":"A","knowledge_point":"路由器","kp_node_id":"kp_007"},
+    {"id":"ccna_027","type":"judge","question":"A switch creates separate collision domains for each port.","options":{"A":"True","B":"False"},"answer":"A","knowledge_point":"交换机","kp_node_id":"kp_005"},
+    {"id":"ccna_028","type":"judge","question":"EIGRP is a Cisco-proprietary protocol.","options":{"A":"True","B":"False"},"answer":"A","knowledge_point":"EIGRP","kp_node_id":"kp_010"},
+    {"id":"ccna_029","type":"judge","question":"IPv6 uses 128-bit addresses.","options":{"A":"True","B":"False"},"answer":"A","knowledge_point":"IPv6","kp_node_id":"kp_012"},
+    {"id":"ccna_030","type":"judge","question":"HTTP uses TCP port 80 by default.","options":{"A":"True","B":"False"},"answer":"A","knowledge_point":"HTTP","kp_node_id":"kp_015"},
+    {"id":"ccna_031","type":"single","question":"What is the broadcast address for the network 192.168.10.0/24?","options":{"A":"192.168.10.0","B":"192.168.10.254","C":"192.168.10.255","D":"192.168.10.1"},"answer":"C","knowledge_point":"广播地址","kp_node_id":"kp_008"},
+    {"id":"ccna_032","type":"single","question":"Which metric does OSPF use?","options":{"A":"Hop count","B":"Bandwidth (cost)","C":"Delay","D":"Reliability"},"answer":"B","knowledge_point":"OSPF度量","kp_node_id":"kp_010"},
+    {"id":"ccna_033","type":"single","question":"What does CIDR stand for?","options":{"A":"Classless Inter-Domain Routing","B":"Class-based IP Domain Routing","C":"Cisco Internet Domain Routing","D":"Common IP Distribution Range"},"answer":"A","knowledge_point":"CIDR","kp_node_id":"kp_008"},
+    {"id":"ccna_034","type":"single","question":"Which protocol is used to send email?","options":{"A":"POP3","B":"IMAP","C":"SMTP","D":"FTP"},"answer":"C","knowledge_point":"邮件协议","kp_node_id":"kp_016"},
+    {"id":"ccna_035","type":"single","question":"How many layers does the TCP/IP model have?","options":{"A":"3","B":"4","C":"5","D":"7"},"answer":"B","knowledge_point":"TCP/IP模型","kp_node_id":"kp_003"},
+    {"id":"ccna_036","type":"single","question":"What is the function of the default gateway?","options":{"A":"Assign IP addresses","B":"Resolve domain names","C":"Forward packets to other networks","D":"Manage VLANs"},"answer":"C","knowledge_point":"默认网关","kp_node_id":"kp_007"},
+    {"id":"ccna_037","type":"single","question":"Which address is used for all OSPF routers?","options":{"A":"224.0.0.1","B":"224.0.0.5","C":"224.0.0.9","D":"255.255.255.255"},"answer":"B","knowledge_point":"OSPF组播","kp_node_id":"kp_010"},
+    {"id":"ccna_038","type":"single","question":"What does ARP stand for?","options":{"A":"Address Resolution Protocol","B":"Advanced Routing Protocol","C":"Automatic Route Protocol","D":"Address Routing Procedure"},"answer":"A","knowledge_point":"ARP","kp_node_id":"kp_009"},
+    {"id":"ccna_039","type":"single","question":"Which protocol is connectionless?","options":{"A":"TCP","B":"HTTP","C":"UDP","D":"FTP"},"answer":"C","knowledge_point":"UDP","kp_node_id":"kp_013"},
+    {"id":"ccna_040","type":"single","question":"What is the purpose of subnetting?","options":{"A":"Increase IP address length","B":"Divide a network into smaller segments","C":"Encrypt data","D":"Monitor network traffic"},"answer":"B","knowledge_point":"子网划分","kp_node_id":"kp_008"},
+    {"id":"ccna_041","type":"multi","question":"Which of the following can be used to troubleshoot network connectivity? (Select all that apply)","options":{"A":"ping","B":"traceroute","C":"nslookup","D":"netstat","E":"format"},"answer":"ABCD","knowledge_point":"网络故障排查","kp_node_id":"kp_020"},
+    {"id":"ccna_042","type":"judge","question":"VLAN 1 is the default VLAN on Cisco switches and cannot be deleted.","options":{"A":"True","B":"False"},"answer":"A","knowledge_point":"VLAN","kp_node_id":"kp_006"},
+    {"id":"ccna_043","type":"judge","question":"BGP is used within a single autonomous system.","options":{"A":"True","B":"False"},"answer":"B","knowledge_point":"BGP","kp_node_id":"kp_011","explanation":"BGP是外部网关协议，用于不同自治系统之间的路由交换。"},
+    {"id":"ccna_044","type":"single","question":"What is the purpose of the TTL field in an IP packet?","options":{"A":"Encrypt the packet","B":"Prevent routing loops by limiting hops","C":"Identify the protocol","D":"Fragment the packet"},"answer":"B","knowledge_point":"TTL","kp_node_id":"kp_009"},
+    {"id":"ccna_045","type":"single","question":"Which TCP flag is used to terminate a connection?","options":{"A":"SYN","B":"ACK","C":"FIN","D":"RST"},"answer":"C","knowledge_point":"TCP四次挥手","kp_node_id":"kp_013"},
+    {"id":"ccna_046","type":"single","question":"What is the maximum data rate of standard Gigabit Ethernet?","options":{"A":"100 Mbps","B":"1 Gbps","C":"10 Gbps","D":"40 Gbps"},"answer":"B","knowledge_point":"以太网标准","kp_node_id":"kp_001"},
+    {"id":"ccna_047","type":"single","question":"Which command verifies OSPF neighbor relationships?","options":{"A":"show ip ospf","B":"show ip ospf neighbor","C":"show ospf topology","D":"debug ospf neighbor"},"answer":"B","knowledge_point":"OSPF配置","kp_node_id":"kp_010"},
+    {"id":"ccna_048","type":"single","question":"What does DNS stand for?","options":{"A":"Data Name Service","B":"Dynamic Name System","C":"Domain Name System","D":"Distributed Network Service"},"answer":"C","knowledge_point":"DNS","kp_node_id":"kp_015"},
+    {"id":"ccna_049","type":"judge","question":"A router can connect different VLAN segments using subinterfaces (Router-on-a-stick).","options":{"A":"True","B":"False"},"answer":"A","knowledge_point":"VLAN路由","kp_node_id":"kp_006"},
+    {"id":"ccna_050","type":"judge","question":"The network address of 192.168.1.130/27 is 192.168.1.128.","options":{"A":"True","B":"False"},"answer":"A","knowledge_point":"子网划分","kp_node_id":"kp_008"},
+]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 计算机网络课程期末模拟（40题）
+# ─────────────────────────────────────────────────────────────────────────────
+cn_exam_questions = [
+    {"id":"cn_001","type":"single","question":"计算机网络按覆盖范围分类，以下哪项属于广域网（WAN）？","options":{"A":"以太局域网","B":"蓝牙网络","C":"Internet","D":"Wi-Fi网络"},"answer":"C","knowledge_point":"网络分类","kp_node_id":"kp_003"},
+    {"id":"cn_002","type":"single","question":"TCP/IP模型中，负责逻辑寻址和路由的是哪一层？","options":{"A":"网络接口层","B":"网际层","C":"传输层","D":"应用层"},"answer":"B","knowledge_point":"TCP/IP模型","kp_node_id":"kp_003"},
+    {"id":"cn_003","type":"single","question":"以下哪种信道复用技术通过频率划分实现多路复用？","options":{"A":"TDM","B":"CDMA","C":"FDM","D":"WDM"},"answer":"C","knowledge_point":"信道复用","kp_node_id":"kp_001"},
+    {"id":"cn_004","type":"single","question":"奈奎斯特定理给出的是什么信道的最大传输速率？","options":{"A":"有噪信道","B":"无噪理想信道","C":"光纤信道","D":"无线信道"},"answer":"B","knowledge_point":"信道容量","kp_node_id":"kp_001"},
+    {"id":"cn_005","type":"single","question":"CRC（循环冗余校验）工作在OSI模型的哪一层？","options":{"A":"物理层","B":"数据链路层","C":"网络层","D":"传输层"},"answer":"B","knowledge_point":"差错控制","kp_node_id":"kp_005"},
+    {"id":"cn_006","type":"single","question":"停止等待协议（Stop-and-Wait）的信道利用率主要受哪个因素影响？","options":{"A":"窗口大小","B":"往返时延RTT","C":"帧大小","D":"差错率"},"answer":"B","knowledge_point":"滑动窗口","kp_node_id":"kp_005"},
+    {"id":"cn_007","type":"single","question":"CSMA/CD适用于哪种网络？","options":{"A":"令牌环网","B":"总线型以太网","C":"FDDI网络","D":"无线网络"},"answer":"B","knowledge_point":"CSMA/CD","kp_node_id":"kp_005"},
+    {"id":"cn_008","type":"single","question":"IP协议提供的服务是什么？","options":{"A":"面向连接可靠","B":"无连接不可靠","C":"面向连接不可靠","D":"无连接可靠"},"answer":"B","knowledge_point":"IP协议","kp_node_id":"kp_007"},
+    {"id":"cn_009","type":"single","question":"IPv4数据报头部最小长度是多少字节？","options":{"A":"12","B":"16","C":"20","D":"24"},"answer":"C","knowledge_point":"IP首部","kp_node_id":"kp_007"},
+    {"id":"cn_010","type":"single","question":"路由选择算法中，Dijkstra算法属于哪种路由算法？","options":{"A":"距离矢量","B":"链路状态","C":"路径矢量","D":"混合型"},"answer":"B","knowledge_point":"路由算法","kp_node_id":"kp_010"},
+    {"id":"cn_011","type":"single","question":"TCP首部中，哪个字段用于流量控制？","options":{"A":"序号","B":"确认号","C":"窗口大小","D":"紧急指针"},"answer":"C","knowledge_point":"TCP流量控制","kp_node_id":"kp_013"},
+    {"id":"cn_012","type":"single","question":"TCP四次挥手中，主动关闭方发送FIN后进入哪个状态？","options":{"A":"CLOSE_WAIT","B":"FIN_WAIT_1","C":"TIME_WAIT","D":"LAST_ACK"},"answer":"B","knowledge_point":"TCP四次挥手","kp_node_id":"kp_013"},
+    {"id":"cn_013","type":"single","question":"TIME_WAIT状态需要等待多长时间？","options":{"A":"1个MSL","B":"2个MSL","C":"3个MSL","D":"4个MSL"},"answer":"B","knowledge_point":"TCP状态","kp_node_id":"kp_013","explanation":"TIME_WAIT等待2MSL（Maximum Segment Lifetime），确保对端能收到最后的ACK。"},
+    {"id":"cn_014","type":"single","question":"UDP相比TCP的优势主要体现在哪里？","options":{"A":"可靠性","B":"顺序保证","C":"低延迟和低开销","D":"流量控制"},"answer":"C","knowledge_point":"UDP vs TCP","kp_node_id":"kp_013"},
+    {"id":"cn_015","type":"single","question":"DNS使用哪种端口和传输协议？","options":{"A":"TCP 53","B":"UDP 53","C":"UDP 53 (查询) / TCP 53 (区域传送)","D":"TCP 80"},"answer":"C","knowledge_point":"DNS","kp_node_id":"kp_015"},
+    {"id":"cn_016","type":"single","question":"HTTP/1.1相比HTTP/1.0的主要改进是什么？","options":{"A":"加密传输","B":"持久连接","C":"无状态","D":"二进制格式"},"answer":"B","knowledge_point":"HTTP","kp_node_id":"kp_015"},
+    {"id":"cn_017","type":"single","question":"TLS/SSL工作在OSI模型的哪两层之间？","options":{"A":"物理层和数据链路层","B":"网络层和传输层","C":"传输层和应用层","D":"会话层和表示层"},"answer":"C","knowledge_point":"TLS","kp_node_id":"kp_014"},
+    {"id":"cn_018","type":"single","question":"BGP使用什么端口号？","options":{"A":"89","B":"179","C":"520","D":"1812"},"answer":"B","knowledge_point":"BGP","kp_node_id":"kp_011"},
+    {"id":"cn_019","type":"single","question":"IP分片重组在哪一层进行？","options":{"A":"数据链路层","B":"网络层","C":"传输层","D":"应用层"},"answer":"B","knowledge_point":"IP分片","kp_node_id":"kp_007"},
+    {"id":"cn_020","type":"single","question":"以太网帧的最大帧长（MTU）通常是多少字节？","options":{"A":"576","B":"1024","C":"1500","D":"9000"},"answer":"C","knowledge_point":"MTU","kp_node_id":"kp_005"},
+    {"id":"cn_021","type":"multi","question":"TCP拥塞控制包含哪些阶段？（多选）","options":{"A":"慢启动","B":"拥塞避免","C":"快重传","D":"快恢复","E":"超时重传"},"answer":"ABCDE","knowledge_point":"TCP拥塞控制","kp_node_id":"kp_013"},
+    {"id":"cn_022","type":"multi","question":"以下哪些是无连接协议？（多选）","options":{"A":"UDP","B":"IP","C":"TCP","D":"ICMP","E":"ARP"},"answer":"ABDE","knowledge_point":"连接类型","kp_node_id":"kp_013"},
+    {"id":"cn_023","type":"multi","question":"HTTP报文由哪些部分组成？（多选）","options":{"A":"请求行/状态行","B":"首部字段","C":"空行","D":"报文主体","E":"CRC校验"},"answer":"ABCD","knowledge_point":"HTTP报文格式","kp_node_id":"kp_015"},
+    {"id":"cn_024","type":"multi","question":"以下哪些属于应用层协议？（多选）","options":{"A":"HTTP","B":"FTP","C":"SMTP","D":"OSPF","E":"SNMP"},"answer":"ABCE","knowledge_point":"应用层协议","kp_node_id":"kp_015"},
+    {"id":"cn_025","type":"judge","question":"IP协议是面向连接的可靠传输协议。","options":{"A":"正确","B":"错误"},"answer":"B","knowledge_point":"IP协议","kp_node_id":"kp_007"},
+    {"id":"cn_026","type":"judge","question":"TCP的拥塞窗口和接收窗口共同决定发送方的发送速率。","options":{"A":"正确","B":"错误"},"answer":"A","knowledge_point":"TCP窗口","kp_node_id":"kp_013"},
+    {"id":"cn_027","type":"judge","question":"RIP协议存在最大跳数15的限制，不适合大型网络。","options":{"A":"正确","B":"错误"},"answer":"A","knowledge_point":"RIP","kp_node_id":"kp_010"},
+    {"id":"cn_028","type":"judge","question":"HTTPS是HTTP加上SSL/TLS的组合，传输内容经过加密。","options":{"A":"正确","B":"错误"},"answer":"A","knowledge_point":"HTTPS","kp_node_id":"kp_014"},
+    {"id":"cn_029","type":"single","question":"子网划分的主要目的是什么？","options":{"A":"增加广播域范围","B":"节约IP地址并减少广播","C":"提升传输速率","D":"增加安全性"},"answer":"B","knowledge_point":"子网划分","kp_node_id":"kp_008"},
+    {"id":"cn_030","type":"single","question":"TCP首部的最大长度是多少字节？","options":{"A":"20","B":"40","C":"60","D":"80"},"answer":"C","knowledge_point":"TCP首部","kp_node_id":"kp_013","explanation":"TCP首部选项字段最大40字节，加上固定20字节，最大60字节。"},
+    {"id":"cn_031","type":"single","question":"在OSI模型中，会话层（Session Layer）的主要功能是什么？","options":{"A":"路由选路","B":"建立/维护/终止会话","C":"数据加密","D":"比特流传输"},"answer":"B","knowledge_point":"OSI模型","kp_node_id":"kp_002"},
+    {"id":"cn_032","type":"single","question":"下面哪种NAT类型允许内网多台主机共享一个公网IP？","options":{"A":"静态NAT","B":"动态NAT","C":"NAPT/PAT","D":"双向NAT"},"answer":"C","knowledge_point":"NAT","kp_node_id":"kp_019"},
+    {"id":"cn_033","type":"single","question":"ICMP报文封装在哪一层？","options":{"A":"数据链路层帧","B":"IP数据报","C":"TCP段","D":"UDP数据报"},"answer":"B","knowledge_point":"ICMP","kp_node_id":"kp_009"},
+    {"id":"cn_034","type":"single","question":"信道编码中，曼彻斯特编码的特点是什么？","options":{"A":"每个比特位中间有跳变","B":"只在比特为1时跳变","C":"NRZ编码","D":"4B/5B编码"},"answer":"A","knowledge_point":"物理层编码","kp_node_id":"kp_004"},
+    {"id":"cn_035","type":"single","question":"以太网使用CSMA/CD，其中CD表示什么？","options":{"A":"冲突检测","B":"冲突避免","C":"碰撞恢复","D":"冲突计数"},"answer":"A","knowledge_point":"CSMA/CD","kp_node_id":"kp_005"},
+    {"id":"cn_036","type":"single","question":"IP地址200.200.200.200属于哪类地址？","options":{"A":"A类","B":"B类","C":"C类","D":"D类"},"answer":"C","knowledge_point":"IP地址分类","kp_node_id":"kp_008"},
+    {"id":"cn_037","type":"single","question":"以下哪个协议可以实现路由器之间的链路状态交换？","options":{"A":"RIP","B":"OSPF","C":"BGP","D":"EIGRP"},"answer":"B","knowledge_point":"OSPF","kp_node_id":"kp_010"},
+    {"id":"cn_038","type":"single","question":"HTTP状态码404表示什么？","options":{"A":"服务器内部错误","B":"请求成功","C":"资源未找到","D":"请求重定向"},"answer":"C","knowledge_point":"HTTP状态码","kp_node_id":"kp_015"},
+    {"id":"cn_039","type":"judge","question":"TCP三次握手中，客户端在收到SYN+ACK后即可发送数据。","options":{"A":"正确","B":"错误"},"answer":"B","knowledge_point":"TCP三次握手","kp_node_id":"kp_013","explanation":"客户端需要发送第三次ACK完成握手后，才能开始发送数据。"},
+    {"id":"cn_040","type":"judge","question":"OSPF协议收敛速度比RIP快，因为OSPF使用链路状态算法，掌握全局拓扑。","options":{"A":"正确","B":"错误"},"answer":"A","knowledge_point":"OSPF vs RIP","kp_node_id":"kp_010"},
+]
+
+data = {
+    "version": "1.0",
+    "description": "Socrates-Cube 证书模拟考题库",
+    "exams": {
+        "hcia_mock": {
+            "id": "hcia_mock",
+            "name": "华为HCIA-Datacom模拟考",
+            "description": "覆盖华为HCIA-Datacom认证考试核心知识点",
+            "question_count": len(hcia_questions),
+            "time_limit_minutes": 90,
+            "pass_score": 70,
+            "cert_node_id": "cert_001",
+            "questions": hcia_questions
+        },
+        "ccna_mock": {
+            "id": "ccna_mock",
+            "name": "思科CCNA模拟考",
+            "description": "覆盖Cisco CCNA认证考试核心知识点（英文题目）",
+            "question_count": len(ccna_questions),
+            "time_limit_minutes": 90,
+            "pass_score": 70,
+            "cert_node_id": "cert_003",
+            "questions": ccna_questions
+        },
+        "computer_network_exam": {
+            "id": "computer_network_exam",
+            "name": "计算机网络课程期末模拟",
+            "description": "涵盖本科计算机网络课程全章节重点内容",
+            "question_count": len(cn_exam_questions),
+            "time_limit_minutes": 120,
+            "pass_score": 60,
+            "cert_node_id": None,
+            "questions": cn_exam_questions
+        }
+    }
+}
+
+out = Path("data/certificate_exams.json")
+out.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+print(f"Done! HCIA: {len(hcia_questions)} questions, CCNA: {len(ccna_questions)} questions, CN exam: {len(cn_exam_questions)} questions")

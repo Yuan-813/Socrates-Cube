@@ -81,4 +81,12 @@ export const usePathStore = defineStore('path', () => {
     markNodeCompleted,
     selectNode,
   }
+}, {
+  // 持久化关键字段：保留已加载的学习路径，避免刷新后重新拉取
+  persist: {
+    paths: [
+      'path',           // 完整学习路径对象
+      'selectedNode',   // 当前选中节点
+    ],
+  },
 })

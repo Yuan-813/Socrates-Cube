@@ -1,0 +1,2153 @@
+{
+  "nodes": [
+    {
+      "id": "kp_001",
+      "name": "计算机网络概述",
+      "chapter": "第1章",
+      "type": "concept",
+      "difficulty": 1,
+      "estimated_time": 20,
+      "keywords": [
+        "计算机网络",
+        "拓扑",
+        "性能指标",
+        "OSI",
+        "TCP/IP"
+      ],
+      "description": "了解计算机网络的基本概念、发展历程、分类和性能指标。"
+    },
+    {
+      "id": "kp_002",
+      "name": "OSI七层模型",
+      "chapter": "第1章",
+      "type": "concept",
+      "difficulty": 2,
+      "estimated_time": 30,
+      "keywords": [
+        "OSI",
+        "七层模型",
+        "分层",
+        "协议",
+        "服务"
+      ],
+      "description": "掌握OSI七层参考模型各层的功能和协议。"
+    },
+    {
+      "id": "kp_003",
+      "name": "TCP/IP体系结构",
+      "chapter": "第1章",
+      "type": "concept",
+      "difficulty": 2,
+      "estimated_time": 30,
+      "keywords": [
+        "TCP/IP",
+        "四层模型",
+        "网络接口",
+        "网际",
+        "传输",
+        "应用",
+        "RFC 1122"
+      ],
+      "description": "掌握TCP/IP四层体系结构（网络接口层/网际层/传输层/应用层），理解其与OSI七层模型的对应关系。（TCP/IP协议族以ARPANET研究为起源，由Cerf和Kahn于1974年在RFC 675中提出雏形）"
+    },
+    {
+      "id": "kp_004",
+      "name": "物理层基本概念",
+      "chapter": "第2章",
+      "type": "concept",
+      "difficulty": 1,
+      "estimated_time": 25,
+      "keywords": [
+        "物理层",
+        "传输媒体",
+        "信道",
+        "复用",
+        "调制"
+      ],
+      "description": "了解物理层的基本概念、传输媒体和信道复用技术。"
+    },
+    {
+      "id": "kp_005",
+      "name": "数据链路层基本概念",
+      "chapter": "第3章",
+      "type": "concept",
+      "difficulty": 2,
+      "estimated_time": 35,
+      "keywords": [
+        "数据链路层",
+        "帧",
+        "差错控制",
+        "流量控制",
+        "PPP"
+      ],
+      "description": "掌握数据链路层的功能、三个基本问题和点对点协议。"
+    },
+    {
+      "id": "kp_006",
+      "name": "局域网技术",
+      "chapter": "第3章",
+      "type": "concept",
+      "difficulty": 2,
+      "estimated_time": 40,
+      "keywords": [
+        "以太网",
+        "CSMA/CD",
+        "MAC地址",
+        "交换机",
+        "VLAN"
+      ],
+      "description": "掌握以太网、CSMA/CD协议、MAC地址和交换机工作原理。"
+    },
+    {
+      "id": "kp_007",
+      "name": "网络层基本概念",
+      "chapter": "第4章",
+      "type": "concept",
+      "difficulty": 2,
+      "estimated_time": 30,
+      "keywords": [
+        "网络层",
+        "IP",
+        "数据报",
+        "虚电路",
+        "路由"
+      ],
+      "description": "掌握网络层提供的服务、IP协议和IP地址分类。"
+    },
+    {
+      "id": "kp_008",
+      "name": "IP地址与子网划分",
+      "chapter": "第4章",
+      "type": "concept",
+      "difficulty": 3,
+      "estimated_time": 50,
+      "keywords": [
+        "IP地址",
+        "子网",
+        "CIDR",
+        "掩码",
+        "前缀",
+        "RFC 791",
+        "RFC 4632",
+        "RFC 8200"
+      ],
+      "description": "掌握IPv4（RFC 791）32位地址结构、CIDR子网划分（RFC 4632）、特殊地址范围（私有地址RFC 1918）；了解IPv6（RFC 8200）128位地址表示与前缀分配规则。"
+    },
+    {
+      "id": "kp_009",
+      "name": "ARP协议",
+      "chapter": "第4章",
+      "type": "protocol",
+      "difficulty": 2,
+      "estimated_time": 30,
+      "keywords": [
+        "ARP",
+        "IP",
+        "MAC",
+        "地址解析",
+        "广播"
+      ],
+      "description": "理解ARP协议的工作原理和应用场景。"
+    },
+    {
+      "id": "kp_010",
+      "name": "路由选择协议",
+      "chapter": "第4章",
+      "type": "protocol",
+      "difficulty": 3,
+      "estimated_time": 55,
+      "keywords": [
+        "路由协议",
+        "OSPF",
+        "BGP",
+        "RIP",
+        "Dijkstra",
+        "RFC 2328",
+        "RFC 4271",
+        "AS"
+      ],
+      "description": "理解静态路由与动态路由协议原理；掌握距离矢量协议（RIP，RFC 2453）与链路状态协议（OSPF，RFC 2328/5340）区别；了解BGP路径矢量协议（RFC 4271）在自治系统间路由的应用。"
+    },
+    {
+      "id": "kp_011",
+      "name": "运输层基本概念",
+      "chapter": "第5章",
+      "type": "concept",
+      "difficulty": 2,
+      "estimated_time": 25,
+      "keywords": [
+        "运输层",
+        "端口",
+        "复用",
+        "分用",
+        "套接字"
+      ],
+      "description": "理解运输层的功能、端口号概念和复用分用。"
+    },
+    {
+      "id": "kp_012",
+      "name": "UDP协议",
+      "chapter": "第5章",
+      "type": "protocol",
+      "difficulty": 2,
+      "estimated_time": 30,
+      "keywords": [
+        "UDP",
+        "无连接",
+        "首部",
+        "校验和",
+        "DNS"
+      ],
+      "description": "掌握UDP的特点、首部格式和适用场景。"
+    },
+    {
+      "id": "kp_013",
+      "name": "TCP协议基础",
+      "chapter": "第5章",
+      "type": "protocol",
+      "difficulty": 3,
+      "estimated_time": 55,
+      "keywords": [
+        "TCP",
+        "可靠传输",
+        "序号",
+        "确认",
+        "重传",
+        "RFC 9293",
+        "RFC 6298",
+        "SACK"
+      ],
+      "description": "深入理解TCP（RFC 9293，更新自RFC 793）面向连接可靠传输机制：序号/确认号、滑动窗口、超时重传（RFC 6298 RTO计算）、选择确认SACK（RFC 2018）。"
+    },
+    {
+      "id": "kp_014",
+      "name": "TCP三次握手与四次挥手",
+      "chapter": "第5章",
+      "type": "protocol",
+      "difficulty": 3,
+      "estimated_time": 60,
+      "keywords": [
+        "三次握手",
+        "四次挥手",
+        "SYN",
+        "FIN",
+        "ACK",
+        "TIME_WAIT",
+        "RFC 9293"
+      ],
+      "description": "掌握TCP三次握手建立连接（SYN/SYN-ACK/ACK）与四次挥手释放连接（FIN/ACK协议）；理解TIME_WAIT状态（2MSL等待，RFC 9293 §3.5）的设计必要性。"
+    },
+    {
+      "id": "kp_015",
+      "name": "TCP流量控制与拥塞控制",
+      "chapter": "第5章",
+      "type": "protocol",
+      "difficulty": 4,
+      "estimated_time": 70,
+      "keywords": [
+        "滑动窗口",
+        "流量控制",
+        "拥塞控制",
+        "cwnd",
+        "rwnd",
+        "RFC 5681",
+        "CUBIC",
+        "BBR"
+      ],
+      "description": "理解TCP流量控制（接收窗口rwnd）与拥塞控制机制：慢启动/拥塞避免/快速重传/快速恢复（RFC 5681）；现代算法对比：CUBIC（RFC 8312）、BBR等。"
+    },
+    {
+      "id": "kp_016",
+      "name": "应用层基本概念",
+      "chapter": "第6章",
+      "type": "concept",
+      "difficulty": 2,
+      "estimated_time": 25,
+      "keywords": [
+        "应用层",
+        "C/S",
+        "P2P",
+        "进程通信"
+      ],
+      "description": "了解应用层的功能、客户-服务器模型和P2P模型。"
+    },
+    {
+      "id": "kp_017",
+      "name": "DNS协议",
+      "chapter": "第6章",
+      "type": "protocol",
+      "difficulty": 2,
+      "estimated_time": 35,
+      "keywords": [
+        "DNS",
+        "域名",
+        "递归查询",
+        "迭代查询",
+        "解析",
+        "RFC 1034",
+        "RFC 1035",
+        "DoH"
+      ],
+      "description": "掌握DNS域名系统（RFC 1034/1035）分层结构：根域名/TLD/二级域；递归查询与迭代查询区别；DNS资源记录类型（A/AAAA/CNAME/MX/NS）；DNS over HTTPS（DoH，RFC 8484）安全扩展。"
+    },
+    {
+      "id": "kp_018",
+      "name": "HTTP与HTTPS",
+      "chapter": "第6章",
+      "type": "protocol",
+      "difficulty": 3,
+      "estimated_time": 50,
+      "keywords": [
+        "HTTP",
+        "HTTPS",
+        "TLS",
+        "请求报文",
+        "响应报文",
+        "RFC 9110",
+        "RFC 8446",
+        "RFC 9000",
+        "QUIC"
+      ],
+      "description": "理解HTTP语义（RFC 9110）与HTTP/1.1（RFC 9112）/HTTP/2（RFC 9113）/HTTP/3（基于QUIC，RFC 9114）演进；掌握TLS 1.3（RFC 8446）握手过程与证书验证机制；理解QUIC（RFC 9000）0-RTT优化。"
+    },
+    {
+      "id": "kp_019",
+      "name": "网络安全基础",
+      "chapter": "第7章",
+      "type": "concept",
+      "difficulty": 2,
+      "estimated_time": 30,
+      "keywords": [
+        "网络安全",
+        "加密",
+        "认证",
+        "防火墙",
+        "TLS"
+      ],
+      "description": "了解网络安全的基本概念、加密算法和安全协议。"
+    },
+    {
+      "id": "kp_020",
+      "name": "综合应用与故障排查",
+      "chapter": "综合",
+      "type": "comprehensive",
+      "difficulty": 5,
+      "estimated_time": 90,
+      "keywords": [
+        "综合",
+        "故障排查",
+        "Wireshark",
+        "性能优化"
+      ],
+      "description": "综合运用各层知识进行网络故障排查和性能优化。"
+    },
+    {
+      "id": "skill_001",
+      "name": "Wireshark抓包分析",
+      "chapter": "实践技能",
+      "type": "skill",
+      "difficulty": 3,
+      "estimated_time": 45,
+      "keywords": [
+        "Wireshark",
+        "抓包",
+        "报文分析",
+        "协议解析"
+      ],
+      "description": "掌握使用Wireshark进行网络报文捕获与协议分析的核心技能。"
+    },
+    {
+      "id": "skill_002",
+      "name": "路由器基础配置",
+      "chapter": "实践技能",
+      "type": "skill",
+      "difficulty": 3,
+      "estimated_time": 60,
+      "keywords": [
+        "路由器",
+        "配置",
+        "静态路由",
+        "动态路由",
+        "CLI"
+      ],
+      "description": "掌握路由器基础配置，包括静态路由和动态路由协议配置。"
+    },
+    {
+      "id": "skill_003",
+      "name": "交换机VLAN配置",
+      "chapter": "实践技能",
+      "type": "skill",
+      "difficulty": 3,
+      "estimated_time": 50,
+      "keywords": [
+        "交换机",
+        "VLAN",
+        "Trunk",
+        "Access",
+        "配置"
+      ],
+      "description": "掌握交换机VLAN划分、Trunk口和Access口的配置方法。"
+    },
+    {
+      "id": "skill_004",
+      "name": "防火墙策略配置",
+      "chapter": "实践技能",
+      "type": "skill",
+      "difficulty": 4,
+      "estimated_time": 60,
+      "keywords": [
+        "防火墙",
+        "ACL",
+        "访问控制",
+        "安全策略"
+      ],
+      "description": "掌握防火墙基本策略配置，包括ACL和安全区域划分。"
+    },
+    {
+      "id": "skill_005",
+      "name": "Linux网络配置",
+      "chapter": "实践技能",
+      "type": "skill",
+      "difficulty": 3,
+      "estimated_time": 45,
+      "keywords": [
+        "Linux",
+        "ip命令",
+        "ifconfig",
+        "网络配置",
+        "iptables"
+      ],
+      "description": "掌握Linux系统下的网络接口配置、路由管理和防火墙设置。"
+    },
+    {
+      "id": "skill_006",
+      "name": "OSPF协议配置",
+      "chapter": "实践技能",
+      "type": "skill",
+      "difficulty": 4,
+      "estimated_time": 70,
+      "keywords": [
+        "OSPF",
+        "链路状态",
+        "区域",
+        "DR/BDR",
+        "配置"
+      ],
+      "description": "掌握OSPF协议的配置与调试，包括多区域划分和路由汇总。"
+    },
+    {
+      "id": "skill_007",
+      "name": "网络故障排查",
+      "chapter": "实践技能",
+      "type": "skill",
+      "difficulty": 4,
+      "estimated_time": 60,
+      "keywords": [
+        "故障排查",
+        "ping",
+        "traceroute",
+        "telnet",
+        "诊断"
+      ],
+      "description": "掌握系统化的网络故障排查方法，从物理层到应用层逐层定位问题。"
+    },
+    {
+      "id": "skill_008",
+      "name": "VPN与隧道技术",
+      "chapter": "实践技能",
+      "type": "skill",
+      "difficulty": 4,
+      "estimated_time": 55,
+      "keywords": [
+        "VPN",
+        "IPSec",
+        "GRE",
+        "隧道",
+        "加密"
+      ],
+      "description": "了解VPN的工作原理，掌握IPSec和GRE隧道的基本配置。"
+    },
+    {
+      "id": "skill_009",
+      "name": "容器网络基础",
+      "chapter": "实践技能",
+      "type": "skill",
+      "difficulty": 4,
+      "estimated_time": 60,
+      "keywords": [
+        "Docker",
+        "Kubernetes",
+        "CNI",
+        "容器网络",
+        "overlay"
+      ],
+      "description": "理解容器网络模型，掌握Docker网络和Kubernetes CNI基础知识。"
+    },
+    {
+      "id": "skill_010",
+      "name": "网络性能调优",
+      "chapter": "实践技能",
+      "type": "skill",
+      "difficulty": 5,
+      "estimated_time": 75,
+      "keywords": [
+        "性能",
+        "调优",
+        "带宽",
+        "延迟",
+        "TCP优化"
+      ],
+      "description": "掌握网络性能分析方法，能够对TCP参数和网络配置进行调优。"
+    },
+    {
+      "id": "cert_001",
+      "name": "华为HCIA-Datacom认证",
+      "chapter": "职业认证",
+      "type": "certification",
+      "difficulty": 4,
+      "estimated_time": 120,
+      "keywords": [
+        "HCIA",
+        "华为",
+        "Datacom",
+        "认证",
+        "数据通信"
+      ],
+      "description": "华为认证网络工程师（HCIA-Datacom），覆盖路由交换、IP基础和网络安全入门。"
+    },
+    {
+      "id": "cert_002",
+      "name": "华为HCIP-Datacom认证",
+      "chapter": "职业认证",
+      "type": "certification",
+      "difficulty": 5,
+      "estimated_time": 180,
+      "keywords": [
+        "HCIP",
+        "华为",
+        "高级认证",
+        "OSPF",
+        "BGP"
+      ],
+      "description": "华为高级认证网络工程师（HCIP-Datacom），深入掌握企业网络规划与运维。"
+    },
+    {
+      "id": "cert_003",
+      "name": "思科CCNA认证",
+      "chapter": "职业认证",
+      "type": "certification",
+      "difficulty": 4,
+      "estimated_time": 120,
+      "keywords": [
+        "CCNA",
+        "思科",
+        "Cisco",
+        "认证",
+        "路由交换"
+      ],
+      "description": "思科认证网络工程师（CCNA），国际认可的入门级网络认证。"
+    },
+    {
+      "id": "cert_004",
+      "name": "思科CCNP Enterprise认证",
+      "chapter": "职业认证",
+      "type": "certification",
+      "difficulty": 5,
+      "estimated_time": 200,
+      "keywords": [
+        "CCNP",
+        "思科",
+        "高级认证",
+        "企业网络"
+      ],
+      "description": "思科专业级认证（CCNP Enterprise），专注于企业网络解决方案。"
+    },
+    {
+      "id": "cert_005",
+      "name": "计算机网络技术高级证书",
+      "chapter": "职业认证",
+      "type": "certification",
+      "difficulty": 3,
+      "estimated_time": 90,
+      "keywords": [
+        "网络技术",
+        "高级",
+        "证书",
+        "软件水平"
+      ],
+      "description": "国内计算机网络相关高级专业技术认证，适合国内就业市场。"
+    },
+    {
+      "id": "job_001",
+      "name": "网络工程师",
+      "chapter": "职业方向",
+      "type": "career_target",
+      "difficulty": 4,
+      "estimated_time": 0,
+      "keywords": [
+        "网络工程师",
+        "运维",
+        "路由交换",
+        "网络规划"
+      ],
+      "description": "负责企业网络基础设施的规划、部署和运维，需熟练掌握路由交换技术。"
+    },
+    {
+      "id": "job_002",
+      "name": "云计算网络工程师",
+      "chapter": "职业方向",
+      "type": "career_target",
+      "difficulty": 5,
+      "estimated_time": 0,
+      "keywords": [
+        "云计算",
+        "SDN",
+        "云网络",
+        "Overlay"
+      ],
+      "description": "专注于云平台的网络架构设计，需掌握SDN、Overlay网络和容器网络技术。"
+    },
+    {
+      "id": "job_003",
+      "name": "网络安全工程师",
+      "chapter": "职业方向",
+      "type": "career_target",
+      "difficulty": 4,
+      "estimated_time": 0,
+      "keywords": [
+        "网络安全",
+        "防火墙",
+        "渗透测试",
+        "安全运营"
+      ],
+      "description": "负责企业网络安全防护，包括防火墙管理、安全审计和应急响应。"
+    },
+    {
+      "id": "job_004",
+      "name": "DevOps工程师",
+      "chapter": "职业方向",
+      "type": "career_target",
+      "difficulty": 4,
+      "estimated_time": 0,
+      "keywords": [
+        "DevOps",
+        "CI/CD",
+        "容器",
+        "自动化",
+        "网络"
+      ],
+      "description": "负责软件交付流程中的基础设施与网络自动化，需了解容器网络和微服务。"
+    },
+    {
+      "id": "job_005",
+      "name": "后端开发工程师",
+      "chapter": "职业方向",
+      "type": "career_target",
+      "difficulty": 3,
+      "estimated_time": 0,
+      "keywords": [
+        "后端",
+        "API",
+        "HTTP",
+        "TCP",
+        "服务端"
+      ],
+      "description": "开发高性能后端服务，需深刻理解TCP/IP和HTTP协议的工作机制。"
+    }
+  ],
+  "edges": [
+    {
+      "from": "kp_001",
+      "to": "kp_002",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_001",
+      "to": "kp_003",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_002",
+      "to": "kp_004",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_003",
+      "to": "kp_004",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_004",
+      "to": "kp_005",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_005",
+      "to": "kp_006",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_006",
+      "to": "kp_007",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_007",
+      "to": "kp_008",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_007",
+      "to": "kp_009",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_008",
+      "to": "kp_010",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_009",
+      "to": "kp_010",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_010",
+      "to": "kp_011",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_011",
+      "to": "kp_012",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_011",
+      "to": "kp_013",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_013",
+      "to": "kp_014",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_014",
+      "to": "kp_015",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_015",
+      "to": "kp_016",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_016",
+      "to": "kp_017",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_017",
+      "to": "kp_018",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_018",
+      "to": "kp_019",
+      "relation": "related"
+    },
+    {
+      "from": "kp_019",
+      "to": "kp_020",
+      "relation": "prerequisite"
+    },
+    {
+      "from": "kp_002",
+      "to": "kp_003",
+      "relation": "related"
+    },
+    {
+      "from": "kp_005",
+      "to": "kp_007",
+      "relation": "related"
+    },
+    {
+      "from": "kp_012",
+      "to": "kp_013",
+      "relation": "related"
+    },
+    {
+      "from": "kp_014",
+      "to": "kp_019",
+      "relation": "related"
+    },
+    {
+      "from": "kp_017",
+      "to": "kp_019",
+      "relation": "related"
+    },
+    {
+      "from": "kp_008",
+      "to": "kp_019",
+      "relation": "related"
+    },
+    {
+      "from": "acu_025",
+      "to": "kp_014",
+      "relation": "repaired_by",
+      "repair_strategy": "simulation"
+    },
+    {
+      "from": "acu_026",
+      "to": "kp_014",
+      "relation": "repaired_by",
+      "repair_strategy": "simulation"
+    },
+    {
+      "from": "acu_028",
+      "to": "kp_015",
+      "relation": "repaired_by",
+      "repair_strategy": "contrast_table"
+    },
+    {
+      "from": "acu_029",
+      "to": "kp_015",
+      "relation": "repaired_by",
+      "repair_strategy": "simulation"
+    },
+    {
+      "from": "acu_038",
+      "to": "kp_018",
+      "relation": "repaired_by",
+      "repair_strategy": "doc"
+    },
+    {
+      "from": "acu_045",
+      "to": "kp_019",
+      "relation": "repaired_by",
+      "repair_strategy": "contrast_table"
+    },
+    {
+      "from": "acu_003",
+      "to": "kp_007",
+      "relation": "repaired_by",
+      "repair_strategy": "contrast_table"
+    },
+    {
+      "from": "acu_001",
+      "to": "kp_002",
+      "relation": "repaired_by",
+      "repair_strategy": "contrast_table"
+    },
+    {
+      "from": "acu_034",
+      "to": "kp_017",
+      "relation": "repaired_by",
+      "repair_strategy": "simulation"
+    },
+    {
+      "from": "acu_039",
+      "to": "kp_018",
+      "relation": "repaired_by",
+      "repair_strategy": "exercise"
+    },
+    {
+      "from": "acu_046",
+      "to": "kp_019",
+      "relation": "repaired_by",
+      "repair_strategy": "doc"
+    },
+    {
+      "from": "kp_020",
+      "to": "skill_001",
+      "relation": "leads_to"
+    },
+    {
+      "from": "kp_010",
+      "to": "skill_002",
+      "relation": "leads_to"
+    },
+    {
+      "from": "kp_006",
+      "to": "skill_003",
+      "relation": "leads_to"
+    },
+    {
+      "from": "kp_019",
+      "to": "skill_004",
+      "relation": "leads_to"
+    },
+    {
+      "from": "kp_007",
+      "to": "skill_005",
+      "relation": "leads_to"
+    },
+    {
+      "from": "kp_010",
+      "to": "skill_006",
+      "relation": "leads_to"
+    },
+    {
+      "from": "kp_020",
+      "to": "skill_007",
+      "relation": "leads_to"
+    },
+    {
+      "from": "kp_019",
+      "to": "skill_008",
+      "relation": "leads_to"
+    },
+    {
+      "from": "kp_019",
+      "to": "skill_009",
+      "relation": "leads_to"
+    },
+    {
+      "from": "kp_015",
+      "to": "skill_010",
+      "relation": "leads_to"
+    },
+    {
+      "from": "skill_001",
+      "to": "cert_001",
+      "relation": "leads_to"
+    },
+    {
+      "from": "skill_002",
+      "to": "cert_001",
+      "relation": "leads_to"
+    },
+    {
+      "from": "skill_003",
+      "to": "cert_001",
+      "relation": "leads_to"
+    },
+    {
+      "from": "cert_001",
+      "to": "cert_002",
+      "relation": "leads_to"
+    },
+    {
+      "from": "skill_002",
+      "to": "cert_003",
+      "relation": "leads_to"
+    },
+    {
+      "from": "skill_006",
+      "to": "cert_003",
+      "relation": "leads_to"
+    },
+    {
+      "from": "cert_003",
+      "to": "cert_004",
+      "relation": "leads_to"
+    },
+    {
+      "from": "cert_001",
+      "to": "job_001",
+      "relation": "leads_to"
+    },
+    {
+      "from": "cert_002",
+      "to": "job_001",
+      "relation": "leads_to"
+    },
+    {
+      "from": "cert_003",
+      "to": "job_001",
+      "relation": "leads_to"
+    },
+    {
+      "from": "cert_004",
+      "to": "job_001",
+      "relation": "leads_to"
+    },
+    {
+      "from": "cert_002",
+      "to": "job_002",
+      "relation": "leads_to"
+    },
+    {
+      "from": "skill_009",
+      "to": "job_002",
+      "relation": "leads_to"
+    },
+    {
+      "from": "skill_004",
+      "to": "job_003",
+      "relation": "leads_to"
+    },
+    {
+      "from": "cert_003",
+      "to": "job_003",
+      "relation": "leads_to"
+    },
+    {
+      "from": "skill_009",
+      "to": "job_004",
+      "relation": "leads_to"
+    },
+    {
+      "from": "skill_005",
+      "to": "job_004",
+      "relation": "leads_to"
+    },
+    {
+      "from": "kp_018",
+      "to": "job_005",
+      "relation": "leads_to"
+    },
+    {
+      "from": "kp_015",
+      "to": "job_005",
+      "relation": "leads_to"
+    },
+    {
+      "from": "kp_019",
+      "to": "job_003",
+      "relation": "leads_to"
+    }
+  ],
+  "cognitive_nodes": [
+    {
+      "id": "acu_001",
+      "name": "osi_tcpip_model_mapping",
+      "label": "理解OSI与TCP/IP分层映射关系",
+      "parent_curriculum_node": "kp_002",
+      "related_misconceptions": [
+        "mc_025"
+      ],
+      "repair_strategies": [
+        "contrast_table:osi_tcpip_layer_comparison",
+        "exercise:model_mapping"
+      ]
+    },
+    {
+      "id": "acu_002",
+      "name": "port_vs_ip_host_identification",
+      "label": "区分IP标识主机与端口标识进程",
+      "parent_curriculum_node": "kp_003",
+      "related_misconceptions": [
+        "mc_019"
+      ],
+      "repair_strategies": [
+        "contrast_table:ip_vs_port_roles",
+        "exercise:addressing_hierarchy"
+      ]
+    },
+    {
+      "id": "acu_003",
+      "name": "switch_mac_vs_router_ip_forwarding",
+      "label": "区分交换机MAC转发与路由器IP转发",
+      "parent_curriculum_node": "kp_006",
+      "related_misconceptions": [
+        "mc_017"
+      ],
+      "repair_strategies": [
+        "simulation:switch_router_forwarding",
+        "doc:mac_ip_addressing"
+      ]
+    },
+    {
+      "id": "acu_004",
+      "name": "ethernet_frame_vs_mtu_definition",
+      "label": "区分以太网帧长度与MTU载荷上限",
+      "parent_curriculum_node": "kp_006",
+      "related_misconceptions": [
+        "mc_026"
+      ],
+      "repair_strategies": [
+        "contrast_table:frame_structure_vs_mtu",
+        "doc:ethernet_frame_anatomy"
+      ]
+    },
+    {
+      "id": "acu_005",
+      "name": "csma_cd_obsolescence_in_switched_lan",
+      "label": "理解全双工交换网络中CSMA/CD已被淘汰",
+      "parent_curriculum_node": "kp_006",
+      "related_misconceptions": [
+        "mc_027"
+      ],
+      "repair_strategies": [
+        "follow_up_question:csma_cd_evolution",
+        "exercise:duplex_mode_comparison"
+      ]
+    },
+    {
+      "id": "acu_006",
+      "name": "vlan_tagging_at_switch_layer",
+      "label": "理解VLAN标签在交换机层的插入与剥离",
+      "parent_curriculum_node": "kp_006",
+      "related_misconceptions": [
+        "mc_028"
+      ],
+      "repair_strategies": [
+        "simulation:vlan_tag_processing",
+        "doc:802_1q_mechanism"
+      ]
+    },
+    {
+      "id": "acu_007",
+      "name": "mtu_size_tradeoff",
+      "label": "理解MTU大小与分片代价的权衡",
+      "parent_curriculum_node": "kp_007",
+      "related_misconceptions": [
+        "mc_018"
+      ],
+      "repair_strategies": [
+        "follow_up_question:mtu_path_discovery",
+        "contrast_table:fragmentation_cost"
+      ]
+    },
+    {
+      "id": "acu_008",
+      "name": "icmp_network_layer_classification",
+      "label": "理解ICMP属于网络层而非传输层",
+      "parent_curriculum_node": "kp_007",
+      "related_misconceptions": [
+        "mc_024"
+      ],
+      "repair_strategies": [
+        "simulation:icmp_encapsulation",
+        "doc:network_layer_protocols"
+      ]
+    },
+    {
+      "id": "acu_009",
+      "name": "ip_fragmentation_layer_responsibility",
+      "label": "理解IP分片是网络层而非TCP的职责",
+      "parent_curriculum_node": "kp_008",
+      "related_misconceptions": [
+        "mc_008"
+      ],
+      "repair_strategies": [
+        "simulation:fragmentation_reassembly",
+        "doc:ip_vs_tcp_segmentation"
+      ]
+    },
+    {
+      "id": "acu_010",
+      "name": "subnet_prefix_host_bits_calculation",
+      "label": "掌握子网前缀长度与主机位数的计算",
+      "parent_curriculum_node": "kp_008",
+      "related_misconceptions": [
+        "mc_009"
+      ],
+      "repair_strategies": [
+        "exercise:prefix_host_calculation",
+        "doc:subnet_mask_binary"
+      ]
+    },
+    {
+      "id": "acu_011",
+      "name": "dhcp_full_configuration_scope",
+      "label": "理解DHCP提供的完整网络配置范围",
+      "parent_curriculum_node": "kp_008",
+      "related_misconceptions": [
+        "mc_023"
+      ],
+      "repair_strategies": [
+        "follow_up_question:dhcp_options",
+        "exercise:dhcp_message_fields"
+      ]
+    },
+    {
+      "id": "acu_012",
+      "name": "ipv6_comprehensive_improvements",
+      "label": "理解IPv6相对IPv4的全面改进特性",
+      "parent_curriculum_node": "kp_008",
+      "related_misconceptions": [
+        "mc_032"
+      ],
+      "repair_strategies": [
+        "follow_up_question:ipv6_features",
+        "exercise:ipv6_header_comparison"
+      ]
+    },
+    {
+      "id": "acu_013",
+      "name": "ipv6_subnet_prefix_mechanism",
+      "label": "理解IPv6的前缀子网划分机制",
+      "parent_curriculum_node": "kp_008",
+      "related_misconceptions": [
+        "mc_033"
+      ],
+      "repair_strategies": [
+        "contrast_table:ipv4_vs_ipv6_prefix",
+        "exercise:ipv6_subnet_calculation"
+      ]
+    },
+    {
+      "id": "acu_014",
+      "name": "cidr_applicability_both_ip_versions",
+      "label": "理解CIDR同时适用于IPv4和IPv6",
+      "parent_curriculum_node": "kp_008",
+      "related_misconceptions": [
+        "mc_034"
+      ],
+      "repair_strategies": [
+        "contrast_table:cidr_history",
+        "exercise:classless_addressing"
+      ]
+    },
+    {
+      "id": "acu_015",
+      "name": "arp_ip_to_mac_resolution",
+      "label": "区分ARP的IP到MAC解析与DNS的域名解析",
+      "parent_curriculum_node": "kp_009",
+      "related_misconceptions": [
+        "mc_010"
+      ],
+      "repair_strategies": [
+        "contrast_table:arp_vs_dns",
+        "exercise:address_resolution"
+      ]
+    },
+    {
+      "id": "acu_016",
+      "name": "bgp_exterior_gateway_classification",
+      "label": "理解BGP作为外部网关协议的定位",
+      "parent_curriculum_node": "kp_010",
+      "related_misconceptions": [
+        "mc_029"
+      ],
+      "repair_strategies": [
+        "contrast_table:igp_egp_classification",
+        "exercise:routing_protocol_categorization"
+      ]
+    },
+    {
+      "id": "acu_017",
+      "name": "ospf_vs_rip_metric_and_scalability",
+      "label": "区分OSPF链路代价与RIP跳数及其适用规模",
+      "parent_curriculum_node": "kp_010",
+      "related_misconceptions": [
+        "mc_030",
+        "mc_031"
+      ],
+      "repair_strategies": [
+        "contrast_table:ospf_rip_comparison",
+        "follow_up_question:rip_limitations",
+        "exercise:cost_calculation"
+      ]
+    },
+    {
+      "id": "acu_018",
+      "name": "udp_practical_use_cases",
+      "label": "理解UDP在实际场景中的应用价值",
+      "parent_curriculum_node": "kp_012",
+      "related_misconceptions": [
+        "mc_004"
+      ],
+      "repair_strategies": [
+        "follow_up_question:udp_scenarios",
+        "exercise:protocol_selection"
+      ]
+    },
+    {
+      "id": "acu_019",
+      "name": "tcp_reliability_beyond_ack",
+      "label": "理解TCP可靠传输不仅依赖ACK确认",
+      "parent_curriculum_node": "kp_013",
+      "related_misconceptions": [
+        "mc_016"
+      ],
+      "repair_strategies": [
+        "follow_up_question:reliability_components",
+        "exercise:mechanism_identification"
+      ]
+    },
+    {
+      "id": "acu_020",
+      "name": "tcp_byte_stream_sequence_numbering",
+      "label": "掌握TCP按字节流编号的序号机制",
+      "parent_curriculum_node": "kp_013",
+      "related_misconceptions": [
+        "mc_020"
+      ],
+      "repair_strategies": [
+        "exercise:byte_stream_numbering",
+        "doc:sequence_number_calculation"
+      ]
+    },
+    {
+      "id": "acu_021",
+      "name": "rtt_round_trip_measurement",
+      "label": "理解RTT是往返时间而非单向传播时延",
+      "parent_curriculum_node": "kp_013",
+      "related_misconceptions": [
+        "mc_021"
+      ],
+      "repair_strategies": [
+        "exercise:rtt_calculation",
+        "doc:delay_components"
+      ]
+    },
+    {
+      "id": "acu_022",
+      "name": "socket_abstraction_definition",
+      "label": "理解Socket是通信端点抽象而非仅端口号",
+      "parent_curriculum_node": "kp_013",
+      "related_misconceptions": [
+        "mc_042"
+      ],
+      "repair_strategies": [
+        "contrast_table:socket_vs_port",
+        "exercise:endpoint_identification"
+      ]
+    },
+    {
+      "id": "acu_023",
+      "name": "timeout_vs_fast_retransmission",
+      "label": "区分超时重传与快速重传的触发条件",
+      "parent_curriculum_node": "kp_013",
+      "related_misconceptions": [
+        "mc_044"
+      ],
+      "repair_strategies": [
+        "contrast_table:timeout_vs_fast_retransmit",
+        "exercise:retransmission_triggers"
+      ]
+    },
+    {
+      "id": "acu_024",
+      "name": "nagle_algorithm_applicability",
+      "label": "理解Nagle算法的适用场景与禁用条件",
+      "parent_curriculum_node": "kp_013",
+      "related_misconceptions": [
+        "mc_045"
+      ],
+      "repair_strategies": [
+        "follow_up_question:nagle_tradeoff",
+        "exercise:tcp_interactive_scenarios"
+      ]
+    },
+    {
+      "id": "acu_025",
+      "name": "tcp_three_way_handshake_necessity",
+      "label": "理解为什么TCP需要三次握手而非两次",
+      "parent_curriculum_node": "kp_014",
+      "related_misconceptions": [
+        "mc_001"
+      ],
+      "repair_strategies": [
+        "simulation:three_way_handshake",
+        "follow_up_question:two_way_failure"
+      ]
+    },
+    {
+      "id": "acu_026",
+      "name": "tcp_four_way_close_full_duplex",
+      "label": "理解TCP四次挥手的全双工独立关闭逻辑",
+      "parent_curriculum_node": "kp_014",
+      "related_misconceptions": [
+        "mc_002"
+      ],
+      "repair_strategies": [
+        "simulation:four_way_close",
+        "follow_up_question:half_close"
+      ]
+    },
+    {
+      "id": "acu_027",
+      "name": "syn_flood_server_resource_attack",
+      "label": "理解SYN洪水攻击消耗服务端资源的原理",
+      "parent_curriculum_node": "kp_014",
+      "related_misconceptions": [
+        "mc_043"
+      ],
+      "repair_strategies": [
+        "follow_up_question:syn_flood_mechanism",
+        "contrast_table:client_vs_server_impact"
+      ]
+    },
+    {
+      "id": "acu_028",
+      "name": "flow_control_vs_congestion_control",
+      "label": "区分流量控制rwnd与拥塞控制cwnd的职责",
+      "parent_curriculum_node": "kp_015",
+      "related_misconceptions": [
+        "mc_006",
+        "mc_015"
+      ],
+      "repair_strategies": [
+        "contrast_table:rwnd_vs_cwnd",
+        "exercise:window_size_formula"
+      ]
+    },
+    {
+      "id": "acu_029",
+      "name": "slow_start_exponential_growth",
+      "label": "掌握慢启动阶段cwnd的指数增长规律",
+      "parent_curriculum_node": "kp_015",
+      "related_misconceptions": [
+        "mc_007"
+      ],
+      "repair_strategies": [
+        "exercise:cwnd_growth_calculation",
+        "doc:slow_start_algorithm"
+      ]
+    },
+    {
+      "id": "acu_030",
+      "name": "forward_vs_reverse_proxy",
+      "label": "区分正向代理与反向代理的方向与角色",
+      "parent_curriculum_node": "kp_016",
+      "related_misconceptions": [
+        "mc_041"
+      ],
+      "repair_strategies": [
+        "contrast_table:forward_vs_reverse",
+        "exercise:proxy_direction"
+      ]
+    },
+    {
+      "id": "acu_031",
+      "name": "ftp_dual_port_mechanism",
+      "label": "理解FTP控制连接与数据连接的双端口设计",
+      "parent_curriculum_node": "kp_016",
+      "related_misconceptions": [
+        "mc_048"
+      ],
+      "repair_strategies": [
+        "contrast_table:control_vs_data_connection",
+        "exercise:ftp_ports"
+      ]
+    },
+    {
+      "id": "acu_032",
+      "name": "smtp_relay_routing",
+      "label": "理解SMTP邮件经中继服务器路由的流程",
+      "parent_curriculum_node": "kp_016",
+      "related_misconceptions": [
+        "mc_049"
+      ],
+      "repair_strategies": [
+        "simulation:smtp_relay",
+        "follow_up_question:mx_record_routing"
+      ]
+    },
+    {
+      "id": "acu_033",
+      "name": "websocket_protocol_upgrade",
+      "label": "理解WebSocket通过HTTP Upgrade建立独立协议",
+      "parent_curriculum_node": "kp_016",
+      "related_misconceptions": [
+        "mc_050"
+      ],
+      "repair_strategies": [
+        "simulation:websocket_upgrade",
+        "doc:protocol_independence"
+      ]
+    },
+    {
+      "id": "acu_034",
+      "name": "dns_recursive_vs_iterative_query",
+      "label": "区分DNS递归查询与迭代查询的流程差异",
+      "parent_curriculum_node": "kp_017",
+      "related_misconceptions": [
+        "mc_005"
+      ],
+      "repair_strategies": [
+        "contrast_table:recursive_vs_iterative",
+        "exercise:query_flow_tracing"
+      ]
+    },
+    {
+      "id": "acu_035",
+      "name": "cdn_beyond_dns_resolution",
+      "label": "理解CDN的完整能力远超DNS解析调度",
+      "parent_curriculum_node": "kp_017",
+      "related_misconceptions": [
+        "mc_038"
+      ],
+      "repair_strategies": [
+        "follow_up_question:cdn_capabilities",
+        "exercise:cdn_architecture"
+      ]
+    },
+    {
+      "id": "acu_036",
+      "name": "dns_ttl_cache_expiration",
+      "label": "理解DNS记录的TTL机制与缓存过期刷新",
+      "parent_curriculum_node": "kp_017",
+      "related_misconceptions": [
+        "mc_046"
+      ],
+      "repair_strategies": [
+        "simulation:ttl_expiration",
+        "follow_up_question:cache_refresh"
+      ]
+    },
+    {
+      "id": "acu_037",
+      "name": "dns_security_poisoning_dnssec",
+      "label": "理解DNS污染威胁与DNSSEC防护机制",
+      "parent_curriculum_node": "kp_017",
+      "related_misconceptions": [
+        "mc_047"
+      ],
+      "repair_strategies": [
+        "follow_up_question:dns_threats",
+        "contrast_table:dnssec_protection"
+      ]
+    },
+    {
+      "id": "acu_038",
+      "name": "http_requires_transport_layer",
+      "label": "理解HTTP必须依赖传输层协议而非直接运行在IP上",
+      "parent_curriculum_node": "kp_018",
+      "related_misconceptions": [
+        "mc_003"
+      ],
+      "repair_strategies": [
+        "simulation:protocol_stack_dependency",
+        "doc:http_layer_position"
+      ]
+    },
+    {
+      "id": "acu_039",
+      "name": "http_status_code_categories",
+      "label": "掌握HTTP状态码1xx-5xx五类分类语义",
+      "parent_curriculum_node": "kp_018",
+      "related_misconceptions": [
+        "mc_014"
+      ],
+      "repair_strategies": [
+        "contrast_table:status_code_classes",
+        "exercise:error_categorization"
+      ]
+    },
+    {
+      "id": "acu_040",
+      "name": "web_cache_hierarchy",
+      "label": "理解Web缓存的多层架构而非仅浏览器缓存",
+      "parent_curriculum_node": "kp_018",
+      "related_misconceptions": [
+        "mc_022"
+      ],
+      "repair_strategies": [
+        "follow_up_question:cache_layers",
+        "exercise:cache_location_identification"
+      ]
+    },
+    {
+      "id": "acu_041",
+      "name": "http2_tls_optional_in_spec",
+      "label": "理解HTTP/2规范中TLS非强制但浏览器要求",
+      "parent_curriculum_node": "kp_018",
+      "related_misconceptions": [
+        "mc_035"
+      ],
+      "repair_strategies": [
+        "follow_up_question:h2_spec_vs_browser",
+        "exercise:http2_deployment"
+      ]
+    },
+    {
+      "id": "acu_042",
+      "name": "http11_persistent_connection",
+      "label": "理解HTTP/1.1默认Keep-Alive持久连接",
+      "parent_curriculum_node": "kp_018",
+      "related_misconceptions": [
+        "mc_036"
+      ],
+      "repair_strategies": [
+        "simulation:persistent_connection",
+        "follow_up_question:keep_alive"
+      ]
+    },
+    {
+      "id": "acu_043",
+      "name": "cookie_server_set_mechanism",
+      "label": "理解Cookie可由服务端Set-Cookie头设置",
+      "parent_curriculum_node": "kp_018",
+      "related_misconceptions": [
+        "mc_037"
+      ],
+      "repair_strategies": [
+        "contrast_table:set_cookie_vs_js",
+        "exercise:cookie_mechanism"
+      ]
+    },
+    {
+      "id": "acu_044",
+      "name": "nat_breaks_end_to_end_transparency",
+      "label": "理解NAT地址改写对端到端透明性的破坏",
+      "parent_curriculum_node": "kp_019",
+      "related_misconceptions": [
+        "mc_011"
+      ],
+      "repair_strategies": [
+        "follow_up_question:nat_transparency_impact",
+        "contrast_table:nat_address_rewrite"
+      ]
+    },
+    {
+      "id": "acu_045",
+      "name": "tls_triple_protection",
+      "label": "理解TLS同时提供机密性、完整性和认证",
+      "parent_curriculum_node": "kp_019",
+      "related_misconceptions": [
+        "mc_012"
+      ],
+      "repair_strategies": [
+        "follow_up_question:tls_three_properties",
+        "exercise:tls_security_goals"
+      ]
+    },
+    {
+      "id": "acu_046",
+      "name": "quic_transport_layer_over_udp",
+      "label": "理解QUIC是基于UDP的传输层协议而非HTTP别名",
+      "parent_curriculum_node": "kp_019",
+      "related_misconceptions": [
+        "mc_013"
+      ],
+      "repair_strategies": [
+        "simulation:quic_stack_position",
+        "doc:quic_over_udp"
+      ]
+    },
+    {
+      "id": "acu_047",
+      "name": "modern_firewall_deep_inspection",
+      "label": "理解现代防火墙超越IP/端口的深度检测能力",
+      "parent_curriculum_node": "kp_019",
+      "related_misconceptions": [
+        "mc_040"
+      ],
+      "repair_strategies": [
+        "follow_up_question:firewall_evolution",
+        "exercise:deep_inspection_scenarios"
+      ]
+    },
+    {
+      "id": "acu_048",
+      "name": "load_balancing_strategies_variety",
+      "label": "理解负载均衡器支持多种调度策略",
+      "parent_curriculum_node": "kp_020",
+      "related_misconceptions": [
+        "mc_039"
+      ],
+      "repair_strategies": [
+        "follow_up_question:lb_strategy_selection",
+        "exercise:algorithm_comparison"
+      ]
+    },
+    {
+      "id": "acu_049",
+      "name": "signal_modulation_basics",
+      "label": "信号调制与解调基本原理",
+      "parent_curriculum_node": "kp_004",
+      "related_misconceptions": [],
+      "repair_strategies": [
+        "animation:signal_modulation_demo",
+        "exercise:modulation_type_identification"
+      ]
+    },
+    {
+      "id": "acu_050",
+      "name": "channel_multiplexing_techniques",
+      "label": "信道复用技术对比（FDM/TDM/CDMA/WDM）",
+      "parent_curriculum_node": "kp_004",
+      "related_misconceptions": [],
+      "repair_strategies": [
+        "contrast_table:multiplexing_comparison",
+        "exercise:multiplexing_scenario"
+      ]
+    },
+    {
+      "id": "acu_051",
+      "name": "transmission_media_types",
+      "label": "传输媒体类型与特性对比",
+      "parent_curriculum_node": "kp_004",
+      "related_misconceptions": [],
+      "repair_strategies": [
+        "contrast_table:media_comparison",
+        "exercise:media_selection"
+      ]
+    },
+    {
+      "id": "acu_052",
+      "name": "wireshark_packet_analysis",
+      "label": "Wireshark抓包分析与协议解读",
+      "parent_curriculum_node": "kp_020",
+      "related_misconceptions": [],
+      "repair_strategies": [
+        "simulation:wireshark_lab",
+        "exercise:packet_decode"
+      ]
+    },
+    {
+      "id": "acu_053",
+      "name": "traceroute_interpretation",
+      "label": "traceroute/tracert 输出解读与 TTL 机制",
+      "parent_curriculum_node": "kp_020",
+      "related_misconceptions": [],
+      "repair_strategies": [
+        "simulation:traceroute_demo",
+        "exercise:hop_analysis"
+      ]
+    },
+    {
+      "id": "acu_054",
+      "name": "network_troubleshooting_methodology",
+      "label": "网络故障排查方法论（分层诊断流程）",
+      "parent_curriculum_node": "kp_020",
+      "related_misconceptions": [],
+      "repair_strategies": [
+        "checklist:troubleshooting_steps",
+        "simulation:fault_scenario"
+      ]
+    },
+    {
+      "id": "acu_055",
+      "name": "http_cache_mechanisms",
+      "label": "HTTP 缓存机制（强缓存/协商缓存/Cache-Control）",
+      "parent_curriculum_node": "kp_018",
+      "related_misconceptions": [],
+      "repair_strategies": [
+        "contrast_table:cache_type_comparison",
+        "exercise:cache_header_analysis"
+      ]
+    },
+    {
+      "id": "acu_056",
+      "name": "cookie_session_management",
+      "label": "Cookie 与 Session 会话管理机制",
+      "parent_curriculum_node": "kp_018",
+      "related_misconceptions": [
+        "mc_115"
+      ],
+      "repair_strategies": [
+        "simulation:login_session_demo",
+        "exercise:stateless_vs_stateful"
+      ]
+    },
+    {
+      "id": "acu_057",
+      "name": "tls_handshake_process",
+      "label": "TLS 握手完整流程（证书验证/密钥协商）",
+      "parent_curriculum_node": "kp_019",
+      "related_misconceptions": [
+        "mc_121",
+        "mc_124"
+      ],
+      "repair_strategies": [
+        "simulation:tls_handshake_animation",
+        "exercise:tls_step_ordering"
+      ]
+    },
+    {
+      "id": "acu_058",
+      "name": "firewall_acl_configuration",
+      "label": "防火墙策略与 ACL 配置逻辑",
+      "parent_curriculum_node": "kp_019",
+      "related_misconceptions": [
+        "mc_122",
+        "mc_128"
+      ],
+      "repair_strategies": [
+        "exercise:acl_rule_writing",
+        "simulation:firewall_policy_demo"
+      ]
+    },
+    {
+      "id": "acu_059",
+      "name": "inter_vlan_routing_methods",
+      "label": "跨 VLAN 路由实现方式（Router-on-a-stick / 三层交换）",
+      "parent_curriculum_node": "kp_006",
+      "related_misconceptions": [
+        "mc_141"
+      ],
+      "repair_strategies": [
+        "simulation:vlan_routing_lab",
+        "contrast_table:vlan_routing_methods"
+      ]
+    },
+    {
+      "id": "acu_060",
+      "name": "stp_convergence_process",
+      "label": "STP 收敛过程与端口状态迁移",
+      "parent_curriculum_node": "kp_006",
+      "related_misconceptions": [
+        "mc_143",
+        "mc_144",
+        "mc_149"
+      ],
+      "repair_strategies": [
+        "simulation:stp_election_demo",
+        "exercise:port_state_identification"
+      ]
+    }
+  ],
+  "cognitive_edges": [
+    {
+      "source": "kp_002",
+      "target": "acu_001",
+      "type": "contains"
+    },
+    {
+      "source": "kp_003",
+      "target": "acu_002",
+      "type": "contains"
+    },
+    {
+      "source": "kp_006",
+      "target": "acu_003",
+      "type": "contains"
+    },
+    {
+      "source": "kp_006",
+      "target": "acu_004",
+      "type": "contains"
+    },
+    {
+      "source": "kp_006",
+      "target": "acu_005",
+      "type": "contains"
+    },
+    {
+      "source": "kp_006",
+      "target": "acu_006",
+      "type": "contains"
+    },
+    {
+      "source": "kp_007",
+      "target": "acu_007",
+      "type": "contains"
+    },
+    {
+      "source": "kp_007",
+      "target": "acu_008",
+      "type": "contains"
+    },
+    {
+      "source": "kp_008",
+      "target": "acu_009",
+      "type": "contains"
+    },
+    {
+      "source": "kp_008",
+      "target": "acu_010",
+      "type": "contains"
+    },
+    {
+      "source": "kp_008",
+      "target": "acu_011",
+      "type": "contains"
+    },
+    {
+      "source": "kp_008",
+      "target": "acu_012",
+      "type": "contains"
+    },
+    {
+      "source": "kp_008",
+      "target": "acu_013",
+      "type": "contains"
+    },
+    {
+      "source": "kp_008",
+      "target": "acu_014",
+      "type": "contains"
+    },
+    {
+      "source": "kp_009",
+      "target": "acu_015",
+      "type": "contains"
+    },
+    {
+      "source": "kp_010",
+      "target": "acu_016",
+      "type": "contains"
+    },
+    {
+      "source": "kp_010",
+      "target": "acu_017",
+      "type": "contains"
+    },
+    {
+      "source": "kp_012",
+      "target": "acu_018",
+      "type": "contains"
+    },
+    {
+      "source": "kp_013",
+      "target": "acu_019",
+      "type": "contains"
+    },
+    {
+      "source": "kp_013",
+      "target": "acu_020",
+      "type": "contains"
+    },
+    {
+      "source": "kp_013",
+      "target": "acu_021",
+      "type": "contains"
+    },
+    {
+      "source": "kp_013",
+      "target": "acu_022",
+      "type": "contains"
+    },
+    {
+      "source": "kp_013",
+      "target": "acu_023",
+      "type": "contains"
+    },
+    {
+      "source": "kp_013",
+      "target": "acu_024",
+      "type": "contains"
+    },
+    {
+      "source": "kp_014",
+      "target": "acu_025",
+      "type": "contains"
+    },
+    {
+      "source": "kp_014",
+      "target": "acu_026",
+      "type": "contains"
+    },
+    {
+      "source": "kp_014",
+      "target": "acu_027",
+      "type": "contains"
+    },
+    {
+      "source": "kp_015",
+      "target": "acu_028",
+      "type": "contains"
+    },
+    {
+      "source": "kp_015",
+      "target": "acu_029",
+      "type": "contains"
+    },
+    {
+      "source": "kp_016",
+      "target": "acu_030",
+      "type": "contains"
+    },
+    {
+      "source": "kp_016",
+      "target": "acu_031",
+      "type": "contains"
+    },
+    {
+      "source": "kp_016",
+      "target": "acu_032",
+      "type": "contains"
+    },
+    {
+      "source": "kp_016",
+      "target": "acu_033",
+      "type": "contains"
+    },
+    {
+      "source": "kp_017",
+      "target": "acu_034",
+      "type": "contains"
+    },
+    {
+      "source": "kp_017",
+      "target": "acu_035",
+      "type": "contains"
+    },
+    {
+      "source": "kp_017",
+      "target": "acu_036",
+      "type": "contains"
+    },
+    {
+      "source": "kp_017",
+      "target": "acu_037",
+      "type": "contains"
+    },
+    {
+      "source": "kp_018",
+      "target": "acu_038",
+      "type": "contains"
+    },
+    {
+      "source": "kp_018",
+      "target": "acu_039",
+      "type": "contains"
+    },
+    {
+      "source": "kp_018",
+      "target": "acu_040",
+      "type": "contains"
+    },
+    {
+      "source": "kp_018",
+      "target": "acu_041",
+      "type": "contains"
+    },
+    {
+      "source": "kp_018",
+      "target": "acu_042",
+      "type": "contains"
+    },
+    {
+      "source": "kp_018",
+      "target": "acu_043",
+      "type": "contains"
+    },
+    {
+      "source": "kp_019",
+      "target": "acu_044",
+      "type": "contains"
+    },
+    {
+      "source": "kp_019",
+      "target": "acu_045",
+      "type": "contains"
+    },
+    {
+      "source": "kp_019",
+      "target": "acu_046",
+      "type": "contains"
+    },
+    {
+      "source": "kp_019",
+      "target": "acu_047",
+      "type": "contains"
+    },
+    {
+      "source": "kp_020",
+      "target": "acu_048",
+      "type": "contains"
+    },
+    {
+      "source": "acu_001",
+      "target": "acu_002",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_001",
+      "target": "acu_008",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_001",
+      "target": "acu_009",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_002",
+      "target": "acu_022",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_003",
+      "target": "acu_006",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_004",
+      "target": "acu_007",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_007",
+      "target": "acu_009",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_010",
+      "target": "acu_013",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_010",
+      "target": "acu_014",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_012",
+      "target": "acu_013",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_018",
+      "target": "acu_046",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_019",
+      "target": "acu_023",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_019",
+      "target": "acu_024",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_020",
+      "target": "acu_021",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_025",
+      "target": "acu_026",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_025",
+      "target": "acu_027",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_028",
+      "target": "acu_029",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_034",
+      "target": "acu_035",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_034",
+      "target": "acu_036",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_034",
+      "target": "acu_037",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_038",
+      "target": "acu_042",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_042",
+      "target": "acu_041",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_039",
+      "target": "acu_040",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_045",
+      "target": "acu_046",
+      "type": "prerequisite"
+    },
+    {
+      "source": "acu_030",
+      "target": "acu_048",
+      "type": "prerequisite"
+    }
+  ]
+}

@@ -29,18 +29,22 @@
               <p class="text-sm leading-6 text-gray-700">{{ node.recommendation_reason }}</p>
             </section>
 
-            <section v-if="node.reason_sources?.length">
-              <h4 class="mb-2 text-xs font-semibold uppercase text-amber-700">依据来源</h4>
-              <ul class="space-y-1">
-                <li
-                  v-for="(source, index) in node.reason_sources"
-                  :key="index"
-                  class="flex gap-2 text-xs leading-5 text-gray-600"
-                >
-                  <span class="text-amber-500">•</span>
-                  <span>{{ source }}</span>
-                </li>
-              </ul>
+            <section v-if="hasPathReasonSources(node.reason_sources)">
+              <h4 class="mb-2 text-xs font-semibold uppercase text-amber-700">三维推荐理由</h4>
+              <div class="space-y-3">
+                <div v-if="node.reason_sources.graph_dependency" class="rounded-lg bg-blue-50 p-3">
+                  <div class="mb-1 text-xs font-semibold text-blue-700">📊 图谱依赖</div>
+                  <p class="text-xs leading-5 text-gray-700">{{ node.reason_sources.graph_dependency }}</p>
+                </div>
+                <div v-if="node.reason_sources.diagnosis_result" class="rounded-lg bg-red-50 p-3">
+                  <div class="mb-1 text-xs font-semibold text-red-700">🔍 诊断结果</div>
+                  <p class="text-xs leading-5 text-gray-700">{{ node.reason_sources.diagnosis_result }}</p>
+                </div>
+                <div v-if="node.reason_sources.cognitive_style" class="rounded-lg bg-violet-50 p-3">
+                  <div class="mb-1 text-xs font-semibold text-violet-700">🧠 认知风格</div>
+                  <p class="text-xs leading-5 text-gray-700">{{ node.reason_sources.cognitive_style }}</p>
+                </div>
+              </div>
             </section>
 
             <section v-if="node.prerequisites?.length">
@@ -78,6 +82,7 @@
 
 <script setup lang="ts">
 import type { PathNode } from '../../types'
+import { hasPathReasonSources } from '../../types'
 
 defineProps<{
   node: PathNode | null

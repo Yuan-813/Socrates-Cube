@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: config_prompts
+title: 多智能体系统提示词与配置资源
+scope:
+    - config/
+source_files: []
+depends_on: []
+related_to:
+    - path: frontend_app/auth_and_onboarding
+    - path: frontend_app/career_interview_exam
+    - path: frontend_app/chat_and_conversation
+    - path: frontend_app/diagnosis_assessment

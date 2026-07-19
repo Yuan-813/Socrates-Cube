@@ -1,0 +1,15 @@
+schema_version: 1
+module_path: frontend_app/diagnosis_assessment
+title: 认知诊断与画像可视化视图
+scope:
+    - frontend/src/views/DiagnosisView.vue
+    - frontend/src/components/DiagnosisFlowStepper.vue
+    - frontend/src/components/ProfileSummaryPanel.vue
+    - frontend/src/components/ProfileRadar.vue
+    - frontend/src/types/diagnosis.ts
+    - frontend/src/types/profile.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: config_prompts
+    - path: frontend_app/career_interview_exam

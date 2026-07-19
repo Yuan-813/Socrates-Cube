@@ -1,0 +1,70 @@
+# ─────────────────────────────────────────────────────────────
+# Socrates-Cube docker-compose.yml
+# 服务编排：backend（Python FastAPI）+ frontend（Nginx Vue3）
+#
+# 使用方法：
+#   开发/测试：docker-compose up --build
+#   后台运行：docker-compose up -d --build
+#   仅后端：  docker-compose up backend
+#   停止：    docker-compose down
+# ─────────────────────────────────────────────────────────────
+
+version: '3.9'
+
+services:
+  # ── 后端服务 ─────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: socrates-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # 从 .env 文件注入（如有），否则使用下面的默认值
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - MOCK_MODE=${MOCK_MODE:-false}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-me-to-a-random-secret-at-least-32-chars}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost,http://localhost:80,http://localhost:5173}
+      # LLM API Keys（可选，未填时使用 Mock 模式）
+      - XUNFEI_APP_ID=${XUNFEI_APP_ID:-}
+      - XUNFEI_API_KEY=${XUNFEI_API_KEY:-}
+      - XUNFEI_API_SECRET=${XUNFEI_API_SECRET:-}
+      - OPENAI_COMPAT_BASE_URL=${OPENAI_COMPAT_BASE_URL:-}
+      - OPENAI_COMPAT_API_KEY=${OPENAI_COMPAT_API_KEY:-}
+      - OPENAI_COMPAT_MODEL=${OPENAI_COMPAT_MODEL:-}
+    volumes:
+      # 数据持久化：SQLite 数据库 + 向量库
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+      # 开发时可挂载 .env 文件
+      - ./.env:/app/.env:ro
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - socrates-net
+
+  # ── 前端服务 ─────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: socrates-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - socrates-net
+
+networks:
+  socrates-net:
+    driver: bridge

@@ -3,6 +3,137 @@
   "user_id": "demo_user_001",
   "title": "计算机网络 TCP/IP 重点攻坚路径",
   "description": "根据诊断结果定制，从分层模型基础到传输层 TCP 可靠传输",
+  "total_estimated_time": 280,
+  "generated_at": "2025-05-25T10:00:00Z",
+  "quality_score": 0.85,
+  "nodes": [
+    {
+      "node_id": "kn_001",
+      "node_name": "OSI与TCP/IP分层模型",
+      "type": "concept",
+      "chapter": "第1章",
+      "difficulty": 2,
+      "estimated_time": 30,
+      "recommendation_reason": "当前分层认知掌握度仅 45%，是后续所有协议学习的根基。需优先补齐分层模型概念，为后续传输层学习打下基础。",
+      "reason_sources": {
+        "graph_dependency": "kn_001 是 kn_002/kn_005/kn_008 的前置基础节点，分层模型是所有网络协议学习的起点",
+        "diagnosis_result": "诊断显示层次穿越型误解，学生对 HTTP 直接基于 IP 的层级关系理解有误，需从分层模型重新建立认知",
+        "cognitive_style": "学生概念理解维度偏低(0.45)，适合先从基础概念图和分层动画入手，建立视觉化认知框架"
+      },
+      "suggested_resources": ["doc", "code"],
+      "prerequisites": [],
+      "prerequisites_met": [],
+      "status": "completed",
+      "current_mastery": 0.7,
+      "is_target": false
+    },
+    {
+      "node_id": "kn_002",
+      "node_name": "数据封装与拆封过程",
+      "type": "concept",
+      "chapter": "第1章",
+      "difficulty": 3,
+      "estimated_time": 40,
+      "recommendation_reason": "封装过程是协议交互理解的核心，当前掌握度 50%。学生混淆了各层封装的职责，需要通过分层封装仿真直观理解。",
+      "reason_sources": {
+        "graph_dependency": "kn_002 依赖 kn_001 分层模型基础，是 kn_005 和 kn_008 的间接前置节点",
+        "diagnosis_result": "诊断显示学生认为 HTTP 直接基于 IP，本质上是未理解逐层封装机制，需重点修复",
+        "cognitive_style": "学生实践操作维度偏低(0.20)，建议通过代码示例和封装动画建立直观认知"
+      },
+      "suggested_resources": ["doc", "exercise"],
+      "prerequisites": ["kn_001"],
+      "prerequisites_met": ["kn_001"],
+      "status": "in_progress",
+      "current_mastery": 0.5,
+      "is_target": true
+    },
+    {
+      "node_id": "kn_005",
+      "node_name": "TCP 三次握手与四次挥手",
+      "type": "protocol",
+      "chapter": "第5章",
+      "difficulty": 3,
+      "estimated_time": 55,
+      "recommendation_reason": "TCP 三次握手是最高频考点，诊断显示学生把三次握手误记为两次，流程记忆不完整但有一定基础。",
+      "reason_sources": {
+        "graph_dependency": "kn_005 依赖 kn_001 分层模型和 kn_002 封装过程，是 kn_008 拥塞控制的前置节点",
+        "diagnosis_result": "诊断显示流程遗漏型误解：学生遗漏第三次 ACK，未理解其防止历史连接的作用",
+        "cognitive_style": "学生协议流程记忆维度中等(0.62)，适合通过仿真动画+变式题强化第三次 ACK 的必要性认知"
+      },
+      "suggested_resources": ["doc", "exercise", "code"],
+      "prerequisites": ["kn_001", "kn_002"],
+      "prerequisites_met": ["kn_001"],
+      "status": "pending",
+      "current_mastery": 0.3,
+      "is_target": true
+    },
+    {
+      "node_id": "kn_007",
+      "node_name": "TCP 滑动窗口与流量控制",
+      "type": "protocol",
+      "chapter": "第5章",
+      "difficulty": 3,
+      "estimated_time": 50,
+      "recommendation_reason": "滑动窗口是 TCP 可靠传输的核心机制，当前掌握度低，需要建立在握手机制理解之上。",
+      "reason_sources": {
+        "graph_dependency": "kn_007 依赖 kn_005 连接管理，是 kn_008 拥塞控制的前置知识",
+        "diagnosis_result": "报文格式理解维度偏低(0.30)，对窗口字段和确认机制理解不足",
+        "cognitive_style": "学生计算能力维度偏低(0.25)，建议配合滑动窗口动画和数值练习逐步掌握"
+      },
+      "suggested_resources": ["doc", "exercise"],
+      "prerequisites": ["kn_005"],
+      "prerequisites_met": [],
+      "status": "locked",
+      "current_mastery": 0.2,
+      "is_target": false
+    },
+    {
+      "node_id": "kn_008",
+      "node_name": "TCP 拥塞控制",
+      "type": "protocol",
+      "chapter": "第5章",
+      "difficulty": 4,
+      "estimated_time": 70,
+      "recommendation_reason": "进阶目标，需先夯实握手机制和滑动窗口。拥塞控制涉及 cwnd 与 rwnd 的区分，是当前最大薄弱点。",
+      "reason_sources": {
+        "graph_dependency": "kn_008 依赖 kn_005 连接管理和 kn_007 滑动窗口，是传输层最高难度知识点",
+        "diagnosis_result": "诊断显示概念混淆型倾向，流量控制与拥塞控制概念边界不清",
+        "cognitive_style": "学生系统分析维度偏低(0.25)，需通过对比表格和拥塞控制仿真动画区分 cwnd/rwnd"
+      },
+      "suggested_resources": ["doc", "exercise"],
+      "prerequisites": ["kn_005", "kn_007"],
+      "prerequisites_met": [],
+      "status": "locked",
+      "current_mastery": 0.1,
+      "is_target": false
+    },
+    {
+      "node_id": "kn_009",
+      "node_name": "DNS 解析流程",
+      "type": "protocol",
+      "chapter": "第6章",
+      "difficulty": 2,
+      "estimated_time": 35,
+      "recommendation_reason": "DNS 是应用层入门协议，递归查询与迭代查询的对比理解对后续应用层学习有帮助。",
+      "reason_sources": {
+        "graph_dependency": "kn_009 是应用层协议入门节点，与传输层 TCP/UDP 有依赖关系",
+        "diagnosis_result": "无直接诊断关联，但作为知识补充推荐",
+        "cognitive_style": "学生认知风格偏视觉型(0.72)，DNS 解析流程适合通过时序图和仿真动画学习"
+      },
+      "suggested_resources": ["doc", "mindmap"],
+      "prerequisites": ["kn_001"],
+      "prerequisites_met": ["kn_001"],
+      "status": "locked",
+      "current_mastery": 0.4,
+      "is_target": false
+    }
+  ]
+}
+{
+  "path_id": "path_demo_001",
+  "user_id": "demo_user_001",
+  "title": "计算机网络 TCP/IP 重点攻坚路径",
+  "description": "根据诊断结果定制，从分层模型基础到传输层 TCP 可靠传输",
   "total_estimated_time": 210,
   "generated_at": "2025-05-25T10:00:00Z",
   "nodes": [

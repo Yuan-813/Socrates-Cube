@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from src.loopse.kb.text_splitter import split_text  # noqa: E402
 from src.loopse.kb.vector_store import vector_store  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -19,28 +20,6 @@ log = logging.getLogger(__name__)
 
 CLEANED_DIR = ROOT / "data" / "cleaned"
 MISCONCEPTIONS_FILE = ROOT / "data" / "raw" / "misconceptions.json"
-CHUNK_SIZE = 900
-OVERLAP = 140
-
-
-def _split_text(text: str) -> list[str]:
-    sections = re.split(r"\n(?=#{1,3}\s)", text)
-    chunks: list[str] = []
-    for section in sections:
-        section = section.strip()
-        if not section:
-            continue
-        if len(section) <= CHUNK_SIZE:
-            chunks.append(section)
-            continue
-        start = 0
-        while start < len(section):
-            end = min(start + CHUNK_SIZE, len(section))
-            chunks.append(section[start:end].strip())
-            if end >= len(section):
-                break
-            start = max(0, end - OVERLAP)
-    return [chunk for chunk in chunks if len(chunk) >= 80]
 
 
 def _doc_id(source: str, index: int) -> str:
@@ -63,7 +42,7 @@ def ingest_course_docs(dry_run: bool = False) -> dict[str, int]:
 
     for path in sorted(CLEANED_DIR.glob("*.md")):
         raw = path.read_text(encoding="utf-8", errors="ignore")
-        chunks = _split_text(raw)
+        chunks = split_text(raw)
         collection = _collection_for_file(path)
         if collection not in counts:
             collection = "course_docs"

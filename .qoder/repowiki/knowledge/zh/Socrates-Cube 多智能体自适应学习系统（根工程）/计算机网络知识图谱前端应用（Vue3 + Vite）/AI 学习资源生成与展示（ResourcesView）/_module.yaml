@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: frontend_app/resources_library
+title: AI 学习资源生成与展示（ResourcesView）
+scope:
+    - frontend/src/views/ResourcesView.vue
+    - frontend/src/stores/resourceStore.ts
+    - frontend/src/api/resources.ts
+    - frontend/src/types/resource.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: scripts_tooling

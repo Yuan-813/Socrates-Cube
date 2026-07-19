@@ -1,0 +1,43 @@
+{
+  "name": "mineru",
+  "description": "MinerU 高精度文档解析 MCP Server（opendatalab/MinerU v3.4+）。支持 PDF/DOCX/PPTX/XLSX → Markdown/JSON，VLM+OCR 双引擎，109种语言，公式→LaTeX，表格→HTML。",
+  "version": "3.4.0",
+  "homepage": "https://github.com/opendatalab/MinerU",
+  "license": "AGPL-3.0",
+  "installation": {
+    "method": "uvx",
+    "command": "uvx",
+    "args": ["mineru-mcp"],
+    "env": {
+      "MINERU_MODEL_DIR": "D:\\models\\magic-pdf",
+      "MAGIC_PDF_MODEL_DIR": "D:\\models\\magic-pdf"
+    },
+    "note": "模型文件约 2GB，必须配置 MINERU_MODEL_DIR 到 D 盘避免 C 盘占用"
+  },
+  "alternatively": {
+    "rest_api": {
+      "base_url": "https://api.mineru.net/v1",
+      "auth": "Bearer ${MINERU_API_KEY}",
+      "endpoints": {
+        "parse": "POST /parse",
+        "status": "GET /parse/{task_id}",
+        "result": "GET /parse/{task_id}/result"
+      }
+    }
+  },
+  "capabilities": [
+    "parse_pdf",
+    "parse_docx",
+    "parse_pptx",
+    "parse_xlsx",
+    "extract_tables",
+    "extract_formulas",
+    "ocr_images",
+    "multilingual_109_langs"
+  ],
+  "integration_points": {
+    "ingest_pdf": "scripts/ingest_pdf.py --use-mineru --backend hybrid",
+    "env_var_api_key": "MINERU_API_KEY",
+    "env_var_model_dir": "MINERU_MODEL_DIR"
+  }
+}

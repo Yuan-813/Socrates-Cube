@@ -1,0 +1,11 @@
+schema_version: 1
+module_path: frontend_app/books_knowledge_base
+title: 书籍知识库与阅读器视图
+scope:
+    - frontend/src/views/BookshelfView.vue
+    - frontend/src/views/BookHouseView.vue
+    - frontend/src/views/BookReaderView.vue
+source_files: []
+depends_on: []
+related_to:
+    - path: scripts_tooling

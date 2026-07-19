@@ -1,54 +1,85 @@
 <template>
-  <Transition name="bar-slide">
-    <div
-      v-if="runningAgents.length > 0"
-      class="flex items-center gap-2 rounded-lg border border-sky-100 bg-sky-50 px-3 py-2"
-    >
-      <div class="h-2 w-2 shrink-0 animate-pulse rounded-full bg-sky-500" />
-      <div class="min-w-0 flex-1">
-        <div class="truncate text-xs font-semibold text-sky-700">
-          {{ runningAgents.map(agent => displayName(agent.agentName)).join(' -> ') }}
-        </div>
-        <div class="truncate text-xs text-sky-500">
-          {{ runningAgents[runningAgents.length - 1]?.message || '处理中' }}
-        </div>
-      </div>
+  <div v-if="currentAgent" class="agent-status-bar">
+    <div class="agent-indicator">
+      <span class="pulse-dot"></span>
+      <span class="agent-name">{{ agentDisplayName }}</span>
+      <span class="agent-action">处理中...</span>
     </div>
-  </Transition>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useChatStore } from '../stores/chatStore'
+import { useChatStore } from '@/stores/chatStore'
 
 const chatStore = useChatStore()
 
-const runningAgents = computed(() =>
-  chatStore.activeAgents.filter(agent => agent.status === 'running'),
-)
+const currentAgent = computed(() => {
+  // 优先使用 currentAgent；否则从 activeAgents 中取最近一个 running 状态的 Agent
+  if (chatStore.currentAgent) return chatStore.currentAgent
+  const running = chatStore.activeAgents.filter(a => a.status === 'running')
+  return running.length > 0 ? running[running.length - 1].agentName : null
+})
 
-function displayName(name: string): string {
+const agentDisplayName = computed(() => {
   const nameMap: Record<string, string> = {
-    Orchestrator: '指挥智能体',
-    Retriever: '知识检索',
-    Diagnosis: '认知诊断',
+    Orchestrator: '指挥官',
+    DiagnosisAgent: '诊断分析',
+    Diagnosis: '诊断分析',
     ResourceGenerator: '资源生成',
     PathPlanner: '路径规划',
+    PathPlannerAgent: '路径规划',
     Profiler: '画像更新',
+    ProfilerAgent: '画像更新',
+    Retriever: '知识检索',
+    RetrieverAgent: '知识检索',
+    Challenger: '挑战追问',
   }
-  return nameMap[name] || name
-}
+  return nameMap[currentAgent.value || ''] || currentAgent.value
+})
 </script>
 
 <style scoped>
-.bar-slide-enter-active,
-.bar-slide-leave-active {
-  transition: all 0.2s ease;
+.agent-status-bar {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: linear-gradient(90deg, #f0f9ff 0%, #ffffff 100%);
+  border: 1px solid #e0f2fe;
+  border-radius: 8px;
 }
 
-.bar-slide-enter-from,
-.bar-slide-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
+.agent-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #0369a1;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #0ea5e9;
+  animation: pulse 1s infinite;
+}
+
+.agent-name {
+  font-weight: 600;
+}
+
+.agent-action {
+  color: #64748b;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 </style>

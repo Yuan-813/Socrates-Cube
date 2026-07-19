@@ -9,9 +9,11 @@ import re
 from pathlib import Path
 from typing import Any, Optional
 
-from dotenv import load_dotenv
-
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -34,7 +36,7 @@ class VectorStore:
     tests keep working when vector dependencies are missing or not initialized.
     """
 
-    COLLECTIONS = ["course_docs", "protocol_specs", "misconceptions"]
+    COLLECTIONS = ["course_docs", "protocol_specs", "misconceptions", "user_uploads"]
 
     def __init__(self, persist_dir: Path = CHROMA_PATH, index_path: Path = LOCAL_INDEX_PATH):
         self.index_path = index_path
@@ -64,6 +66,10 @@ class VectorStore:
 
     def _load_local_index(self) -> None:
         if not self.index_path.exists():
+            # 确保所有 collection（含 user_uploads）均有初始化列表
+            for name in self.COLLECTIONS:
+                if name not in self._local_docs:
+                    self._local_docs[name] = []
             return
         try:
             data = json.loads(self.index_path.read_text(encoding="utf-8"))
@@ -96,6 +102,7 @@ class VectorStore:
         metadatas: list[dict],
         ids: list[str],
     ) -> None:
+        # 允许动态集合（user_uploads 等），但仍检查是否在 COLLECTIONS 中
         if collection_name not in self.COLLECTIONS:
             raise ValueError(f"unknown collection: {collection_name}")
         rows = []

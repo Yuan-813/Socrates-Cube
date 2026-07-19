@@ -1,0 +1,54 @@
+{
+  "name": "sensenova-u1",
+  "description": "SenseNova-U1 统一多模态模型 MCP Server（OpenSenseNova/SenseNova-U1）。集成 Infographic-V3 专用信息图生成能力，支持高密度文字渲染、数据可视化、专业排版布局，以及多模态理解与推理。",
+  "version": "1.0.0",
+  "homepage": "https://github.com/OpenSenseNova/SenseNova-U1",
+  "license": "Apache-2.0",
+  "type": "remote_api",
+  "installation": {
+    "method": "api_key",
+    "env_var": "SENSENOVA_API_KEY",
+    "base_url": "https://api.sensenova.cn/v1",
+    "note": "需要在 .env 中配置 SENSENOVA_API_KEY，前往 https://platform.sensenova.cn 获取"
+  },
+  "models": {
+    "infographic": {
+      "model_id": "SenseNova-U1-Infographic",
+      "description": "信息图生成专用模型（V3），支持高密度文字渲染和专业排版",
+      "output": "base64 PNG image",
+      "size": "1280x1920 (default)"
+    },
+    "general": {
+      "model_id": "SenseNova-U1",
+      "description": "通用统一多模态模型，支持图文理解、推理、生成",
+      "capabilities": ["vision", "text", "multimodal_reasoning"]
+    }
+  },
+  "endpoints": {
+    "infographic_generate": {
+      "method": "POST",
+      "path": "/images/generations",
+      "description": "生成专业信息图（信息图谱/思维导图/协议图解）",
+      "integration": "src/loopse/api/infographic.py"
+    },
+    "chat_completions": {
+      "method": "POST",
+      "path": "/chat/completions",
+      "description": "多模态对话，支持图文混合输入"
+    }
+  },
+  "capabilities": [
+    "infographic_v3_generation",
+    "high_density_text_rendering",
+    "data_visualization",
+    "professional_layout",
+    "multimodal_understanding",
+    "vision_reasoning",
+    "multilingual"
+  ],
+  "integration_notes": {
+    "infographic_api": "src/loopse/api/infographic.py",
+    "model_name": "SenseNova-U1-Infographic",
+    "response_source": "sensenova-u1-infographic-v3"
+  }
+}

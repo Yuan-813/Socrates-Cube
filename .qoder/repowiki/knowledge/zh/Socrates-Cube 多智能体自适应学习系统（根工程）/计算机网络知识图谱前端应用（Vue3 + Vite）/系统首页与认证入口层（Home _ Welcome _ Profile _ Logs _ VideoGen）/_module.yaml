@@ -1,0 +1,23 @@
+schema_version: 1
+module_path: frontend_app/system_pages
+title: 系统首页与认证入口层（Home / Welcome / Profile / Logs / VideoGen）
+scope:
+    - frontend/src/views/HomeView.vue
+    - frontend/src/views/WelcomeView.vue
+    - frontend/src/views/ProfileView.vue
+    - frontend/src/views/LogsView.vue
+    - frontend/src/views/VideoGenView.vue
+    - frontend/src/stores/authStore.ts
+    - frontend/src/stores/userStore.ts
+    - frontend/src/api/auth.ts
+    - frontend/src/api/client.ts
+    - frontend/src/api/mockInterceptor.ts
+    - frontend/src/composables/useApi.ts
+    - frontend/src/types/agent.ts
+    - frontend/src/types/chat.ts
+    - frontend/src/types/sse.ts
+    - frontend/src/types/index.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: frontend_app/auth_and_onboarding

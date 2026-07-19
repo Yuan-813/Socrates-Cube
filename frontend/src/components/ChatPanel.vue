@@ -1,21 +1,19 @@
 <script setup lang="ts">
-import { ref, nextTick, onMounted } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
+import { useChatSSE } from '@/composables/useSSE'
 import { useChatStore } from '@/stores/chatStore'
-import { useFetchSSE } from '@/composables/useSSE'
+import { useUserStore } from '@/stores/userStore'
 import ChatMessage from './ChatMessage.vue'
+import ScopeNotice from './ScopeNotice.vue'
 import type { ChatMessage as ChatMessageType } from '@/stores/chatStore'
 
 const chatStore = useChatStore()
-const sse = useFetchSSE()
+const userStore = useUserStore()
+const chatSSE = useChatSSE()
+const props = defineProps<{ agentPersona?: string }>()
 const inputText = ref('')
 const messagesContainer = ref<HTMLElement>()
 const inputRef = ref<any>(null)
-
-const mockReply = ref('')
-
-// 是否启用真实 SSE（通过环境变量控制）
-const SSE_ENDPOINT = import.meta.env.VITE_SSE_ENDPOINT || ''
-const USE_REAL_SSE = SSE_ENDPOINT.length > 0
 
 const quickPrompts = [
   { icon: 'QuestionFilled', text: '什么是TCP三次握手？', label: '概念询问' },
@@ -23,6 +21,13 @@ const quickPrompts = [
   { icon: 'EditPen', text: '生成协议练习题', label: '生成题目' },
   { icon: 'FirstAidKit', text: '诊断我的理解水平', label: '能力诊断' },
 ]
+
+const streamingMessage = computed(() => {
+  const session = chatStore.currentSession
+  if (!session || !chatStore.isStreaming) return null
+  const last = session.messages[session.messages.length - 1]
+  return last?.role === 'assistant' && last.isStreaming ? last : null
+})
 
 async function sendMessage() {
   if (!inputText.value.trim() || chatStore.isStreaming) return
@@ -36,85 +41,27 @@ async function sendMessage() {
 
   const sessionId = chatStore.currentSession?.sessionId || chatStore.createSession().sessionId
   chatStore.addMessage(sessionId, userMsg)
+  // 发送新消息时立即清除上一轮的诊断结果，避免展示过期数据
+  chatStore.clearDiagnosis()
 
   const text = inputText.value
   inputText.value = ''
-  chatStore.setStreaming(true)
-  mockReply.value = ''
 
   await nextTick()
   scrollToBottom()
 
-  if (USE_REAL_SSE) {
-    await sendWithRealSSE(sessionId, text)
-  } else {
-    sendWithMockSSE(sessionId, text)
-  }
-}
+  await chatSSE.send(text, userStore.userId, sessionId, props.agentPersona || 'professor')
 
-async function sendWithRealSSE(sessionId: string, text: string) {
-  const session = chatStore.currentSession
-  const history = session ? session.messages.map((m: ChatMessageType) => ({ role: m.role, content: m.content })) : []
-
-  const body = {
-    session_id: sessionId,
-    message: text,
-    history: history.slice(-10), // 最近 10 轮上下文
-  }
-
-  await sse.connect(SSE_ENDPOINT, {
-    body,
-    onMessage: (chunk: string) => {
-      mockReply.value += chunk
-      scrollToBottom()
-    },
-    onDone: () => {
-      chatStore.setStreaming(false)
-      const assistantMsg: ChatMessageType = {
-        id: `msg-${Date.now()}`,
-        role: 'assistant',
-        content: mockReply.value,
-        timestamp: Date.now(),
-        agentName: 'Orchestrator',
-      }
-      chatStore.addMessage(sessionId, assistantMsg)
-    },
-    onError: (err) => {
-      chatStore.setStreaming(false)
-      const assistantMsg: ChatMessageType = {
-        id: `msg-${Date.now()}`,
-        role: 'assistant',
-        content: `⚠️ 连接异常：${err.message}\n\n已切换为离线模式。`,
-        timestamp: Date.now(),
-        agentName: 'System',
-      }
-      chatStore.addMessage(sessionId, assistantMsg)
-    },
-  })
-}
-
-function sendWithMockSSE(sessionId: string, text: string) {
-  const fullReply = `收到你的问题："${text}"\n\n我是 Socrates Cube 的 AI 教练，正在分析你的协议理解水平...\n\n（当前为演示模式，真实 SSE 连接请在 .env 中配置 VITE_SSE_ENDPOINT）`
-  let index = 0
-
-  const timer = setInterval(() => {
-    if (index >= fullReply.length) {
-      clearInterval(timer)
-      chatStore.setStreaming(false)
-      const assistantMsg: ChatMessageType = {
-        id: `msg-${Date.now()}`,
-        role: 'assistant',
-        content: mockReply.value,
-        timestamp: Date.now(),
-        agentName: 'Orchestrator',
-      }
-      chatStore.addMessage(sessionId, assistantMsg)
-      return
+  if (chatSSE.lastError.value) {
+    const session = chatStore.currentSession
+    const last = session?.messages[session.messages.length - 1]
+    if (last && last.role === 'assistant') {
+      last.content = last.content || `连接异常：${chatSSE.lastError.value}`
+      last.agentName = 'System'
     }
-    mockReply.value += fullReply[index]
-    index++
-    scrollToBottom()
-  }, 30)
+  }
+
+  scrollToBottom()
 }
 
 function scrollToBottom() {
@@ -141,15 +88,32 @@ function clearChat() {
 
 onMounted(() => {
   chatStore.ensureValidCurrentSession()
+
+  // 修复：重置可能因刷新/中断而持久化的残留流式状态
+  if (chatStore.isStreaming) {
+    chatStore.setStreaming(false)
+  }
+  // 同时清理消息列表中可能残留的 isStreaming 标记
+  const session = chatStore.currentSession
+  if (session) {
+    session.messages.forEach(m => {
+      if (m.isStreaming) {
+        m.isStreaming = false
+        // 如果内容为空说明响应被中断，添加提示
+        if (!m.content.trim()) m.content = '*（该回复因连接中断未完成）*'
+      }
+    })
+  }
+
   scrollToBottom()
 })
+
+defineExpose({ setPrompt })
 </script>
 
 <template>
   <div class="chat-panel">
-    <!-- 消息列表 -->
     <div ref="messagesContainer" class="messages-container">
-      <!-- 空状态欢迎语 -->
       <div v-if="!chatStore.currentSession?.messages.length && !chatStore.isStreaming" class="chat-welcome">
         <div class="welcome-icon">
           <el-icon size="48" color="#3b82f6"><ChatDotSquare /></el-icon>
@@ -172,30 +136,33 @@ onMounted(() => {
         </div>
       </div>
 
+      <ScopeNotice
+        v-if="chatStore.lastScopeNotice"
+        :title="chatStore.lastScopeNotice.title"
+        :description="chatStore.lastScopeNotice.description"
+      />
+
       <ChatMessage
         v-for="msg in chatStore.currentSession?.messages"
         :key="msg.id"
         :message="msg"
       />
 
-      <!-- 流式输出中 -->
-      <div v-if="chatStore.isStreaming" class="streaming-row">
+      <div v-if="streamingMessage && !streamingMessage.content" class="streaming-row">
         <div class="streaming-bubble">
           <div class="streaming-header">
             <el-avatar :size="28" icon="ChatDotRound" style="background-color: #10b981" />
             <span class="streaming-role">AI教练</span>
             <span class="typing-indicator">正在输入...</span>
           </div>
-          <div class="streaming-content">{{ mockReply }}</div>
         </div>
       </div>
     </div>
 
-    <!-- 输入区 -->
     <div class="input-area">
       <div class="input-toolbar">
         <div class="toolbar-hints">
-          <span class="hint-text">💡 试试快捷提问：</span>
+          <span class="hint-text">已连接后端 SSE</span>
           <span
             v-for="prompt in quickPrompts.slice(0, 3)"
             :key="prompt.text"
@@ -273,20 +240,12 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 10px;
 }
 
 .streaming-role {
   font-weight: 500;
   font-size: 13px;
   color: #475569;
-}
-
-.streaming-content {
-  font-size: 14px;
-  line-height: 1.7;
-  white-space: pre-wrap;
-  word-break: break-word;
 }
 
 .typing-indicator {
@@ -442,9 +401,5 @@ onMounted(() => {
   font-size: 11px;
   color: #3b82f6;
   animation: pulse 1.5s infinite;
-}
-
-.mr-1 {
-  margin-right: 4px;
 }
 </style>

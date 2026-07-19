@@ -1,0 +1,23 @@
+schema_version: 1
+module_path: frontend_app/simulator_training
+title: 协议仿真实验室与知识挑战模块
+scope:
+    - frontend/src/views/SimulatorView.vue
+    - frontend/src/stores/simulatorStore.ts
+    - frontend/src/components/SimulatorPlayer.vue
+    - frontend/src/components/SimulationParams.vue
+    - frontend/src/components/AgentSelector.vue
+    - frontend/src/components/AgentLogPanel.vue
+    - frontend/src/components/AgentStatusBar.vue
+    - frontend/src/components/ChallengerPanel.vue
+    - frontend/src/components/ChallengerQuizCard.vue
+    - frontend/src/components/StateMachinePanel.vue
+    - frontend/src/components/KGPanel.vue
+    - frontend/src/components/MistakeBook.vue
+    - frontend/src/components/RepairOverview.vue
+    - frontend/src/api/challenger.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: frontend_app/chat_and_conversation
+    - path: scripts_tooling

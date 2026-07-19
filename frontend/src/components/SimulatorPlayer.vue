@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useSimulatorStore } from '@/stores/simulatorStore'
+import StateMachinePanel from '@/components/StateMachinePanel.vue'
+import SimulationParams from '@/components/SimulationParams.vue'
 
 const store = useSimulatorStore()
 const canvasRef = ref<HTMLCanvasElement>()
+const playerRootRef = ref<HTMLElement>()
 
 interface SimStep {
   from: 'client' | 'server'
@@ -22,6 +25,9 @@ const scenarios = [
   { label: 'TCP 四次挥手', value: 'four_way_wavehand', desc: '优雅关闭 TCP 连接' },
   { label: 'TCP 滑动窗口', value: 'sliding_window', desc: '连续数据传输与流量控制' },
   { label: 'HTTP 请求响应', value: 'http_request', desc: '应用层请求与响应过程' },
+  { label: 'HTTP 分层封装', value: 'http_encapsulation', desc: '数据从上到下逐层封装' },
+  { label: 'DNS 解析', value: 'dns_resolution', desc: '域名到IP的解析过程' },
+  { label: '拥塞控制', value: 'congestion_control_basic', desc: 'TCP 拥塞窗口变化过程' },
 ]
 
 const stepsMap: Record<string, SimStep[]> = {
@@ -56,6 +62,29 @@ const stepsMap: Record<string, SimStep[]> = {
     { from: 'server', to: 'client', flags: ['ACK'], seq: 2249, ack: 230, clientState: 'FIN_WAIT_2', serverState: 'LAST_ACK', desc: 'Step 9: 服务端确认 FIN' },
     { from: 'server', to: 'client', flags: ['FIN','ACK'], seq: 2249, ack: 230, clientState: 'TIME_WAIT', serverState: 'LAST_ACK', desc: 'Step 10: 服务端发送 FIN' },
     { from: 'client', to: 'server', flags: ['ACK'], seq: 230, ack: 2250, clientState: 'CLOSED', serverState: 'CLOSED', desc: 'Step 11: 客户端最后确认，连接关闭' },
+  ],
+  http_encapsulation: [
+    { from: 'client', to: 'server', flags: ['APP'], seq: 0, ack: 0, clientState: '应用层', serverState: '应用层', desc: '应用层：生成 HTTP 请求报文（Method + URL + Headers + Body）' },
+    { from: 'client', to: 'server', flags: ['TCP'], seq: 0, ack: 0, clientState: '传输层', serverState: '传输层', desc: '传输层：添加 TCP 头部（源端口:49152 → 目的端口:80）' },
+    { from: 'client', to: 'server', flags: ['IP'], seq: 0, ack: 0, clientState: '网络层', serverState: '网络层', desc: '网络层：添加 IP 头部（源IP:192.168.1.100 → 目的IP:93.184.216.34）' },
+    { from: 'client', to: 'server', flags: ['ETH'], seq: 0, ack: 0, clientState: '数据链路层', serverState: '数据链路层', desc: '数据链路层：添加以太网帧头（源MAC → 目的MAC）' },
+    { from: 'client', to: 'server', flags: ['PHY'], seq: 0, ack: 0, clientState: '物理层', serverState: '物理层', desc: '物理层：转换为比特流在物理介质上传输' },
+    { from: 'server', to: 'client', flags: ['DE-CAP'], seq: 0, ack: 0, clientState: '物理层→应用层', serverState: '接收完成', desc: '服务端逐层解封装：物理层→数据链路层→网络层→传输层→应用层' },
+  ],
+  dns_resolution: [
+    { from: 'client', to: 'server', flags: ['QUERY'], seq: 1, ack: 0, clientState: '发起查询', serverState: '本地DNS', desc: '客户端向本地 DNS 发起递归查询：www.example.com → ?' },
+    { from: 'server', to: 'client', flags: ['ITER'], seq: 2, ack: 1, clientState: '等待', serverState: '根服务器', desc: '本地 DNS 向根服务器迭代查询，获得 .com TLD 地址' },
+    { from: 'server', to: 'client', flags: ['ITER'], seq: 3, ack: 2, clientState: '等待', serverState: 'TLD服务器', desc: '向 .com TLD 查询，获得 example.com 权威 DNS 地址' },
+    { from: 'server', to: 'client', flags: ['ITER'], seq: 4, ack: 3, clientState: '等待', serverState: '权威DNS', desc: '向权威 DNS 查询，获得 IP: 93.184.216.34' },
+    { from: 'server', to: 'client', flags: ['RESP'], seq: 5, ack: 4, clientState: '解析完成', serverState: '本地DNS', desc: '本地 DNS 返回结果：www.example.com → 93.184.216.34' },
+  ],
+  congestion_control_basic: [
+    { from: 'client', to: 'server', flags: ['SS'], seq: 1, ack: 0, clientState: '慢启动 cwnd=1', serverState: '等待', desc: '慢启动：cwnd=1 MSS，发送1个报文段' },
+    { from: 'server', to: 'client', flags: ['ACK'], seq: 1, ack: 1, clientState: '慢启动 cwnd=2', serverState: '确认', desc: '收到ACK，cwnd翻倍：1→2 MSS（指数增长）' },
+    { from: 'client', to: 'server', flags: ['SS'], seq: 2, ack: 0, clientState: '慢启动 cwnd=4', serverState: '等待', desc: '发送2段，cwnd→4 MSS' },
+    { from: 'client', to: 'server', flags: ['CA'], seq: 4, ack: 0, clientState: '拥塞避免 cwnd=5', serverState: '等待', desc: '达到ssthresh，进入拥塞避免：线性增长' },
+    { from: 'server', to: 'client', flags: ['LOSS'], seq: 5, ack: 0, clientState: '丢包！cwnd减半', serverState: '丢包检测', desc: '丢包！ssthresh=cwnd/2，快重传/快恢复' },
+    { from: 'client', to: 'server', flags: ['CA'], seq: 6, ack: 0, clientState: '拥塞避免 线性增长', serverState: '恢复', desc: '重新进入拥塞避免，cwnd线性增长' },
   ],
 }
 
@@ -442,6 +471,39 @@ onUnmounted(() => {
   cancelAnimationFrame(animId)
 })
 
+const isFullscreen = ref(false)
+
+function handlePrevStep() {
+  if (store.currentStep > 0) {
+    store.currentStep--
+    stepProgress.value = 0
+    isInTransition.value = false
+  }
+}
+
+function handleProgressChange(val: number) {
+  store.currentStep = val
+  stepProgress.value = 0
+  isInTransition.value = false
+}
+
+function toggleFullscreen() {
+  const el = playerRootRef.value
+  if (!el) {
+    isFullscreen.value = !isFullscreen.value
+    return
+  }
+  if (!document.fullscreenElement) {
+    el.requestFullscreen?.().then(() => { isFullscreen.value = true }).catch(() => {
+      isFullscreen.value = !isFullscreen.value
+    })
+  } else {
+    document.exitFullscreen?.().then(() => { isFullscreen.value = false }).catch(() => {
+      isFullscreen.value = false
+    })
+  }
+}
+
 function handlePlay() {
   if (store.currentStep >= packetSteps.value.length) {
     store.reset()
@@ -451,6 +513,11 @@ function handlePlay() {
 
 function handlePause() {
   store.pause()
+}
+
+function handleRerunParams(params: { windowSize: number; rttDelay: number; packetLossRate: number }) {
+  handleReset()
+  store.speed = Math.max(0.5, Math.min(3, 100 / Math.max(params.rttDelay, 20)))
 }
 
 function handleReset() {
@@ -496,28 +563,10 @@ const serverState = computed(() => {
   const idx = Math.min(store.currentStep, steps.length)
   return idx > 0 ? steps[idx - 1].serverState : (store.scenario === 'three_way_handshake' ? 'LISTEN' : 'ESTABLISHED')
 })
-
-// TCP 状态机数据
-const tcpStates = [
-  { name: 'CLOSED', color: '#ef4444', role: 'client' },
-  { name: 'LISTEN', color: '#3b82f6', role: 'server' },
-  { name: 'SYN_SENT', color: '#f59e0b', role: 'client' },
-  { name: 'SYN_RCVD', color: '#8b5cf6', role: 'server' },
-  { name: 'ESTABLISHED', color: '#10b981', role: 'both' },
-  { name: 'FIN_WAIT_1', color: '#f97316', role: 'client' },
-  { name: 'FIN_WAIT_2', color: '#f97316', role: 'client' },
-  { name: 'CLOSE_WAIT', color: '#06b6d4', role: 'server' },
-  { name: 'LAST_ACK', color: '#ec4899', role: 'server' },
-  { name: 'TIME_WAIT', color: '#eab308', role: 'client' },
-]
-
-function isStateActive(stateName: string) {
-  return clientState.value === stateName || serverState.value === stateName
-}
 </script>
 
 <template>
-  <div class="simulator-player">
+  <div ref="playerRootRef" class="simulator-player" :class="{ 'is-fullscreen': isFullscreen }">
     <!-- 工具栏 -->
     <div class="simulator-toolbar">
       <el-select
@@ -547,8 +596,12 @@ function isStateActive(stateName: string) {
         >
           {{ store.isPlaying ? '暂停' : '播放' }}
         </el-button>
-        <el-button icon="DArrowRight" @click="handleStep">步进</el-button>
+        <el-button icon="DArrowLeft" @click="handlePrevStep" :disabled="store.currentStep <= 0">上一步</el-button>
+        <el-button icon="DArrowRight" @click="handleStep" :disabled="store.currentStep >= packetSteps.length">步进</el-button>
         <el-button icon="RefreshRight" @click="handleReset">重置</el-button>
+        <el-button :icon="isFullscreen ? 'FullScreen' : 'FullScreen'" @click="toggleFullscreen" size="small">
+          {{ isFullscreen ? '退出全屏' : '全屏' }}
+        </el-button>
       </div>
 
       <div class="step-info">
@@ -556,11 +609,24 @@ function isStateActive(stateName: string) {
           步骤 {{ store.currentStep }} / {{ packetSteps.length }}
         </span>
         <el-slider
+          :model-value="store.currentStep"
+          :min="0"
+          :max="packetSteps.length"
+          :step="1"
+          style="width: 120px"
+          @update:model-value="handleProgressChange"
+          :show-tooltip="true"
+          :format-tooltip="(val: number) => `步骤 ${val}`"
+        />
+        <el-divider direction="vertical" />
+        <el-slider
           v-model="store.speed"
           :min="0.5"
           :max="3"
           :step="0.5"
-          style="width: 100px"
+          style="width: 80px"
+          :show-tooltip="true"
+          :format-tooltip="(val: number) => `${val}x 速度`"
         />
         <span class="text-xs text-slate-400">{{ store.speed }}x</span>
       </div>
@@ -580,29 +646,13 @@ function isStateActive(stateName: string) {
 
       <!-- 右侧面板 -->
       <div class="side-panel">
-        <!-- TCP 状态机 -->
-        <div class="state-machine-card">
-          <h4 class="panel-title">
-            <el-icon><SetUp /></el-icon>
-            TCP 状态机
-          </h4>
-          <div class="state-diagram">
-            <div
-              v-for="state in tcpStates"
-              :key="state.name"
-              class="state-node"
-              :class="{ active: isStateActive(state.name) }"
-              :style="{ borderColor: isStateActive(state.name) ? state.color : '#e2e8f0', backgroundColor: isStateActive(state.name) ? state.color + '15' : '#f8fafc' }"
-            >
-              <div class="state-name" :style="{ color: isStateActive(state.name) ? state.color : '#64748b' }">
-                {{ state.name }}
-              </div>
-              <div v-if="isStateActive(state.name)" class="state-role">
-                {{ state.role === 'both' ? 'Client / Server' : state.role }}
-              </div>
-            </div>
-          </div>
-        </div>
+        <StateMachinePanel
+          :client-state="clientState"
+          :server-state="serverState"
+          :scenario="store.scenario"
+        />
+
+        <SimulationParams @rerun="handleRerunParams" />
 
         <!-- 步骤时间线 -->
         <div class="steps-card">

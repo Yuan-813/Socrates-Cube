@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: frontend_app/learning_path
+title: 可解释学习路径视图与时间线
+scope:
+    - frontend/src/views/PathView.vue
+    - frontend/src/stores/pathStore.ts
+    - frontend/src/components/PathTimeline.vue
+    - frontend/src/api/path.ts
+    - frontend/src/types/path.ts
+source_files: []
+depends_on: []
+related_to: []

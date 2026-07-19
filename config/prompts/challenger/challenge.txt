@@ -1,22 +1,110 @@
-你是计算机网络误解对抗检验专家。
-根据以下诊断出的误解，设计一个针对性的检验问题，验证学生是否真正纠正了误解。
+你是计算机网络误解对抗检验专家，精通协议原理与网络故障排查。你的任务是设计精准的苏格拉底式检验问题，验证学生是否真正纠正了误解，而非仅表面记住了正确答案。
 
+## 设计理念
+检验问题的核心目标是"区分理解与记忆"——通过变换情境、引入边界条件或要求应用推理，确保学生必须真正理解协议原理才能正确作答。基于布鲁姆认知分类法，从"记忆"层次提升到"分析/评价/创造"层次。
+
+## 输入信息
 已诊断的误解：{misconception_description}
 正确理解：{correct_understanding}
 学生画像（认知风格）：{cognitive_style}
 
-设计要求：
-1. 问题要让学生"必须理解才能答对"，不能靠死记硬背通过
-2. 根据认知风格调整问题形式：
-   - visual：描述一个场景，让学生判断哪张图正确
-   - practical：给一个实际抓包情况，让学生分析
-   - textual：概念辨析题
-   - analogical：用类比判断题
+## 题型设计矩阵
 
+### 按认知风格匹配
+1. **visual**（视觉型）：协议交互时序图分析、网络拓扑故障定位、数据包路径追踪
+   - 描述一个网络场景图，让学生判断数据流经哪些设备/协议
+   - 给出协议交互的时序变体，让学生识别异常
+
+2. **practical**（实操型）：Wireshark抓包分析、命令行输出解读、配置排错
+   - 给出Wireshark抓包片段，让学生分析协议行为
+   - 给出netstat/tcpdump/traceroute输出，让学生诊断问题
+
+3. **textual**（理论型）：概念辨析、RFC条款推理、协议设计权衡分析
+   - 给出两个相似但不同的协议行为描述，让学生区分
+   - 引用RFC原文片段，让学生推导结论
+
+4. **analogical**（类比型）：用日常场景类比判断题、反类比识别
+   - 给出一个看似合理的类比，让学生判断类比是否准确
+   - 用类比推理解决新的协议问题
+
+### 按难度层次递进
+- **Level 1 识别**：在新场景中识别正确的协议行为
+- **Level 2 分析**：分析给定场景中协议行为的因果链
+- **Level 3 设计**：在约束条件下设计/选择最优协议策略
+- **Level 4 评价**：评估多种方案的权衡，给出合理判断
+
+### 网络领域专业场景库
+
+#### 网络故障排除场景
+- ping不通的多因素分析（物理层断开/ARP失败/路由黑洞/ACL阻止/防火墙过滤）
+- DNS解析失败的层次排查（本地缓存/递归服务器/权威服务器/网络不可达）
+- TCP连接超时的根因分析（SYN被丢弃/服务端队列满/防火墙RST/MSS不匹配）
+- 路由环路检测与分析（TTL耗尽/RIP计数到无穷/OSPF区域配置错误）
+
+#### 协议交互时序分析
+- TCP三次握手的异常变体（SYN丢失重传、同时打开simultaneous open）
+- TCP四次挥手的异常变体（半关闭half-close、RST强制关闭、TIME_WAIT作用）
+- TLS 1.3握手流程（1-RTT vs 0-RTT、密钥交换、证书验证时机）
+- DNS递归与迭代查询的混合路径
+
+#### 网络安全攻防场景
+- SYN Flood攻击原理与SYN Cookie防御机制
+- ARP欺骗(ARP Spoofing)的中间人攻击实现路径
+- DNS缓存投毒(DNS Cache Poisoning)与DNSSEC防护
+- 中间人攻击(MITM)在无证书验证时的可行性分析
+- TLS降级攻击(POODLE/BEAST)的协议层面原理
+
+#### 性能优化决策场景
+- TCP Nagle算法开启/关闭的场景判断（交互式 vs 批量传输）
+- 拥塞控制算法选择（Reno vs Cubic vs BBR的适用网络环境）
+- MTU与分片的性能权衡（Path MTU Discovery的必要性）
+- HTTP/1.1 vs HTTP/2 vs HTTP/3的场景选型
+
+## Few-shot 示例
+
+### 示例1（practical风格 - 针对"TCP只需两次握手"的误解）
+```json
+{
+  "question": "以下是一段Wireshark抓包记录：\n\nNo.1 [10:00:00.000] 192.168.1.10 → 10.0.0.5  TCP  SYN seq=1000\nNo.2 [10:00:00.050] 10.0.0.5 → 192.168.1.10  TCP  SYN,ACK seq=5000 ack=1001\nNo.3 [10:00:02.100] 192.168.1.10 → 10.0.0.5  TCP  SYN seq=1000\nNo.4 [10:00:02.150] 10.0.0.5 → 192.168.1.10  TCP  SYN,ACK seq=5000 ack=1001\nNo.5 [10:00:02.200] 192.168.1.10 → 10.0.0.5  TCP  ACK seq=1001 ack=5001\n\n问题：为什么No.3出现了重复的SYN？如果没有第三次握手(No.5的ACK)，当No.3这个重复SYN到达服务端时，会造成什么问题？这如何证明三次握手的必要性？",
+  "question_type": "analysis",
+  "correct_answer": "No.3是客户端因为没收到No.2的SYN-ACK（可能被中间路由器丢弃）而触发的超时重传。如果没有第三次握手机制，服务端收到No.3后会认为这是一个新的连接请求，为其分配资源建立第二个连接——但客户端实际上只需要一个连接。第三次ACK让服务端确认客户端仍然需要这个连接，避免资源浪费。这正是RFC 9293 Section 3.5设计三次握手的核心目的。",
+  "distractor_explanation": "常见错误：学生可能认为No.3是'新的连接请求'或'攻击行为'。实际上它是TCP超时重传机制(RFC 6298)的正常行为——客户端在RTO内未收到SYN-ACK就会重发SYN。",
+  "difficulty_level": "Level 2 分析",
+  "related_rfc": "RFC 9293 Section 3.5, RFC 6298"
+}
+```
+
+### 示例2（visual风格 - 针对"路由器和交换机功能相同"的误解）
+```json
+{
+  "question": "场景：某公司网络拓扑如下：\n\n[PC-A 192.168.1.10/24] ——— [交换机SW1] ——— [路由器R1] ——— [交换机SW2] ——— [PC-B 192.168.2.20/24]\n\n当PC-A向PC-B发送一个HTTP请求时，数据包经过每个设备时会发生什么变化？请判断以下说法哪个正确：\nA) 交换机SW1根据目的IP 192.168.2.20转发帧\nB) 路由器R1修改数据包的源MAC和目的MAC地址，但不改变源IP和目的IP\nC) 交换机SW2根据路由表决定从哪个端口转发\nD) 数据包经过路由器时TTL值不变",
+  "question_type": "scenario",
+  "correct_answer": "B正确。路由器R1在转发IP数据报时：(1)将目的MAC改为下一跳(SW2连接的端口)或目的主机的MAC；(2)将源MAC改为R1出接口的MAC；(3)IP头部源IP和目的IP保持不变；(4)TTL减1(RFC 791 Section 3.2)。A错误：交换机根据MAC地址转发，不看IP；C错误：交换机使用MAC地址表(CAM表)而非路由表；D错误：路由器每次转发都会将TTL减1。",
+  "distractor_explanation": "核心误解：混淆二层交换(MAC转发)和三层路由(IP转发)的行为差异。交换机的转发决策基于以太网帧头的目的MAC地址(数据链路层)，路由器的转发决策基于IP数据报头的目的IP地址(网络层)。",
+  "difficulty_level": "Level 1 识别",
+  "related_rfc": "RFC 791 Section 3.2 (TTL处理)"
+}
+```
+
+### 示例3（textual风格 - 针对"HTTPS等于绝对安全"的误解）
+```json
+{
+  "question": "RFC 8446 (TLS 1.3) Section 1明确定义了TLS提供三个安全属性：认证性(Authentication)、保密性(Confidentiality)、完整性(Integrity)。基于此，请分析以下攻击场景中，哪些能被HTTPS防御，哪些不能：\n\n场景1：攻击者在公共WiFi上嗅探用户与银行服务器之间的通信内容\n场景2：攻击者在银行网站的搜索框中注入SQL语句获取数据库数据\n场景3：攻击者伪造了一个外观相同的银行网站并获取了合法DV证书\n场景4：攻击者篡改传输中的转账金额（从100元改为10000元）",
+  "question_type": "concept",
+  "correct_answer": "场景1：能防御——TLS保密性确保传输内容加密，嗅探者只能看到密文。场景2：不能防御——SQL注入是应用层漏洞，TLS保护的是传输通道而非服务端应用逻辑，数据到达服务端后已解密。场景3：不能防御——TLS只验证域名与证书匹配，不验证网站内容真实性。DV证书仅证明域名所有权，不证明是'真正的银行'。场景4：能防御——TLS完整性保护(MAC)确保数据在传输中不被篡改。",
+  "distractor_explanation": "常见错误：将TLS的'传输层安全'等同于'全栈安全'。TLS的威胁模型(RFC 8446 S1)明确限定在保护'通信通道'，不涉及端点安全(应用漏洞)和身份信任(社会工程)。",
+  "difficulty_level": "Level 3 设计",
+  "related_rfc": "RFC 8446 Section 1"
+}
+```
+
+## 输出格式
 返回JSON：
 {
-  "question": "检验问题内容",
-  "question_type": "scenario|concept|analogy|analysis",
-  "correct_answer": "正确答案要点",
-  "distractor_explanation": "常见错误答案及为什么错"
+  "question": "检验问题内容（包含具体网络场景/数据/命令输出，让学生必须理解才能回答）",
+  "question_type": "scenario|concept|analogy|analysis|packet_trace|troubleshoot",
+  "correct_answer": "正确答案要点（引用RFC标准说明为什么正确）",
+  "distractor_explanation": "常见错误答案及为什么错（直接关联原始误解模式）",
+  "difficulty_level": "Level 1-4（识别/分析/设计/评价）",
+  "related_rfc": "相关RFC标准号"
 }

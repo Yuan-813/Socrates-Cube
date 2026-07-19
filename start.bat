@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 chcp 65001 >nul
 setlocal EnableDelayedExpansion
 
@@ -22,15 +22,15 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
-if not exist .venv (
+if not exist .venv_new (
     echo [2/5] 创建虚拟环境...
-    python -m venv .venv
+    python -m venv .venv_new
 ) else (
     echo [2/5] 虚拟环境已存在
 )
 
 echo [3/5] 激活虚拟环境并安装依赖...
-call .venv\Scripts\activate.bat
+call .venv_new\Scripts\activate.bat
 pip install -r requirements.txt -q 2>nul
 
 if not exist .env (
@@ -41,10 +41,10 @@ if not exist .env (
 echo [4/5] 启动后端服务...
 if %MOCK_MODE%==1 (
     echo       → 后端 Mock 模式启动中 ^(端口 8000^)
-    start "Socrates-Backend" /min cmd /c ".venv\Scripts\activate.bat && set MOCK_MODE=1 && uvicorn src.loopse.main:app --host 0.0.0.0 --port 8000"
+    start "Socrates-Backend" /min cmd /c ".venv_new\Scripts\activate.bat && set MOCK_MODE=1 && uvicorn src.loopse.main:app --host 0.0.0.0 --port 8000"
 ) else (
     echo       → 后端正常模式启动中 ^(端口 8000^)
-    start "Socrates-Backend" /min cmd /c ".venv\Scripts\activate.bat && uvicorn src.loopse.main:app --reload --host 0.0.0.0 --port 8000"
+    start "Socrates-Backend" /min cmd /c ".venv_new\Scripts\activate.bat && uvicorn src.loopse.main:app --reload --host 0.0.0.0 --port 8000"
 )
 
 :: 等待后端启动

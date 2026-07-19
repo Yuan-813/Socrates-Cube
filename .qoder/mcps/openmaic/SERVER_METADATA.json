@@ -1,0 +1,55 @@
+{
+  "name": "openmaic",
+  "description": "OpenMAIC 多智能体互动课堂 MCP Server（THU-MAIC/OpenMAIC）。支持从主题一键生成结构化课程：标题页、概念讲解、协议分析、图示描述、随堂测验、课程总结。专为网络协议教学设计，含RFC引用和难度分级。",
+  "version": "1.0.0",
+  "homepage": "https://github.com/THU-MAIC/OpenMAIC",
+  "license": "MIT",
+  "type": "local_api",
+  "installation": {
+    "method": "local",
+    "note": "Socrates-Cube 内置，通过 lesson.py 提供互动课程生成 API",
+    "base_url": "http://localhost:8000/api/v1/lesson"
+  },
+  "endpoints": {
+    "generate_lesson": {
+      "method": "POST",
+      "path": "/generate",
+      "description": "一键生成完整互动课程（幻灯片+测验+摘要）",
+      "params": {
+        "topic": "课程主题（必填）",
+        "difficulty": "难度1-5（默认2）",
+        "slide_count": "幻灯片数量3-10（默认5）",
+        "include_quiz": "是否包含测验（默认true）"
+      }
+    },
+    "list_templates": {
+      "method": "GET",
+      "path": "/templates",
+      "description": "获取预置课程模板（TCP握手/DNS/OSI/拥塞控制/BGP）"
+    },
+    "generate_slide": {
+      "method": "POST",
+      "path": "/slide",
+      "description": "生成单页幻灯片",
+      "params": {
+        "topic": "幻灯片主题",
+        "slide_type": "类型：title/concept/protocol/diagram/quiz/summary",
+        "context": "前序内容上下文（可选）"
+      }
+    }
+  },
+  "capabilities": [
+    "structured_course_generation",
+    "slide_generation",
+    "quiz_generation",
+    "rfc_citation",
+    "difficulty_levels_1_to_5",
+    "network_protocol_focused"
+  ],
+  "integration_notes": {
+    "frontend": "frontend/src/views/LessonView.vue",
+    "backend": "src/loopse/api/lesson.py",
+    "router_path": "/lesson"
+  },
+  "inspired_by": "OpenMAIC - Open Multi-Agent Interactive Classroom by THU-MAIC"
+}

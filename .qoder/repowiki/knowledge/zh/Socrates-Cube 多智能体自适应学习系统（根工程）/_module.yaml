@@ -1,0 +1,17 @@
+schema_version: 1
+module_path: ""
+title: Socrates-Cube 多智能体自适应学习系统（根工程）
+scope:
+    - pyproject.toml
+    - requirements.txt
+    - requirements-vector.txt
+    - start.sh
+    - .env.example
+    - .gitignore
+    - README.md
+    - Socrates-Cube Phase0-Phase3 全阶段仓库核查报告.md
+    - generate_acu_report.py
+    - start.bat
+source_files: []
+depends_on: []
+related_to: []

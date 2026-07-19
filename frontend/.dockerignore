@@ -1,0 +1,9 @@
+# 前端构建上下文排除规则
+node_modules
+dist
+.env
+.env.local
+.env.*.local
+*.log
+.vite
+coverage/

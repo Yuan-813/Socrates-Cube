@@ -16,7 +16,7 @@ CODE_MOCK = "```python\nimport socket\nclient = socket.socket()\nclient.connect(
 
 @pytest.fixture()
 def resource_agent():
-    from loopse.agents.resource_generator import ResourceGeneratorAgent
+    from loopse.agent.resource_generator import ResourceGeneratorAgent
 
     agent = ResourceGeneratorAgent.__new__(ResourceGeneratorAgent)
     agent.llm = MagicMock()
@@ -94,3 +94,22 @@ async def test_result_schema(resource_agent):
     )
     required_keys = {"resource_id", "resource_type", "knowledge_point", "title", "content", "metadata", "created_at"}
     assert required_keys.issubset(result.keys()), f"缺少字段: {required_keys - result.keys()}"
+
+
+# ------------------------------------------------------------------ #
+# 一次性生成三类资源
+# ------------------------------------------------------------------ #
+@pytest.mark.asyncio
+async def test_generate_all(resource_agent):
+    result = await resource_agent.generate_all(
+        knowledge_point="TCP 三次握手",
+        difficulty=3
+    )
+    assert result["knowledge_point"] == "TCP 三次握手"
+    assert result["total_resources"] == 6
+    assert result["doc"] is not None
+    assert result["exercise"] is not None
+    assert result["code"] is not None
+    assert result["doc"]["resource_type"] == "doc"
+    assert result["exercise"]["resource_type"] == "exercise"
+    assert result["code"]["resource_type"] == "code"

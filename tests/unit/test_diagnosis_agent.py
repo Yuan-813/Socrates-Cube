@@ -25,7 +25,7 @@ def mock_llm_response():
 @pytest.fixture()
 def diagnosis_agent(mock_llm_response):
     """返回打了桩的 DiagnosisAgent 实例"""
-    from loopse.agents.diagnosis import DiagnosisAgent
+    from loopse.agent.diagnosis import DiagnosisAgent
 
     agent = DiagnosisAgent.__new__(DiagnosisAgent)
     agent.llm = MagicMock()

@@ -1,0 +1,13 @@
+schema_version: 1
+module_path: frontend_app/shared_ui_components
+title: 应用级通用 UI 组件集
+scope:
+    - frontend/src/components/AppEmpty.vue
+    - frontend/src/components/AppError.vue
+    - frontend/src/components/AppLoading.vue
+    - frontend/src/components/AppSkeleton.vue
+    - frontend/src/components/SplitScreenTransition.vue
+    - frontend/src/components/ResourceCards.vue
+source_files: []
+depends_on: []
+related_to: []

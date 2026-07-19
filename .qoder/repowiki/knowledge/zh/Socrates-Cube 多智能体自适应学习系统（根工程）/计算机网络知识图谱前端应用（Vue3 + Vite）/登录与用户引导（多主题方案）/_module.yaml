@@ -1,0 +1,16 @@
+schema_version: 1
+module_path: frontend_app/auth_and_onboarding
+title: 登录与用户引导（多主题方案）
+scope:
+    - frontend/src/views/LoginView.vue
+    - frontend/src/views/LoginViewScheme2.vue
+    - frontend/src/views/OAuthCallbackView.vue
+    - frontend/src/views/OnboardingView.vue
+    - frontend/src/views/OnboardingScheme1.vue
+    - frontend/src/views/OnboardingScheme2.vue
+    - frontend/src/views/OnboardingScheme3.vue
+source_files: []
+depends_on: []
+related_to:
+    - path: config_prompts
+    - path: frontend_app/system_pages

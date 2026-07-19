@@ -3,13 +3,23 @@ interface Props {
   title?: string
   description?: string
   icon?: string
+  actionText?: string
 }
 
 withDefaults(defineProps<Props>(), {
   title: '暂无数据',
   description: '当前没有可展示的内容',
   icon: 'Box',
+  actionText: '',
 })
+
+const emit = defineEmits<{
+  action: []
+}>()
+
+function handleAction() {
+  emit('action')
+}
 </script>
 
 <template>
@@ -17,6 +27,9 @@ withDefaults(defineProps<Props>(), {
     <el-icon :size="64" class="empty-icon"><component :is="icon" /></el-icon>
     <h3 class="empty-title">{{ title }}</h3>
     <p class="empty-desc">{{ description }}</p>
+    <el-button v-if="actionText" type="primary" plain @click="handleAction">
+      {{ actionText }}
+    </el-button>
     <slot />
   </div>
 </template>

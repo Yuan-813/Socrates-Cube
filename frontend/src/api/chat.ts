@@ -1,6 +1,8 @@
 import type { SSEPayload } from '../types'
+import { isMockMode, mockStreamChat } from './mockInterceptor'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+const SSE_ENDPOINT = import.meta.env.VITE_SSE_ENDPOINT || '/api/v1/chat/stream'
 
 export interface ChatRequest {
   message: string
@@ -17,9 +19,14 @@ export function startChatStream(
   onDone: () => void,
   onError: (err: Error) => void,
 ): AbortController {
+  // Mock 模式：使用本地模拟 SSE
+  if (isMockMode()) {
+    return mockStreamChat(req.message, onEvent, onDone, onError)
+  }
+
   const controller = new AbortController()
 
-  fetch(`${BASE_URL}/api/v1/chat/stream`, {
+  fetch(`${BASE_URL}${SSE_ENDPOINT}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

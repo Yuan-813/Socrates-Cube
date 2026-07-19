@@ -1,29 +1,45 @@
-# Web 框架
+# Web framework
 fastapi==0.111.0
 uvicorn[standard]==0.29.0
 sse-starlette==2.1.0
 httpx==0.27.0
+python-multipart>=0.0.9
 
-# 环境变量
+# Environment variables
 python-dotenv==1.0.1
 
-# 数据验证
+# Data validation
 pydantic==2.7.1
 
-# 数据库
+# Database
 sqlalchemy==2.0.30
 aiosqlite==0.20.0
+pymysql>=1.1.0
 
-# 向量数据库
-chromadb==0.5.0
+# Authentication (JWT + password hashing)
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
 
-# LangChain（RAG 检索增强生成）
-langchain==0.2.1
-langchain-community==0.2.1
+# Export (Word / Excel)
+python-docx>=1.1.0
+openpyxl>=3.1.2
 
-# 讯飞星火 SDK
-sparkai==0.1.8
+# PDF parsing (M4 BookshelfView)
+pypdf>=4.0.0
 
-# 开发 / 测试
+# PDF高精度解析（可选，需GPU获得最佳效果）
+# mineru>=3.4.0
+# opendataloader-pdf>=0.3.0
+
+# PDF文本提取降级方案（可选，未安装 MinerU 时自动使用）
+# PyMuPDF>=1.24.0
+
+# Vector database (optional — see requirements-vector.txt)
+# Core install works without ChromaDB; local JSON index is used as fallback.
+
+# Spark AI SDK
+spark-ai-python>=0.4.5
+
+# Development / Testing
 pytest==8.2.0
 pytest-asyncio==0.23.7

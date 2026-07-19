@@ -1,0 +1,12 @@
+schema_version: 1
+module_path: scripts_tooling
+title: 知识库构建与数据工程脚本集
+scope:
+    - scripts/
+    - generate_metrics.py
+source_files: []
+depends_on: []
+related_to:
+    - path: frontend_app/books_knowledge_base
+    - path: frontend_app/resources_library
+    - path: frontend_app/simulator_training

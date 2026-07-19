@@ -1,0 +1,16 @@
+schema_version: 1
+module_path: frontend_app/career_interview_exam
+title: 职业成长与测评视图集（Career & Assessment Views）
+scope:
+    - frontend/src/views/CareerView.vue
+    - frontend/src/views/InterviewView.vue
+    - frontend/src/views/ExamView.vue
+    - frontend/src/views/LessonView.vue
+    - frontend/src/components/RoleSelector.vue
+    - frontend/src/components/ScopeNotice.vue
+    - frontend/src/components/RegisterSuccessNotify.vue
+source_files: []
+depends_on: []
+related_to:
+    - path: config_prompts
+    - path: frontend_app/diagnosis_assessment

@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RAW_DIR = ROOT / "data" / "raw" / "external"
 CLEANED_DIR = ROOT / "data" / "cleaned"
 MANIFEST = ROOT / "data" / "raw" / "external_sources.json"
+SEED_CHAPTERS_DIR = ROOT / "scripts" / "seeds" / "course_chapters"
 
 
 @dataclass(frozen=True)
@@ -65,6 +66,32 @@ MISCONCEPTIONS = [
     ("mc_022", "缓存", "认为 Web 缓存只在浏览器里", "over_simplification", "缓存可存在于浏览器、代理、CDN、服务端等多个位置。"),
     ("mc_023", "DHCP", "认为 DHCP 只分配 IP 地址", "over_simplification", "DHCP 还可分配网关、DNS、租期等网络配置。"),
     ("mc_024", "ICMP", "认为 ICMP 是传输层协议", "layer_misplacement", "ICMP 是网络层控制/差错报告协议。"),
+    ("mc_025", "OSI 模型", "认为 OSI 七层与 TCP/IP 四层一一对应", "concept_confusion", "TCP/IP 是四层模型，OSI 是参考模型，二者是抽象层次而非严格一一映射。"),
+    ("mc_026", "以太网", "认为以太网帧最大长度就是 MTU", "term_confusion", "以太网 MTU 通常指 IP 层有效载荷上限；帧本身还包含头部和尾部。"),
+    ("mc_027", "CSMA/CD", "认为现代交换机网络仍依赖 CSMA/CD 碰撞检测", "over_simplification", "全双工交换式以太网通常不再使用 CSMA/CD。"),
+    ("mc_028", "VLAN", "认为 VLAN 标签只在路由器上添加", "layer_misplacement", "802.1Q VLAN 标签通常在交换机上添加和处理。"),
+    ("mc_029", "BGP", "认为 BGP 是内部网关协议", "concept_confusion", "BGP 是域间路由协议；OSPF/RIP 等常用于域内。"),
+    ("mc_030", "OSPF", "认为 OSPF 按跳数选路", "concept_confusion", "OSPF 基于链路状态与代价（cost），RIP 才主要按跳数。"),
+    ("mc_031", "RIP", "认为 RIP 适合大型互联网核心网", "over_simplification", "RIP 跳数限制和收敛特性使其更适合小型网络。"),
+    ("mc_032", "IPv6", "认为 IPv6 只是把地址变长了", "over_simplification", "IPv6 还简化了头部、改进邻居发现，并内置扩展头机制。"),
+    ("mc_033", "IPv6 地址", "认为 IPv6 不需要子网划分", "concept_confusion", "IPv6 仍使用前缀长度进行子网划分，只是通常默认 /64。"),
+    ("mc_034", "CIDR", "认为 CIDR 只用于 IPv6", "concept_confusion", "CIDR 最初用于缓解 IPv4 地址耗尽，也适用于 IPv6。"),
+    ("mc_035", "HTTP/2", "认为 HTTP/2 必须基于 TLS", "over_simplification", "HTTP/2 可在明文 TCP 上运行，但浏览器通常要求 HTTPS。"),
+    ("mc_036", "HTTP 持久连接", "认为 HTTP/1.1 每个请求都要新建 TCP 连接", "flow_omission", "HTTP/1.1 默认支持持久连接（Keep-Alive）。"),
+    ("mc_037", "Cookie", "认为 Cookie 只能由 JavaScript 设置", "concept_confusion", "Set-Cookie 响应头由服务器设置；HttpOnly Cookie 不能由 JS 访问。"),
+    ("mc_038", "CDN", "认为 CDN 只是 DNS 解析服务", "over_simplification", "CDN 还包含缓存、负载均衡、边缘计算等能力。"),
+    ("mc_039", "负载均衡", "认为负载均衡器只做轮询", "over_simplification", "还可使用最少连接、加权、一致性哈希等策略。"),
+    ("mc_040", "防火墙", "认为防火墙只能过滤 IP 和端口", "over_simplification", "现代防火墙可基于应用层协议、状态、用户身份等过滤。"),
+    ("mc_041", "代理", "认为正向代理和反向代理是同一种东西", "concept_confusion", "正向代理代表客户端访问外网；反向代理代表服务端接收外部请求。"),
+    ("mc_042", "Socket", "认为 Socket 就是端口号", "concept_confusion", "Socket 是 (IP, 端口, 协议) 等标识通信端点的抽象。"),
+    ("mc_043", "半开连接", "认为 SYN 洪水只会占用客户端资源", "reasoning_breakdown", "服务端会为半开连接维护状态，SYN 洪水主要攻击服务端。"),
+    ("mc_044", "TCP 重传", "认为超时重传和快速重传是同一机制", "concept_confusion", "超时重传基于 RTO；快速重传基于重复 ACK。"),
+    ("mc_045", "Nagle 算法", "认为 Nagle 算法提高所有 TCP 应用性能", "over_simplification", "Nagle 适合小数据包场景，实时交互应用可能需关闭。"),
+    ("mc_046", "DNS 缓存", "认为 DNS 查询结果永不失效", "flow_omission", "DNS 记录有 TTL，缓存会过期并重新查询。"),
+    ("mc_047", "DNS 污染", "认为 DNS 只能返回正确结果", "reasoning_breakdown", "DNS 响应可能被篡改或劫持，需要 DNSSEC 等机制防护。"),
+    ("mc_048", "FTP", "认为 FTP 只使用一个端口", "concept_confusion", "FTP 控制连接用 21 端口，数据连接另开端口（主动/被动模式）。"),
+    ("mc_049", "SMTP", "认为发邮件时客户端直接投递到收件人邮箱服务器", "flow_omission", "通常经发件人 SMTP 服务器中继，再路由到收件人 MX。"),
+    ("mc_050", "WebSocket", "认为 WebSocket 是 HTTP 的一个方法", "layer_misplacement", "WebSocket 通过 HTTP Upgrade 建立，之后是独立的全双工协议。"),
 ]
 
 
@@ -119,6 +146,21 @@ def write_misconceptions() -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def write_course_chapters() -> int:
+    """Copy bundled course chapter markdown into data/cleaned for course_docs indexing."""
+    CLEANED_DIR.mkdir(parents=True, exist_ok=True)
+    if not SEED_CHAPTERS_DIR.exists():
+        print(f"[WARN] seed chapters missing: {SEED_CHAPTERS_DIR}")
+        return 0
+    count = 0
+    for seed in sorted(SEED_CHAPTERS_DIR.glob("chapter*.md")):
+        target = CLEANED_DIR / seed.name
+        target.write_text(seed.read_text(encoding="utf-8"), encoding="utf-8")
+        count += 1
+    print(f"Wrote {count} course chapter files to {CLEANED_DIR}")
+    return count
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--skip-existing", action="store_true")
@@ -152,9 +194,10 @@ def main() -> None:
         )
 
     write_misconceptions()
+    chapter_count = write_course_chapters()
     MANIFEST.parent.mkdir(parents=True, exist_ok=True)
     MANIFEST.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"Wrote {len(manifest)} sources and {len(MISCONCEPTIONS)} misconceptions.")
+    print(f"Wrote {len(manifest)} sources, {len(MISCONCEPTIONS)} misconceptions, {chapter_count} course chapters.")
 
 
 if __name__ == "__main__":

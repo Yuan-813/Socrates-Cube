@@ -1,22 +1,203 @@
-你是计算机网络实操专家，请为以下知识点生成一份Python代码实操案例。
+你是计算机网络实操专家，精通Socket编程、协议实现与网络调试工具。请为以下知识点生成一份专业级Python代码实操案例，让学生通过动手实践深入理解网络协议的工作机制。
 
 知识点：{knowledge_point}
 参考内容：{reference_content}
 目标：让学生通过运行代码，直观理解 {knowledge_point} 的工作机制
 
-代码要求：
-1. 使用Python标准库（socket / struct 按需选用）
-2. 代码量50-100行，有详细注释
-3. 可以在本地直接运行（不依赖外部服务器）
-4. 代码后附：预期输出说明 + 1个思考问题
+## 代码设计原则
+1. 使用Python标准库（socket / struct / threading / select 按需选用）
+2. 代码量50-120行，有详细中文注释，注释需引用RFC标准
+3. 可以在本地直接运行（不依赖外部服务器），优先使用localhost回环地址
+4. 代码后附：预期输出说明 + Wireshark验证方法 + 思考问题
+5. 体现网络编程最佳实践：
+   - 错误处理（连接超时、拒绝连接、地址已占用）
+   - 超时机制（socket.settimeout）
+   - 资源清理（try-finally / with语句）
+   - 重传策略（针对UDP不可靠传输的应用层重传）
 
+## 网络编程场景分类
+
+### Socket编程基础场景
+- TCP客户端/服务端通信（三次握手可观察）
+- UDP无连接通信（对比TCP的差异）
+- 多客户端并发服务（select/threading）
+- 非阻塞Socket与事件驱动模型
+
+### 协议实现与解析场景
+- TCP状态机模拟（FSM实现，展示状态转换）
+- ARP请求构造与解析（struct打包以太网帧）
+- DNS查询报文手动构造（理解DNS报文格式）
+- HTTP/1.1请求手动构造（理解应用层协议文本格式）
+- ICMP Echo构造（理解校验和计算）
+
+### 网络调试与分析场景
+- 端口扫描器（理解TCP SYN扫描原理）
+- 简易traceroute实现（TTL递增+ICMP超时）
+- 网络延迟测量（RTT计算，对标RFC 6298）
+- 带宽估算工具（BDP计算演示）
+
+### Wireshark配合场景
+- 代码运行同时抓包，验证协议行为
+- 提供精确的Wireshark过滤器表达式
+- 标注关键字段在抓包中的对应位置
+
+## Few-shot 示例
+
+### 示例1（TCP三次握手观察）
+```json
+{
+  "title": "TCP三次握手实时观察：Socket编程与Wireshark联动",
+  "language": "python",
+  "code": "\"\"\"
+TCP三次握手观察实验
+通过创建TCP连接，配合Wireshark观察SYN/SYN-ACK/ACK三步交互
+参考：RFC 9293 Section 3.5 - Connection Establishment
+\"\"\"
+import socket
+import threading
+import time
+
+def tcp_server(host='127.0.0.1', port=9999):
+    \"\"\"TCP服务端：监听并接受连接（观察SYN-RCVD→ESTABLISHED状态转换）\"\"\"
+    server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server_sock.bind((host, port))
+    server_sock.listen(1)  # backlog=1，半连接队列长度
+    print(f'[Server] 监听 {host}:{port}，等待SYN...')
+    
+    conn, addr = server_sock.accept()  # 阻塞直到三次握手完成
+    print(f'[Server] 连接建立！对端={addr}（ESTABLISHED状态）')
+    
+    # 接收数据
+    data = conn.recv(1024)
+    print(f'[Server] 收到: {data.decode()}')
+    conn.send(b'ACK from server')
+    
+    # 关闭连接（触发四次挥手）
+    conn.close()
+    server_sock.close()
+    print('[Server] 连接关闭（观察FIN/ACK序列）')
+
+def tcp_client(host='127.0.0.1', port=9999):
+    \"\"\"TCP客户端：发起连接（观察SYN-SENT→ESTABLISHED状态转换）\"\"\"
+    time.sleep(0.5)  # 等服务端就绪
+    client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_sock.settimeout(5.0)  # 连接超时5秒（RFC 6298建议初始RTO=1s）
+    
+    print(f'[Client] 发起连接到 {host}:{port}（发送SYN，进入SYN-SENT）')
+    try:
+        client_sock.connect((host, port))  # 触发三次握手
+        print('[Client] 连接成功！（ESTABLISHED状态）')
+        
+        client_sock.send(b'Hello TCP!')
+        response = client_sock.recv(1024)
+        print(f'[Client] 收到响应: {response.decode()}')
+    except socket.timeout:
+        print('[Client] 连接超时！（SYN未得到SYN-ACK响应）')
+    finally:
+        client_sock.close()
+        print('[Client] Socket关闭')
+
+if __name__ == '__main__':
+    print('=== TCP三次握手观察实验 ===')
+    print('提示：先启动Wireshark，过滤器设为 tcp.port==9999')
+    print()
+    t = threading.Thread(target=tcp_server)
+    t.start()
+    tcp_client()
+    t.join()",
+  "explanation": "本代码创建一对TCP客户端/服务端，完整展示连接建立(三次握手)→数据传输→连接释放(四次挥手)的全过程。server_sock.listen()使服务端进入LISTEN状态；client.connect()触发SYN发送；accept()返回意味着三次握手完成。配合Wireshark可观察到完整的SYN→SYN-ACK→ACK序列。",
+  "expected_output": "[Server] 监听 127.0.0.1:9999，等待SYN...\\n[Client] 发起连接到 127.0.0.1:9999（发送SYN，进入SYN-SENT）\\n[Server] 连接建立！对端=('127.0.0.1', xxxxx)（ESTABLISHED状态）\\n[Client] 连接成功！（ESTABLISHED状态）\\n[Client] 收到响应: ACK from server\\n[Server] 收到: Hello TCP!\\n[Server] 连接关闭（观察FIN/ACK序列）\\n[Client] Socket关闭",
+  "wireshark_filter": "tcp.port==9999",
+  "wireshark_key_fields": "观察要点：(1) 第1个包：SYN=1,seq=ISN_client (2) 第2个包：SYN=1,ACK=1,seq=ISN_server,ack=ISN_client+1 (3) 第3个包：ACK=1,seq=ISN_client+1,ack=ISN_server+1",
+  "think_question": "如果在client_sock.connect()之前将网络断开，客户端会经历什么？操作系统会重试发送SYN几次？每次重试间隔如何变化？（提示：查看RFC 6298关于RTO退避策略）",
+  "related_rfc": "RFC 9293 Section 3.5, RFC 6298 Section 2"
+}
+```
+
+### 示例2（UDP不可靠传输与应用层重传）
+```json
+{
+  "title": "UDP不可靠传输实验：应用层重传机制实现",
+  "language": "python",
+  "code": "\"\"\"
+UDP不可靠传输与应用层重传实验
+演示UDP丢包场景下的应用层可靠性保证策略
+参考：RFC 768 - User Datagram Protocol
+\"\"\"
+import socket
+import random
+import time
+import threading
+
+MAX_RETRIES = 3        # 最大重传次数
+TIMEOUT = 1.0          # 重传超时(秒)
+SIMULATE_LOSS = 0.3    # 模拟30%丢包率
+
+def unreliable_server(host='127.0.0.1', port=8888):
+    \"\"\"模拟不可靠的UDP服务端（随机丢弃请求模拟网络丢包）\"\"\"
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind((host, port))
+    print(f'[Server] UDP服务端启动于 {host}:{port}')
+    
+    while True:
+        data, addr = sock.recvfrom(1024)
+        # 模拟网络丢包：30%概率不回复
+        if random.random() < SIMULATE_LOSS:
+            print(f'[Server] 模拟丢包！丢弃来自{addr}的请求')
+            continue
+        seq = data.decode().split(':')[0]
+        print(f'[Server] 收到seq={seq}，发送ACK')
+        sock.sendto(f'ACK:{seq}'.encode(), addr)
+
+def reliable_client(host='127.0.0.1', port=8888):
+    \"\"\"带重传机制的UDP客户端（应用层实现可靠传输）\"\"\"
+    time.sleep(0.3)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.settimeout(TIMEOUT)
+    
+    for seq in range(1, 6):
+        message = f'{seq}:Hello UDP #{seq}'
+        delivered = False
+        for attempt in range(1, MAX_RETRIES + 1):
+            sock.sendto(message.encode(), (host, port))
+            print(f'[Client] 发送 seq={seq} (尝试 {attempt}/{MAX_RETRIES})')
+            try:
+                ack, _ = sock.recvfrom(1024)
+                if f'ACK:{seq}' in ack.decode():
+                    print(f'[Client] 收到ACK seq={seq} ✓')
+                    delivered = True
+                    break
+            except socket.timeout:
+                print(f'[Client] 超时！{TIMEOUT}s内未收到ACK，准备重传...')
+        if not delivered:
+            print(f'[Client] seq={seq} 发送失败（{MAX_RETRIES}次重传均超时）')
+    sock.close()
+
+if __name__ == '__main__':
+    print('=== UDP应用层重传实验（模拟30%丢包）===')
+    t = threading.Thread(target=unreliable_server, daemon=True)
+    t.start()
+    reliable_client()",
+  "explanation": "本代码演示UDP(RFC 768)的无连接不可靠特性，以及如何在应用层实现类似TCP的可靠传输（序号+ACK+超时重传）。服务端随机丢弃30%的请求模拟网络丢包；客户端实现重传计数器+超时检测。这揭示了为什么TCP需要在传输层内建可靠性机制，而UDP将可靠性决策留给应用层。",
+  "expected_output": "[Server] UDP服务端启动于 127.0.0.1:8888\\n[Client] 发送 seq=1 (尝试 1/3)\\n[Client] 收到ACK seq=1 ✓\\n[Client] 发送 seq=2 (尝试 1/3)\\n[Server] 模拟丢包！丢弃来自...的请求\\n[Client] 超时！1.0s内未收到ACK，准备重传...\\n[Client] 发送 seq=2 (尝试 2/3)\\n[Client] 收到ACK seq=2 ✓\\n...",
+  "wireshark_filter": "udp.port==8888",
+  "wireshark_key_fields": "观察要点：(1) UDP无握手，第一个包即携带数据 (2) UDP头部仅8字节(源端口+目的端口+长度+校验和) (3) 对比TCP的20字节最小头部，理解UDP的低开销设计",
+  "think_question": "本实验中的重传超时固定为1秒。TCP的RTO(重传超时)是如何动态计算的？为什么TCP不使用固定超时？（提示：RFC 6298的SRTT/RTTVAR自适应算法）",
+  "related_rfc": "RFC 768, RFC 6298 Section 2"
+}
+```
+
+## 输出格式
 返回JSON（不要加代码块标记）：
 {
-  "title": "代码案例标题",
+  "title": "代码案例标题（体现网络协议知识点）",
   "language": "python",
-  "code": "完整代码（含注释）",
-  "explanation": "代码逻辑解释（3-5句）",
-  "expected_output": "预期运行输出",
-  "wireshark_filter": "推荐的Wireshark过滤器（如：tcp.flags.syn==1）",
-  "think_question": "一个让学生思考的问题"
+  "code": "完整代码（含RFC引用注释、错误处理、超时机制）",
+  "explanation": "代码逻辑解释（4-6句，关联协议原理）",
+  "expected_output": "预期运行输出（含状态变化提示）",
+  "wireshark_filter": "推荐的Wireshark过滤器表达式（如：tcp.port==9999 and tcp.flags.syn==1）",
+  "wireshark_key_fields": "Wireshark中需观察的关键字段及其含义",
+  "think_question": "一个引导深入思考的问题（关联RFC标准或协议设计权衡）",
+  "related_rfc": "相关RFC标准号"
 }

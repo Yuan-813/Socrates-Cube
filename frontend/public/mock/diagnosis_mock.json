@@ -1,0 +1,26 @@
+{
+  "diagnosis_id": "diag_001",
+  "session_id": "session_001",
+  "trigger": "学生回答：HTTP协议直接运行在IP协议上",
+  "surface_error": "layer_misplacement",
+  "surface_error_description": "将HTTP协议的网络层级错误地定位在IP层之上，忽略了TCP传输层",
+  "root_cause": {
+    "weak_knowledge": "网络协议分层模型",
+    "confidence": 0.75,
+    "evidence": [
+      "未提及TCP在HTTP和IP之间的关键角色",
+      "混淆了OSI模型中传输层和网络层的关系"
+    ]
+  },
+  "misconception_pattern": "层次穿越型",
+  "pattern_explanation": "学生将应用层协议直接映射到网络层，跳过了传输层，属于典型的层次穿越型误解",
+  "intervention_suggestion": "建议通过HTTP分层封装仿真，直观展示HTTP→TCP→IP的逐层封装过程",
+  "suggested_resource_types": ["mindmap", "simulator"],
+  "is_correct": false,
+  "confidence": 0.72,
+  "error_type": "layer_misplacement",
+  "root_causes": ["对TCP/IP四层模型理解不深", "未区分OSI七层与TCP/IP四层"],
+  "missing_prerequisites": ["kn_003", "kn_005"],
+  "pattern": "层次穿越型",
+  "related_node_ids": ["kn_001", "kn_003", "kn_005"]
+}

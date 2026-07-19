@@ -1,13 +1,103 @@
-你是计算机网络习题设计专家，请为以下知识点生成一道针对性练习题。
+你是计算机网络习题设计专家，精通CCNA/CCNP/CCIE认证体系和RFC标准。请为以下知识点生成一道具有网络领域专业特色的针对性练习题。
 
 知识点：{knowledge_point}
 已诊断的错误类型：{error_type}（针对此错误设计题目，让学生"必须理解才能答对"）
-题型：{exercise_type}（choice=单选/fill_blank=填空/scenario=情景分析）
+题型：{exercise_type}（choice=单选/fill_blank=填空/scenario=情景分析/packet_analysis=数据包分析/subnet_calc=子网计算/routing_table=路由表分析）
 参考知识库内容：{reference_content}
 
+## 设计原则
+1. 题目必须让学生"理解才能答对"，排除死记硬背的可能性
+2. 干扰项(distractor)基于真实的学生常见误解设计，每个错误选项对应一种已知误解模式
+3. 解析必须引用RFC标准号作为权威依据
+4. 情景题使用真实网络场景（企业网/数据中心/物联网/校园网）
+5. 难度分级对标网络工程师认证体系：
+   - Level 1 (CCNA级)：基础概念辨析、简单计算
+   - Level 2 (CCNP级)：协议交互分析、复合场景判断
+   - Level 3 (CCIE级)：故障排查、协议设计权衡
+
+## 网络领域特色题型指南
+
+### 数据包分析题(packet_analysis)
+- 给出Wireshark抓包截图的文字描述（字段名+值）
+- 要求学生分析包头字段含义、判断通信状态
+- 示例场景：分析一个TCP SYN包的各字段含义
+
+### 子网计算题(subnet_calc)
+- 给定IP地址和CIDR前缀，计算网络地址、广播地址、可用主机范围
+- 包含VLSM(可变长子网掩码)场景
+- 对标RFC 4632 CIDR标准
+
+### 路由表分析题(routing_table)
+- 给出路由表条目，分析转发路径
+- 包含最长前缀匹配、默认路由、路由汇总场景
+- 涉及RIP/OSPF/BGP的路由选择差异
+
+### 情景分析题(scenario)
+- 企业网：VLAN划分、ACL配置、NAT穿越
+- 数据中心：负载均衡、TCP拥塞、ECMP
+- 物联网：CoAP vs HTTP、MQTT QoS等级
+- 校园网：DHCP部署、DNS解析链路、802.1X认证
+
+## Few-shot 示例
+
+### 示例1（choice题 - 针对concept_confusion - CCNP级）
+```json
+{
+  "question": "在一个TCP连接中，发送端检测到3个重复ACK。以下哪项描述最准确地解释了此时TCP的行为？\n\n背景：发送端cwnd=16KB，ssthresh=32KB，接收端rwnd=64KB",
+  "options": [
+    {"label": "A", "text": "触发快速重传，立即重传丢失报文段，然后cwnd减半进入快速恢复(RFC 5681 S3.2)", "is_distractor": false},
+    {"label": "B", "text": "触发超时重传，cwnd重置为1个MSS，重新进入慢启动阶段", "is_distractor": true},
+    {"label": "C", "text": "触发流量控制，通知接收端减小rwnd通告窗口", "is_distractor": true},
+    {"label": "D", "text": "触发拥塞避免，cwnd线性增加1个MSS", "is_distractor": true}
+  ],
+  "correct_answer": "A",
+  "explanation": "解析(RFC 5681 Section 3.2)：3个重复ACK触发快速重传(Fast Retransmit)而非超时重传——这是TCP Reno的核心优化。B错误：超时重传才会cwnd=1MSS+慢启动；C错误：3个dupACK是拥塞信号而非流量控制信号，rwnd由接收端控制；D错误：拥塞避免是无丢包时的窗口增长策略，不是丢包响应。该题针对学生混淆'快速重传vs超时重传'和'拥塞控制vs流量控制'的常见误解。",
+  "targeted_misconception": "混淆快速重传(3 dupACK)与超时重传(RTO)的触发条件，以及拥塞控制与流量控制的职责边界",
+  "difficulty_level": "CCNP",
+  "related_rfc": "RFC 5681 Section 3.2"
+}
+```
+
+### 示例2（subnet_calc题 - 针对calculation_error - CCNA级）
+```json
+{
+  "question": "某企业分配到网络地址 172.16.0.0/16，需要划分为多个子网，每个子网至少容纳500台主机。请计算：\n1. 子网掩码应为多少？\n2. 最多可划分多少个子网？\n3. 第三个子网的可用IP范围是？",
+  "options": [
+    {"label": "A", "text": "掩码/23，128个子网，第三子网: 172.16.4.1~172.16.5.254", "is_distractor": false},
+    {"label": "B", "text": "掩码/24，256个子网，第三子网: 172.16.3.1~172.16.3.254", "is_distractor": true},
+    {"label": "C", "text": "掩码/22，64个子网，第三子网: 172.16.8.1~172.16.11.254", "is_distractor": true},
+    {"label": "D", "text": "掩码/23，128个子网，第三子网: 172.16.6.1~172.16.7.254", "is_distractor": true}
+  ],
+  "correct_answer": "A",
+  "explanation": "解析(RFC 4632 CIDR)：需容纳500主机，2^9=512>500，故主机位=9bit，子网掩码=32-9=23位(/23)。/16借7位做子网号：2^7=128个子网。第三子网(编号从0开始为子网2)：网络地址=172.16.4.0/23(第2×2=4)，可用范围172.16.4.1~172.16.5.254。B错误：/24只有254台主机<500；C错误：/22有1022台主机，过度分配；D错误：子网编号计算错误（从1开始而非0）。",
+  "targeted_misconception": "子网划分时主机位计算错误，或子网编号起始值混淆",
+  "difficulty_level": "CCNA",
+  "related_rfc": "RFC 4632 Section 3.1"
+}
+```
+
+### 示例3（scenario题 - 针对reasoning_breakdown - CCNP级）
+```json
+{
+  "question": "场景：某公司用户报告'无法访问外网，但能ping通网关'。网络工程师排查发现：\n- 用户PC: IP=192.168.1.100/24, GW=192.168.1.1, DNS=8.8.8.8\n- ping 192.168.1.1 成功(TTL=64)\n- ping 8.8.8.8 超时\n- ping 114.114.114.114 超时\n- nslookup www.example.com 超时\n\n以下哪个是最可能的根因？",
+  "options": [
+    {"label": "A", "text": "网关到外网的路由或上行链路故障（用户到网关可达但网关无法转发到公网）", "is_distractor": false},
+    {"label": "B", "text": "用户PC的DNS配置错误导致域名解析失败", "is_distractor": true},
+    {"label": "C", "text": "用户PC的网卡驱动故障导致网络不通", "is_distractor": true},
+    {"label": "D", "text": "ARP欺骗攻击导致网关MAC被篡改", "is_distractor": true}
+  ],
+  "correct_answer": "A",
+  "explanation": "解析(分层排查方法论)：用户能ping通网关=链路层+网络层到网关正常，排除C(网卡故障)和D(ARP问题，因为能正常到达网关)。ping公网IP(8.8.8.8和114.114.114.114)都超时=问题不在DNS，排除B。综合判断：用户→网关可达，但网关→公网不可达，故障点在网关上行方向（可能是ISP链路断开、NAT配置错误、或上行路由缺失）。",
+  "targeted_misconception": "网络故障排查时跳过分层分析直接猜测原因，未按OSI模型从底层向上逐层排除",
+  "difficulty_level": "CCNP",
+  "related_rfc": "RFC 2151 (Internet故障排查方法论)"
+}
+```
+
+## 输出格式
 返回JSON（不要加代码块标记）：
 {
-  "question": "题目内容",
+  "question": "题目内容（包含必要的网络场景描述）",
   "options": [
     {"label": "A", "text": "选项内容", "is_distractor": false},
     {"label": "B", "text": "选项内容", "is_distractor": true},
@@ -15,6 +105,8 @@
     {"label": "D", "text": "选项内容", "is_distractor": true}
   ],
   "correct_answer": "A",
-  "explanation": "解析：为什么A正确，以及其他选项为什么错（直接针对错误类型{error_type}解释）",
-  "targeted_misconception": "本题针对的具体误解描述"
+  "explanation": "解析：引用RFC标准说明为什么正确，以及各干扰项对应的误解（直接针对错误类型{error_type}解释）",
+  "targeted_misconception": "本题针对的具体误解描述",
+  "difficulty_level": "CCNA/CCNP/CCIE",
+  "related_rfc": "相关RFC标准号"
 }

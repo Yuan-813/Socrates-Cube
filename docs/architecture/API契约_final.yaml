@@ -1,0 +1,362 @@
+openapi: 3.0.3
+info:
+  title: Socrates-Cube API
+  version: "1.0.0"
+  description: |
+    Socrates-Cube 多智能体自适应学习系统 API 契约（终版冻结）。
+    
+    所有接口前缀：/api/v1
+    
+    SSE 事件类型清单（冻结）：
+      - agent_start    : Agent 开始执行
+      - agent_end      : Agent 执行完成
+      - tool_call      : 工具调用状态更新
+      - token          : 流式 token 输出
+      - diagnosis      : 诊断结果推送
+      - resource       : 资源生成推送
+      - path_update    : 学习路径更新推送
+      - state_change   : Orchestrator 状态机变化
+      - done           : 本轮对话完成
+      - error          : 错误事件
+    
+    新增 SSE 事件类型需经架构师审批。
+servers:
+  - url: http://localhost:8000
+    description: 本地开发环境
+
+paths:
+  /health:
+    get:
+      summary: 健康检查
+      responses:
+        '200':
+          description: 系统状态
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  version:
+                    type: string
+                    example: "1.0.0"
+
+  /api/v1/chat/test:
+    get:
+      summary: 后端联通测试
+      responses:
+        '200':
+          description: 联通成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /api/v1/chat/stream:
+    post:
+      summary: SSE 流式对话
+      description: |
+        发送用户消息，返回 SSE 流式响应。
+        每条 SSE 消息格式：data: {"event":"...", "agent_name":"...", "data":{...}, "timestamp":"..."}
+        包含 heartbeat 保活机制（每 15s 发送 ": heartbeat"）。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                  maxLength: 2000
+                user_id:
+                  type: string
+                  default: student-001
+                session_id:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: SSE 事件流
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '400':
+          description: 消息为空
+
+  /api/v1/profile/{user_id}:
+    get:
+      summary: 获取学生画像
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 学生画像数据
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conceptual_understanding:
+                    type: number
+                    format: float
+                  protocol_analysis:
+                    type: number
+                    format: float
+                  calculation_ability:
+                    type: number
+                    format: float
+                  error_diagnosis:
+                    type: number
+                    format: float
+                  system_design:
+                    type: number
+                    format: float
+                  knowledge_connection:
+                    type: number
+                    format: float
+                  expression_clarity:
+                    type: number
+                    format: float
+                  self_correction:
+                    type: number
+                    format: float
+                  mastery_map:
+                    type: object
+                  weak_points:
+                    type: array
+                    items:
+                      type: string
+                  strong_points:
+                    type: array
+                    items:
+                      type: string
+                  turn_count:
+                    type: integer
+
+  /api/v1/path/plan:
+    post:
+      summary: 生成学习路径
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              properties:
+                user_id:
+                  type: string
+                target_node_ids:
+                  type: array
+                  items:
+                    type: string
+                  nullable: true
+      responses:
+        '200':
+          description: 学习路径
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  path_id:
+                    type: string
+                  title:
+                    type: string
+                  nodes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        node_id:
+                          type: string
+                        node_name:
+                          type: string
+                        recommendation_reason:
+                          type: string
+                        reason_sources:
+                          type: object
+                          properties:
+                            graph_dependency:
+                              type: string
+                            diagnosis_result:
+                              type: string
+                            cognitive_style:
+                              type: string
+
+  /api/v1/resources/generate-all:
+    post:
+      summary: 生成五类学习资源
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [knowledge_point]
+              properties:
+                knowledge_point:
+                  type: string
+                difficulty:
+                  type: integer
+                  default: 3
+      responses:
+        '200':
+          description: 五类资源生成结果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  knowledge_point:
+                    type: string
+                  total_resources:
+                    type: integer
+                  doc:
+                    type: object
+                  exercise:
+                    type: object
+                  code:
+                    type: object
+                  mindmap:
+                    type: object
+                  script:
+                    type: object
+
+  /api/v1/resources:
+    get:
+      summary: 获取最近生成的资源列表
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: 资源列表
+
+  /api/v1/logs/{session_id}:
+    get:
+      summary: 获取会话 Agent 日志
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Agent 日志列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    log_id:
+                      type: string
+                    agent_name:
+                      type: string
+                    action:
+                      type: string
+                    state:
+                      type: object
+                    result:
+                      type: object
+                    timestamp:
+                      type: string
+
+  /api/v1/simulator/scenarios:
+    get:
+      summary: 获取所有仿真场景
+      responses:
+        '200':
+          description: 仿真场景列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scenarios:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        value:
+                          type: string
+                        label:
+                          type: string
+                        desc:
+                          type: string
+                        step_count:
+                          type: integer
+
+  /api/v1/simulator/scenarios/{scenario_id}:
+    get:
+      summary: 获取指定场景步骤数据
+      parameters:
+        - name: scenario_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 场景详情
+        '404':
+          description: 场景不存在
+
+  /api/v1/simulator/run:
+    post:
+      summary: 运行仿真
+      parameters:
+        - name: scenario_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 仿真执行结果
+        '404':
+          description: 场景不存在
+
+components:
+  schemas:
+    SSEPayload:
+      type: object
+      properties:
+        event:
+          type: string
+          enum:
+            - agent_start
+            - agent_end
+            - tool_call
+            - token
+            - diagnosis
+            - resource
+            - path_update
+            - state_change
+            - done
+            - error
+        agent_name:
+          type: string
+        data:
+          type: object
+        timestamp:
+          type: string
+          format: date-time

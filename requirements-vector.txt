@@ -1,0 +1,19 @@
+# Optional vector-database dependencies (ChromaDB + LangChain RAG)
+# Windows 用户若安装失败，可跳过本文件；系统会自动使用本地 JSON 索引。
+# 安装：pip install -r requirements-vector.txt
+chromadb==0.5.0
+langchain==0.2.1
+langchain-community==0.2.1
+
+# ──────────────────────────────────────────────────────────────
+# PDF 高精度解析 (MinerU / magic-pdf) - 开源: https://github.com/opendatalab/MinerU
+# 未安装时自动降级 PyMuPDF，项目所有功能仍正常运行。
+# Windows 安装：pip install magic-pdf[full] --cache-dir D:\pip-cache
+# Linux/Mac 安装：pip install magic-pdf[full]
+# ──────────────────────────────────────────────────────────────
+# magic-pdf[full]  # 取消注释即安装 MinerU 完整功能版
+
+# ──────────────────────────────────────────────────────────────
+# PyMuPDF - PDF 标准降级方案（当 MinerU 未安装时自动使用）
+# ──────────────────────────────────────────────────────────────
+PyMuPDF>=1.24.0

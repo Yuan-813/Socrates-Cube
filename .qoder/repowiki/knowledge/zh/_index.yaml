@@ -1,0 +1,295 @@
+# 知识卡导出索引文件
+schema_version: 1
+locale: zh-CN
+branch: fix/integration-base
+nodes_managed: true
+exported_at: "2026-07-19T17:02:27Z"
+modules:
+    "":
+        dir_name: Socrates-Cube 多智能体自适应学习系统（根工程）
+        title: Socrates-Cube 多智能体自适应学习系统（根工程）
+        scope:
+            - pyproject.toml
+            - requirements.txt
+            - requirements-vector.txt
+            - start.sh
+            - .env.example
+            - .gitignore
+            - README.md
+            - Socrates-Cube Phase0-Phase3 全阶段仓库核查报告.md
+            - generate_acu_report.py
+            - start.bat
+        source_files: []
+        children:
+            - config_prompts
+            - docs
+            - frontend_app
+            - scripts_tooling
+            - tests
+        depends_on: []
+        related_to: []
+    config_prompts:
+        dir_name: 多智能体系统提示词与配置资源
+        title: 多智能体系统提示词与配置资源
+        scope:
+            - config/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: frontend_app/auth_and_onboarding
+            - path: frontend_app/career_interview_exam
+            - path: frontend_app/chat_and_conversation
+            - path: frontend_app/diagnosis_assessment
+    docs:
+        dir_name: 项目文档与交付材料库
+        title: 项目文档与交付材料库
+        scope:
+            - docs/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    frontend_app:
+        dir_name: 计算机网络知识图谱前端应用（Vue3 + Vite）
+        title: 计算机网络知识图谱前端应用（Vue3 + Vite）
+        scope:
+            - frontend/
+        source_files: []
+        children:
+            - frontend_app/auth_and_onboarding
+            - frontend_app/books_knowledge_base
+            - frontend_app/build_config_assets
+            - frontend_app/career_interview_exam
+            - frontend_app/chat_and_conversation
+            - frontend_app/diagnosis_assessment
+            - frontend_app/learning_path
+            - frontend_app/resources_library
+            - frontend_app/shared_ui_components
+            - frontend_app/simulator_training
+            - frontend_app/system_pages
+            - frontend_app/visualization_3d
+        depends_on: []
+        related_to: []
+    frontend_app/auth_and_onboarding:
+        dir_name: 登录与用户引导（多主题方案）
+        title: 登录与用户引导（多主题方案）
+        scope:
+            - frontend/src/views/LoginView.vue
+            - frontend/src/views/LoginViewScheme2.vue
+            - frontend/src/views/OAuthCallbackView.vue
+            - frontend/src/views/OnboardingView.vue
+            - frontend/src/views/OnboardingScheme1.vue
+            - frontend/src/views/OnboardingScheme2.vue
+            - frontend/src/views/OnboardingScheme3.vue
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: config_prompts
+            - path: frontend_app/system_pages
+    frontend_app/books_knowledge_base:
+        dir_name: 书籍知识库与阅读器视图
+        title: 书籍知识库与阅读器视图
+        scope:
+            - frontend/src/views/BookshelfView.vue
+            - frontend/src/views/BookHouseView.vue
+            - frontend/src/views/BookReaderView.vue
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: scripts_tooling
+    frontend_app/build_config_assets:
+        dir_name: 前端构建与部署配置
+        title: 前端构建与部署配置
+        scope:
+            - frontend/vite.config.ts
+            - frontend/tailwind.config.js
+            - frontend/postcss.config.js
+            - frontend/tsconfig.json
+            - frontend/tsconfig.node.json
+            - frontend/package.json
+            - frontend/nginx.conf
+            - frontend/vercel.json
+            - frontend/src/env.d.ts
+            - frontend/src/vite-env.d.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    frontend_app/career_interview_exam:
+        dir_name: 职业成长与测评视图集（Career & Assessment Views）
+        title: 职业成长与测评视图集（Career & Assessment Views）
+        scope:
+            - frontend/src/views/CareerView.vue
+            - frontend/src/views/InterviewView.vue
+            - frontend/src/views/ExamView.vue
+            - frontend/src/views/LessonView.vue
+            - frontend/src/components/RoleSelector.vue
+            - frontend/src/components/ScopeNotice.vue
+            - frontend/src/components/RegisterSuccessNotify.vue
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: config_prompts
+            - path: frontend_app/diagnosis_assessment
+    frontend_app/chat_and_conversation:
+        dir_name: AI 对话与虚拟教师面板
+        title: AI 对话与虚拟教师面板
+        scope:
+            - frontend/src/views/ChatView.vue
+            - frontend/src/views/ScenarioView.vue
+            - frontend/src/stores/chatStore.ts
+            - frontend/src/composables/useSSE.ts
+            - frontend/src/composables/useVirtualTeacher.ts
+            - frontend/src/components/ChatPanel.vue
+            - frontend/src/components/ChatMessage.vue
+            - frontend/src/components/VirtualTeacherPanel.vue
+            - frontend/src/api/chat.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: config_prompts
+            - path: frontend_app/simulator_training
+    frontend_app/diagnosis_assessment:
+        dir_name: 认知诊断与画像可视化视图
+        title: 认知诊断与画像可视化视图
+        scope:
+            - frontend/src/views/DiagnosisView.vue
+            - frontend/src/components/DiagnosisFlowStepper.vue
+            - frontend/src/components/ProfileSummaryPanel.vue
+            - frontend/src/components/ProfileRadar.vue
+            - frontend/src/types/diagnosis.ts
+            - frontend/src/types/profile.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: config_prompts
+            - path: frontend_app/career_interview_exam
+    frontend_app/learning_path:
+        dir_name: 可解释学习路径视图与时间线
+        title: 可解释学习路径视图与时间线
+        scope:
+            - frontend/src/views/PathView.vue
+            - frontend/src/stores/pathStore.ts
+            - frontend/src/components/PathTimeline.vue
+            - frontend/src/api/path.ts
+            - frontend/src/types/path.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    frontend_app/resources_library:
+        dir_name: AI 学习资源生成与展示（ResourcesView）
+        title: AI 学习资源生成与展示（ResourcesView）
+        scope:
+            - frontend/src/views/ResourcesView.vue
+            - frontend/src/stores/resourceStore.ts
+            - frontend/src/api/resources.ts
+            - frontend/src/types/resource.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: scripts_tooling
+    frontend_app/shared_ui_components:
+        dir_name: 应用级通用 UI 组件集
+        title: 应用级通用 UI 组件集
+        scope:
+            - frontend/src/components/AppEmpty.vue
+            - frontend/src/components/AppError.vue
+            - frontend/src/components/AppLoading.vue
+            - frontend/src/components/AppSkeleton.vue
+            - frontend/src/components/SplitScreenTransition.vue
+            - frontend/src/components/ResourceCards.vue
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    frontend_app/simulator_training:
+        dir_name: 协议仿真实验室与知识挑战模块
+        title: 协议仿真实验室与知识挑战模块
+        scope:
+            - frontend/src/views/SimulatorView.vue
+            - frontend/src/stores/simulatorStore.ts
+            - frontend/src/components/SimulatorPlayer.vue
+            - frontend/src/components/SimulationParams.vue
+            - frontend/src/components/AgentSelector.vue
+            - frontend/src/components/AgentLogPanel.vue
+            - frontend/src/components/AgentStatusBar.vue
+            - frontend/src/components/ChallengerPanel.vue
+            - frontend/src/components/ChallengerQuizCard.vue
+            - frontend/src/components/StateMachinePanel.vue
+            - frontend/src/components/KGPanel.vue
+            - frontend/src/components/MistakeBook.vue
+            - frontend/src/components/RepairOverview.vue
+            - frontend/src/api/challenger.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: frontend_app/chat_and_conversation
+            - path: scripts_tooling
+    frontend_app/system_pages:
+        dir_name: 系统首页与认证入口层（Home _ Welcome _ Profile _ Logs _ VideoGen）
+        title: 系统首页与认证入口层（Home / Welcome / Profile / Logs / VideoGen）
+        scope:
+            - frontend/src/views/HomeView.vue
+            - frontend/src/views/WelcomeView.vue
+            - frontend/src/views/ProfileView.vue
+            - frontend/src/views/LogsView.vue
+            - frontend/src/views/VideoGenView.vue
+            - frontend/src/stores/authStore.ts
+            - frontend/src/stores/userStore.ts
+            - frontend/src/api/auth.ts
+            - frontend/src/api/client.ts
+            - frontend/src/api/mockInterceptor.ts
+            - frontend/src/composables/useApi.ts
+            - frontend/src/types/agent.ts
+            - frontend/src/types/chat.ts
+            - frontend/src/types/sse.ts
+            - frontend/src/types/index.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: frontend_app/auth_and_onboarding
+    frontend_app/visualization_3d:
+        dir_name: 3D 可视化与 AI 知识图谱视图
+        title: 3D 可视化与 AI 知识图谱视图
+        scope:
+            - frontend/src/views/Device3DView.vue
+            - frontend/src/views/Hardware3DView.vue
+            - frontend/src/views/AIKGView.vue
+            - frontend/src/utils/kgMap.ts
+            - frontend/src/utils/animationConfig.ts
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    scripts_tooling:
+        dir_name: 知识库构建与数据工程脚本集
+        title: 知识库构建与数据工程脚本集
+        scope:
+            - scripts/
+            - generate_metrics.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: frontend_app/books_knowledge_base
+            - path: frontend_app/resources_library
+            - path: frontend_app/simulator_training
+    tests:
+        dir_name: Pytest 单元测试与集成测试套件
+        title: Pytest 单元测试与集成测试套件
+        scope:
+            - tests/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []

@@ -81,6 +81,9 @@ const currentRound = computed(() => rounds[currentIndex.value])
 const totalRounds = rounds.length
 const isFinished = computed(() => currentIndex.value >= totalRounds)
 
+// 实际错误数应从历史记录中统计，而不是 total - 正确（这样会把未完成题目也计为错误）
+const wrongCount = computed(() => history.value.filter(h => !h.correct).length)
+
 const progressPercent = computed(() => {
   if (isFinished.value) return 100
   return ((currentIndex.value) / totalRounds) * 100
@@ -140,7 +143,7 @@ function resetAll() {
           <span class="stat-label">正确</span>
         </div>
         <div class="stat-box">
-          <span class="stat-num">{{ totalRounds - score }}</span>
+          <span class="stat-num stat-wrong">{{ wrongCount }}</span>
           <span class="stat-label">错误</span>
         </div>
         <div class="stat-box">
@@ -218,12 +221,6 @@ function resetAll() {
             placeholder="输入你对该陈述错误的解释..."
             resize="none"
           />
-        </div>
-
-        <div v-if="userJudgment === 'correct' && !currentRound.isCorrect" class="explanation-input">
-          <el-alert type="warning" :closable="false" class="mb-3">
-            你选择了"正确"，请确认你真的认为这个陈述没有问题。
-          </el-alert>
         </div>
 
         <el-button
@@ -379,6 +376,10 @@ function resetAll() {
   font-size: 22px;
   font-weight: 700;
   color: #1e293b;
+}
+
+.stat-wrong {
+  color: #dc2626;
 }
 
 .stat-label {

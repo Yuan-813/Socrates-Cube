@@ -34,6 +34,11 @@ export const useUserStore = defineStore('user', () => {
   const username = ref<string>('学生用户')
   const isLoggedIn = ref<boolean>(true)
   const profile = ref<StudentProfile>(defaultProfile())
+  const demoMode = ref<boolean>(false)
+  const manualRead = ref<boolean>(false)
+  /** 学生综合掌握度历史（最近12次，每次 ProfilerAgent 更新后记录一个快照）
+   *  这才是“能力成长曲线”的真正数据源，区别于 chatStore.confidenceHistory（AI 诊断自信度） */
+  const masteryHistory = ref<number[]>([])
 
   /** 8维评分数组（供 ECharts 雷达图使用） */
   const radarScores = computed(() =>
@@ -49,8 +54,10 @@ export const useUserStore = defineStore('user', () => {
   async function fetchProfile() {
     try {
       const resp = await apiClient.get(`/api/v1/profile/${userId.value}`)
-      if (resp.data?.profile) {
-        profile.value = { ...defaultProfile(), ...resp.data.profile }
+      // profile 响应识别：新格式 { success, data: { profile } }，旧格式 { profile }
+      const payload = resp.data?.data ?? resp.data
+      if (payload?.profile) {
+        profile.value = { ...defaultProfile(), ...payload.profile }
       }
     } catch {
       // 保留本地默认值
@@ -60,6 +67,14 @@ export const useUserStore = defineStore('user', () => {
   /** 从 SSE agent_end(Profiler) 事件更新画像 */
   function updateFromSSE(partial: Partial<StudentProfile>) {
     profile.value = { ...profile.value, ...partial }
+    // 每次画像被 ProfilerAgent 更新，记录一个综合掌握度快照（这才是能力曲线的真正含义）
+    const mastery = Math.round(
+      PROFILE_DIMS.reduce((sum, d) => sum + profile.value[d], 0) / PROFILE_DIMS.length * 100
+    )
+    masteryHistory.value.push(mastery)
+    if (masteryHistory.value.length > 12) {
+      masteryHistory.value = masteryHistory.value.slice(-12)
+    }
   }
 
   function setUser(id: string, name: string) {
@@ -73,8 +88,11 @@ export const useUserStore = defineStore('user', () => {
     username,
     isLoggedIn,
     profile,
+    demoMode,
+    manualRead,
     radarScores,
     profileCompleteness,
+    masteryHistory,
     fetchProfile,
     updateFromSSE,
     setUser,

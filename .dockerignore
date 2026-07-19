@@ -1,0 +1,42 @@
+# ─────────────────────────────────────────────────────────────
+# 根目录 .dockerignore — 后端构建上下文排除规则
+# ─────────────────────────────────────────────────────────────
+
+# 版本控制
+.git
+.gitignore
+
+# Python 缓存 & 虚拟环境
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# 前端（由 frontend/Dockerfile 单独构建）
+frontend/node_modules
+frontend/dist
+frontend/.env*
+
+# 本地开发工具
+.qoder
+.vscode
+*.idea
+
+# 日志 & 临时文件
+*.log
+*.tmp
+outputs/
+
+# 敏感配置（通过 docker run -e 或 docker-compose env 传入）
+.env
+
+# 文档（减小构建上下文）
+docs/
+*.md
+
+# 大型 PDF 书籍（已通过向量库索引，镜像中不必携带原文件）
+data/books/

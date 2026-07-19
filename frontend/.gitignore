@@ -34,6 +34,10 @@ Thumbs.db
 .env.*
 !.env.example
 
+# Vite dev output logs
+vite_out.txt
+vite_err.txt
+
 # Lock files (optional, keep one)
 # package-lock.json
 # yarn.lock

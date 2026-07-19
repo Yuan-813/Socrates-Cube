@@ -1,5 +1,8 @@
 <template>
   <div class="resource-section">
+    <!-- 生成进度追踪 -->
+    <GenerationProgress />
+
     <!-- Tab 切换栏 -->
     <div class="flex gap-1 border-b border-gray-100 mb-3">
       <button
@@ -11,7 +14,7 @@
           : 'text-gray-500 hover:text-gray-700'"
         @click="resourceStore.activeTab = tab.type"
       >
-        {{ tab.label }}
+        {{ tab.icon }} {{ tab.label }}
         <span v-if="tab.count > 0"
           class="ml-1 px-1 py-0.5 rounded-full text-xs bg-gray-200 text-gray-600">
           {{ tab.count }}
@@ -47,14 +50,19 @@ import type { ResourceType } from '../../types'
 import DocCard from './DocCard.vue'
 import ExerciseCard from './ExerciseCard.vue'
 import CodeCard from './CodeCard.vue'
+import MindmapCard from './MindmapCard.vue'
+import ScriptCard from './ScriptCard.vue'
+import GenerationProgress from './GenerationProgress.vue'
 
 const resourceStore = useResourceStore()
 const activeTab = computed(() => resourceStore.activeTab)
 
 const tabs = computed(() => [
-  { type: 'doc' as ResourceType, label: '知识文档', count: resourceStore.docResources.length },
-  { type: 'exercise' as ResourceType, label: '练习题', count: resourceStore.exerciseResources.length },
-  { type: 'code' as ResourceType, label: '代码示例', count: resourceStore.codeResources.length },
+  { type: 'doc' as ResourceType, label: '知识文档', icon: '📄', count: resourceStore.docResources.length },
+  { type: 'exercise' as ResourceType, label: '练习题', icon: '📝', count: resourceStore.exerciseResources.length },
+  { type: 'code' as ResourceType, label: '代码示例', icon: '💻', count: resourceStore.codeResources.length },
+  { type: 'mindmap' as ResourceType, label: '思维导图', icon: '🗺️', count: resourceStore.mindmapResources.length },
+  { type: 'script' as ResourceType, label: '视频脚本', icon: '🎬', count: resourceStore.scriptResources.length },
 ])
 
 const currentResources = computed(() => {
@@ -62,6 +70,8 @@ const currentResources = computed(() => {
     case 'doc': return resourceStore.docResources
     case 'exercise': return resourceStore.exerciseResources
     case 'code': return resourceStore.codeResources
+    case 'mindmap': return resourceStore.mindmapResources
+    case 'script': return resourceStore.scriptResources
     default: return resourceStore.docResources
   }
 })
@@ -71,6 +81,8 @@ const cardComponent = computed(() => {
     case 'doc': return DocCard
     case 'exercise': return ExerciseCard
     case 'code': return CodeCard
+    case 'mindmap': return MindmapCard
+    case 'script': return ScriptCard
     default: return DocCard
   }
 })

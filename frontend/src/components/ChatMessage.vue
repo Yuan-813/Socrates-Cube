@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { renderMarkdown } from '@/utils/markdown'
-import type { ChatMessage } from '@/stores/chatStore'
+import type { ChatMessage, AgentTraceItem } from '@/stores/chatStore'
 
 interface Props {
   message: ChatMessage
@@ -9,11 +9,40 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const renderedContent = computed(() => {
-  return renderMarkdown(props.message.content)
+const renderedContent = computed(() => renderMarkdown(props.message.content))
+const isUser = computed(() => props.message.role === 'user')
+
+// 执行链路展开/收起
+const showTrace = ref(false)
+
+// Agent 图标映射
+const AGENT_ICONS: Record<string, string> = {
+  '知识检索': '🔍',
+  '认知诊断': '🧠',
+  '画像更新': '👤',
+  '资源生成': '📚',
+  '路径规划': '🗳️',
+  '挑战追问': '⚡',
+}
+
+function formatMs(ms: number): string {
+  if (ms >= 1000) return `${(ms / 1000).toFixed(1)}s`
+  return `${ms}ms`
+}
+
+const confColor = computed(() => {
+  const v = (props.message.diagnosisConfidence ?? 0) * 100
+  if (v >= 85) return '#10b981'
+  if (v >= 70) return '#3b82f6'
+  if (v >= 50) return '#f59e0b'
+  return '#ef4444'
 })
 
-const isUser = computed(() => props.message.role === 'user')
+function traceNodeClass(item: AgentTraceItem) {
+  if (item.durationMs > 2000) return 'node-slow'
+  if (item.durationMs > 500) return 'node-normal'
+  return 'node-fast'
+}
 </script>
 
 <template>
@@ -29,7 +58,62 @@ const isUser = computed(() => props.message.role === 'user')
           <span class="message-role">{{ isUser ? '你' : (message.agentName || 'AI教练') }}</span>
           <span class="message-time">{{ new Date(message.timestamp).toLocaleTimeString() }}</span>
         </div>
+
         <div class="message-body markdown-body" v-html="renderedContent" />
+
+        <!-- 响应质量元数据（流式结束后展示） -->
+        <div
+          v-if="!isUser && !message.isStreaming && (message.responseTimeMs || message.diagnosisConfidence)"
+          class="msg-meta"
+        >
+          <span v-if="message.responseTimeMs" class="meta-chip time-chip">
+            ⏱ {{ formatMs(message.responseTimeMs) }}
+          </span>
+          <span
+            v-if="message.diagnosisConfidence"
+            class="meta-chip conf-chip"
+            :style="{ borderColor: confColor, color: confColor }"
+          >
+            🎯 {{ Math.round(message.diagnosisConfidence * 100) }}% 置信
+          </span>
+          <span v-if="message.sourceCount" class="meta-chip src-chip">
+            📚 {{ message.sourceCount }} 篇来源
+          </span>
+        </div>
+
+        <!-- Agent 执行链路（可折叠） -->
+        <div
+          v-if="!isUser && !message.isStreaming && message.agentTrace?.length"
+          class="trace-section"
+        >
+          <button class="trace-toggle" @click="showTrace = !showTrace">
+            <span class="trace-toggle-icon">&#x26D3;</span>
+            <span class="trace-toggle-label">Agent 执行链路</span>
+            <span class="trace-toggle-count">{{ message.agentTrace.length }} 步</span>
+            <span v-if="message.responseTimeMs" class="trace-toggle-total">
+              总耗时 {{ formatMs(message.responseTimeMs) }}
+            </span>
+            <span class="trace-toggle-arrow" :class="{ 'is-open': showTrace }">&#x25BE;</span>
+          </button>
+
+          <div v-show="showTrace" class="trace-pipeline">
+            <template v-for="(item, idx) in message.agentTrace" :key="item.agentName + idx">
+              <div class="trace-node" :class="traceNodeClass(item)">
+                <span class="node-icon">{{ AGENT_ICONS[item.displayName] ?? '🤖' }}</span>
+                <div class="node-body">
+                  <span class="node-name">{{ item.displayName }}</span>
+                  <span class="node-ms">{{ item.durationMs }}ms</span>
+                </div>
+              </div>
+              <div v-if="idx < message.agentTrace!.length - 1" class="trace-arrow">
+                <svg width="16" height="16" viewBox="0 0 16 16">
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </template>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -39,6 +123,18 @@ const isUser = computed(() => props.message.role === 'user')
 .message-wrapper {
   display: flex;
   width: 100%;
+  animation: msg-slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes msg-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .message-wrapper.user {
@@ -177,6 +273,126 @@ const isUser = computed(() => props.message.role === 'user')
 
 .message-wrapper.assistant .message-header {
   gap: 6px;
+}
+
+/* ======================== 响应元数据条 ======================== */
+.msg-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid;
+}
+
+.time-chip {
+  color: #64748b;
+  border-color: #e2e8f0;
+  background: #f8fafc;
+}
+
+.conf-chip {
+  background: #fafafa;
+}
+
+.src-chip {
+  color: #6366f1;
+  border-color: #c7d2fe;
+  background: #eef2ff;
+}
+
+/* ======================== Agent 执行链路 ======================== */
+.trace-section {
+  margin-top: 10px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 8px;
+}
+
+.trace-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 8px;
+  background: linear-gradient(90deg, #f0f9ff, #fafafa);
+  border: 1px solid #e0f2fe;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #0369a1;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.trace-toggle:hover {
+  background: #e0f2fe;
+  border-color: #bae6fd;
+}
+
+.trace-toggle-icon { font-size: 13px; }
+.trace-toggle-label { font-weight: 600; flex: 1; }
+.trace-toggle-count {
+  background: #0ea5e9;
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+}
+.trace-toggle-total {
+  color: #64748b;
+  font-size: 11px;
+}
+.trace-toggle-arrow {
+  font-size: 10px;
+  transition: transform 0.2s;
+  color: #94a3b8;
+}
+.trace-toggle-arrow.is-open { transform: rotate(180deg); }
+
+.trace-pipeline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 10px 8px 4px;
+  overflow-x: auto;
+}
+
+.trace-node {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid;
+  min-width: 80px;
+  transition: box-shadow 0.15s;
+}
+.trace-node:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+
+.node-fast  { background: #f0fdf4; border-color: #86efac; }
+.node-normal{ background: #fffbeb; border-color: #fcd34d; }
+.node-slow  { background: #fef2f2; border-color: #fca5a5; }
+
+.node-icon { font-size: 14px; flex-shrink: 0; }
+.node-body { display: flex; flex-direction: column; }
+.node-name { font-size: 11px; font-weight: 600; color: #1e293b; }
+.node-ms   { font-size: 10px; color: #64748b; font-family: 'JetBrains Mono', monospace; }
+
+.trace-arrow {
+  color: #94a3b8;
+  flex-shrink: 0;
 }
 </style>
 

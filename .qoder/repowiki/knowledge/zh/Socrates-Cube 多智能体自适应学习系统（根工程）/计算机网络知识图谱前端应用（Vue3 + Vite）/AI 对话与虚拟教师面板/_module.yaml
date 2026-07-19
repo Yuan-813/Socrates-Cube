@@ -1,0 +1,18 @@
+schema_version: 1
+module_path: frontend_app/chat_and_conversation
+title: AI 对话与虚拟教师面板
+scope:
+    - frontend/src/views/ChatView.vue
+    - frontend/src/views/ScenarioView.vue
+    - frontend/src/stores/chatStore.ts
+    - frontend/src/composables/useSSE.ts
+    - frontend/src/composables/useVirtualTeacher.ts
+    - frontend/src/components/ChatPanel.vue
+    - frontend/src/components/ChatMessage.vue
+    - frontend/src/components/VirtualTeacherPanel.vue
+    - frontend/src/api/chat.ts
+source_files: []
+depends_on: []
+related_to:
+    - path: config_prompts
+    - path: frontend_app/simulator_training

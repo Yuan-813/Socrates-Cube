@@ -1,5 +1,27 @@
 # Phase 3 遗留问题记录
 
+## Phase 3 遗留问题记录
+
+| 问题ID | 问题描述 | 严重度 | 处理状态 |
+|--------|---------|--------|---------|
+| P3-001 | `data/knowledge_graph.json` 未确认可用 | Critical | ✅ Phase 4 已生成并提交 20 节点 21 边 |
+| P3-002 | `/health` 路由需要确认 | Critical | ✅ 当前 `src/loopse/main.py` 通过 `api/health.py` 提供 `/health` |
+| P3-003 | `SRS_v1.md` 被 C 分支删除 | Critical | ✅ Phase 4 已恢复并补充第 5 章 |
+| P3-004 | `PathTimeline` 与 `PathReasonModal` 缺少联动 | High | ✅ 已在时间线中接入弹窗 |
+| P3-005 | `AgentStatusBar` 所有分支均缺失 | High | ✅ Phase 4 已实现并接入 ChatView |
+| P3-006 | `feature/C-role` 的 pycache 污染 | Medium | ✅ Phase 4 已清理并统一目录为 `src/loopse/agent/` |
+| P3-007 | `knowledge_graph.py` 两套实现冲突 | High | ✅ Phase 4 保留 `_estimate_mastery` 兼容能力 |
+
+## 清账总结
+
+- **遗留问题总数**：7 个
+- **Critical 级别**：3 个（P3-001、P3-002、P3-003）
+- **High 级别**：3 个（P3-004、P3-005、P3-007）
+- **Medium 级别**：1 个（P3-006）
+- **已完成数量**：7 个
+- **清账完成率**：100%
+# Phase 3 遗留问题记录
+
 | 问题ID | 问题描述 | 严重度 | 处理状态 |
 | --- | --- | --- | --- |
 | P3-001 | `data/knowledge_graph.json` 未确认可用 | Critical | 当前图谱为 20 节点、21 边，满足 Phase 4 最小验收 |

@@ -1,786 +1,1058 @@
-# 系统开发说明书 v1.0
-
-## 一、项目概述
-
-**项目名称：** Socrates-Cube 苏格拉底问答学习系统  
-**目标赛项：** 软件杯 A3 — AI 赋能教育创新  
-**核心场景：** 面向《计算机网络》课程的多智能体自适应学习系统  
-**文档版本：** v1.0 终稿（2026-07-19 最终更新）
-
-> **开源工具集成声明**：本系统集成以下开源项目
-> - [MinerU](https://github.com/opendatalab/MinerU) (Apache 2.0) — PDF 高精度解析引擎
-> - [OpenMAIC](https://github.com/THU-MAIC/OpenMAIC) (MIT) — 清华大学 MAIC 实验室多智能体教学平台（架构参考）
-> - [ChatGLM3](https://github.com/THUDM/ChatGLM3) (Apache 2.0) — 清华大学 KEG 实验室开源对话模型（GLM-4 商业版接入）
-> - [SenseNova-U1](https://github.com/OpenSenseNova/SenseNova-U1) — 多模态信息图生成
+# 系统开发说明书
 
 ---
 
-## 二、技术栈
-
-### 后端
-| 组件 | 版本 | 用途 |
-|------|------|------|
-| Python | 3.10+ | 运行时 |
-| FastAPI | 0.111.0 | Web 框架 |
-| uvicorn | 0.29.0 | ASGI 服务器 |
-| sse-starlette | 2.1.0 | SSE 推送 |
-| SQLAlchemy | 2.0.30 | ORM |
-| aiosqlite | 0.20.0 | 异步 SQLite |
-| ChromaDB | 0.5.0 | 向量数据库 |
-| spark-ai-python | >=0.4.5 | 讯飞星火 LLM |
-| python-dotenv | 1.0.1 | 环境变量管理 |
-
-### 前端
-| 组件 | 版本 | 用途 |
-|------|------|------|
-| Vue | 3.x | UI 框架 |
-| TypeScript | 5.x | 类型安全 |
-| Vite | 5.x | 构建工具 |
-| TailwindCSS | 3.x | 样式 |
-| Pinia | 2.x | 状态管理 |
-| ECharts | 5.x | 数据可视化 |
-| markdown-it | 14.x | Markdown 渲染 |
+| 项目名称 | Socrates-Cube 多智能体自适应网络协议学习系统 |
+|----------|----------------------------------------------|
+| 文档编号 | SC-SDD-2026-001 |
+| 版本号   | V2.0 |
+| 编制日期 | 2026-07-20 |
+| 文档状态 | 正式发布 |
+| 保密级别 | 内部资料 |
+| 编制依据 | GB/T 8567-2006《计算机软件文档编制规范》 |
 
 ---
 
-## 三、C4 架构设计
+## 变更历史
 
-### 3.1 Context 上下文图（C4 - Level 1）
+| 版本 | 日期 | 变更说明 | 编制人 |
+|------|------|----------|--------|
+| V1.0 | 2026-05-20 | 初稿，建立基础架构框架 | B |
+| V1.1 | 2026-07-13 | 补充 C4 架构图、状态图、接口规格、算法描述 | B |
+| V2.0 | 2026-07-20 | 依据 GB/T 8567-2006 全面升级，增加组件详细设计、AI 技术融合方案、知识库详细设计 | A+B |
+
+---
+
+## 目录
+
+1. 引言
+2. 总体设计
+3. 多智能体核心设计
+4. 接口设计
+5. 数据结构设计
+6. AI 技术融合设计
+7. 运行设计
+8. 系统出错处理设计
+9. 附录
+
+---
+
+## 1 引言
+
+### 1.1 编写目的
+
+本文档是 Socrates-Cube 系统的系统开发说明书，依据 GB/T 8567-2006 § 5.6 编制。文档详细描述系统的总体架构、多智能体设计、接口规格、数据结构、关键算法及 AI 技术融合方案，供开发人员、测试人员及评审专家参考。
+
+本文档是在软件需求规格说明书（SC-SRS-2026-001）基础上进行的设计细化，需与其配套阅读。
+
+### 1.2 背景
+
+**系统名称：** Socrates-Cube（苏格拉底方块）  
+**参赛赛项：** 第十五届"中国软件杯"A3 赛题  
+**核心技术路线：** 大语言模型（LLM）+ 检索增强生成（RAG）+ 多智能体协同（Multi-Agent）+ 知识图谱（KG）
+
+系统创新地将认知科学中的诊断模型（错误识别→根因追溯→模式归类）与 AI 技术深度融合，面向计算机网络课程构建了具有可解释性的自适应学习闭环。
+
+### 1.3 定义与缩略词
+
+参见《软件需求规格说明书》（SC-SRS-2026-001）第 1.3 节。
+
+新增本文档特定术语：
+
+| 术语 | 定义 |
+|------|------|
+| C4 架构 | Context-Container-Component-Code 四层软件架构描述模型 |
+| SSE 事件 | 通过 text/event-stream 协议推送的结构化 JSON 事件 |
+| Pydantic Schema | 使用 Python Pydantic 库定义的数据模型，含类型校验 |
+| SQLAlchemy | Python 的异步 ORM 框架，用于数据库操作 |
+| Kahn 算法 | 基于入度的拓扑排序算法，用于知识路径规划 |
+| Mock Provider | 无外部 LLM 时的本地响应提供器，预置典型问答数据 |
+| DFP | Domain Filter Policy，域外问题过滤策略 |
+
+### 1.4 参考资料
+
+1. GB/T 8567-2006《计算机软件文档编制规范》
+2. SC-SRS-2026-001《Socrates-Cube 软件需求规格说明书》
+3. FastAPI 官方文档（https://fastapi.tiangolo.com）
+4. Vue 3 Composition API 文档（https://vuejs.org）
+5. OpenMAIC 多智能体教学平台（清华大学，MIT License）——架构参考
+6. Kahn 算法论文《Topological sorting of large networks》(1962)
+
+---
+
+## 2 总体设计
+
+### 2.1 需求规定
+
+本系统需实现的核心能力如下（详见 SC-SRS-2026-001）：
+
+| 需求 ID | 需求摘要 | 设计应对 |
+|---------|---------|---------|
+| F01 | SSE 流式对话 | OrchestratorAgent + SSE 中间件 |
+| F02 | 三库知识检索 | RetrieverAgent + ChromaDB/本地 JSON |
+| F03 | 三层认知诊断 | DiagnosisAgent + 三层 Prompt 链 |
+| F04 | 八维学习画像 | ProfilerAgent + SQLite 持久化 |
+| F05 | 多 Agent 编排 | OrchestratorAgent + AgentCoordinator |
+| F06 | 五类资源生成 | ResourceGeneratorAgent + 5 类 Prompt |
+| F07 | 可解释路径规划 | PathPlannerAgent + Kahn 算法 + KG |
+| F08 | 协议仿真 | SimulatorPlayer.vue + Canvas 2D |
+| F09 | 可信机制 | TrustMechanism + DFP 过滤 |
+
+### 2.2 运行环境
+
+| 类别 | 规格 |
+|------|------|
+| 服务端 Python | 3.10+（3.12.7 已验证），asyncio 异步运行时 |
+| Web 框架 | FastAPI 0.111.0 + Uvicorn 0.29.0 ASGI 服务器 |
+| 数据库 | SQLite 3（aiosqlite 0.20.0 异步驱动） |
+| 向量库 | ChromaDB 0.5.0（可选），降级方案：本地 JSON |
+| LLM 服务 | 讯飞星火 Spark v3.5（spark-ai-python ≥ 0.4.5） |
+| 前端运行时 | Node.js 18+，Vue 3.5，Vite 5.4 |
+| 浏览器 | Chrome/Edge 90+，支持 Canvas 2D + SSE |
+| 操作系统 | Windows 10/11 / Ubuntu 20.04+ / macOS 12+ |
+
+### 2.3 基本设计概念与处理流程
+
+#### 2.3.1 核心设计理念
+
+系统采用三项核心设计理念：
+
+**（1）认知闭环驱动（Cognitive Loop Driven）**
+
+整个系统流程围绕"诊断→生成→规划→反馈"认知闭环设计：学生每次交互产生诊断数据，诊断结果驱动资源生成，资源使用更新画像，画像变化触发路径重规划。
+
+**（2）多智能体星形协同（Star-Topology Multi-Agent）**
+
+OrchestratorAgent 作为中枢节点，按意图路由激活专业 Agent 子集，避免全链路串行执行。各 Agent 职责单一，通过 Python asyncio 并发运行，结果通过 SSE 事件流实时推送。
+
+**（3）可信优先（Trust-First）**
+
+知识库来源可溯（三库联合检索 + 引用标注），域外问题主动拦截（DFP），不确定内容主动声明。防幻觉机制不依赖单一 LLM 自我约束，而是通过结构化检索结果注入实现。
+
+#### 2.3.2 主处理流程
+
+```
+学生输入问题
+      │
+      ▼
+[1] OrchestratorAgent 接收
+  │  ├─ 意图分类（AgentCoordinator）
+  │  └─ 可信过滤（DFP 第一层：域外拦截）
+      │
+      ▼
+[2] RetrieverAgent 知识检索
+  │  ├─ 三库向量检索（ChromaDB/JSON）
+  │  ├─ 查询扩展（同义词+缩略词）
+  │  └─ 知识图谱节点命中
+      │
+      ▼
+[3] DiagnosisAgent 三层诊断（若检测到错误）
+  │  ├─ L1：表面错误识别
+  │  ├─ L2：根因分析
+  │  └─ L3：误区模式匹配
+      │
+      ▼
+[4] LLM 流式生成主回复（token SSE 事件流）
+      │
+      ▼
+[5] TrustMechanism 可信处理（第二、三层）
+  │  ├─ 溯源标注（引用 [1][2]）
+  │  └─ 不确定性声明（confidence < 0.6）
+      │
+      ▼
+[6] ProfilerAgent 画像更新
+  │  ├─ 确定性增量更新
+  │  └─ 每 5 轮 LLM 全量校准
+      │
+      ▼
+[7] 按需激活（ResourceGenerator / PathPlanner）
+  │  ├─ 五类资源生成（含兜底 fallback）
+  │  └─ 知识图谱路径规划
+      │
+      ▼
+[8] SSE done 事件，前端渲染
+```
+
+### 2.4 系统结构（C4 架构）
+
+#### 2.4.1 上下文图（Level 1）
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        学生 / 教师用户                          │
-└─────────────────────────────┬───────────────────────────────────┘
-                              │
-                              │ 浏览器访问
-                              ▼
+│  外部参与者                                                     │
+│  ┌─────────┐   ┌─────────┐   ┌────────────────────────────┐   │
+│  │  学  生  │   │  助  教  │   │  讯飞星火 LLM API (可选)    │   │
+│  └────┬────┘   └────┬────┘   └──────────────┬─────────────┘   │
+└───────┼─────────────┼───────────────────────┼─────────────────┘
+        │ 浏览器访问   │                        │ HTTPS/WS
+        ▼             ▼                        ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    Socrates-Cube 系统                              │
-│  ┌──────────┐  ┌────────────┐  ┌───────────────┐              │
-│  │ 前端 SPA  │  │  后端 API   │  │  知识库/数据库 │              │
-│  └──────────┘  └────────────┘  └───────────────┘              │
-└─────────────────────────────┬───────────────────────────────────┘
-                              │
-                              │ API 调用
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    讯飞星火大模型 API                             │
+│                  Socrates-Cube 应用系统                         │
+│  ┌───────────────────┐    ┌──────────────────────────────────┐ │
+│  │  前端 SPA (Vue3)  │◄──►│  后端 API + 多 Agent 引擎        │ │
+│  │  Port: 5173        │    │  FastAPI / Port: 8000            │ │
+│  └───────────────────┘    └──────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**系统上下文说明：**
-- **主要用户**：学习计算机网络的学生、课程助教、授课教师
-- **外部依赖**：讯飞星火大模型 API（提供自然语言理解与生成能力）
-- **核心价值**：通过多 Agent 协作为学生提供个性化、自适应的计算机网络课程辅导
-
-### 3.2 Container 容器图（C4 - Level 2）
+#### 2.4.2 容器图（Level 2）
 
 ```
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                          Socrates-Cube 应用系统                                      │
-│                                                                               │
-│  ┌─────────────────────┐    ┌──────────────────────────────────────┐               │
-│  │   前端应用 (Vue)   │    │        后端服务 (FastAPI)        │               │
-│  │                   │    │                                  │               │
-│  │  - ChatPanel      │    │  ┌──────────────────────────┐   │               │
-│  │  - DiagnosisPanel │    │  │   API 路由层             │   │               │
-│  │  - ProfileRadar   │    │  │   (chat/resources/...)    │   │               │
-│  │  - PathTimeline    │    │  └──────────┬───────────────┘   │               │
-│  │  - AgentLogPanel  │    │             │                   │               │
-│  └─────────┬─────────┘    │  ┌──────────▼───────────────┐   │               │
-│            │              │  │   OrchestratorAgent        │   │               │
-│  HTTP/SSE  │              │  │   (多Agent协调器)           │   │               │
-│            │              │  └──────┬───────┬───────┬──────┘   │               │
-│            │              │         │       │       │          │               │
-│            │              │  ┌────▼───┐ ┌─▼────┐ ┌▼───────┐ ┌▼──────────┐ │
-│            │              │  │Retriever│ │Diagnosis│ │Profiler│ │ResourceGen│ │
-│            │              │  │  Agent  │ │ Agent │ │ Agent │ │  Agent  │ │
-│            │              │  └─────────┬─┘ └───────┘ └───────┘ └─────────┘ │
-│            │              │          │                                    │               │
-│            │              │  ┌───────▼─────────┐    ┌──────────────┐    │               │
-│            │              │  │  PathPlanner    │    │  数据访问层     │    │               │
-│            │              │  │    Agent         │    │  (Repository)  │    │               │
-│            │              │  └─────────────────┘    └───────┬──────┘    │               │
-│            │              │                           │             │               │
-└────────────┴──────────────┘───────────────────────────┼─────────────┘               │
-                                                         │                             │
-                                                         ▼                             │
-                                               ┌─────────────────┐                  │
-                                               │   数据存储层        │                  │
-                                               │  - SQLite (业务)│                  │
-                                               │  - ChromaDB (向量)│                  │
-                                               │  - 知识图谱 JSON  │                  │
-                                               └─────────────────┘                  │
-                                                                                   └───────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│                     Socrates-Cube 应用系统                    │
+│                                                               │
+│  ┌──────────────────┐  HTTP/SSE  ┌───────────────────────┐  │
+│  │  前端 SPA         │◄──────────►│  FastAPI 后端           │  │
+│  │  Vue3+TS+Pinia    │            │  uvicorn ASGI 服务器    │  │
+│  │                  │            │                       │  │
+│  │  · ChatView      │            │  ┌─────────────────┐  │  │
+│  │  · ProfileView   │            │  │  API 路由层      │  │  │
+│  │  · DiagnosisView │            │  │  /chat /profile  │  │  │
+│  │  · ResourcesView │            │  │  /path /resources│  │  │
+│  │  · PathView      │            │  └────────┬────────┘  │  │
+│  │  · SimulatorView │            │           │           │  │
+│  │  · ChallengerView│            │  ┌────────▼────────┐  │  │
+│  │  · LogsView      │            │  │  Agent 引擎层   │  │  │
+│  └──────────────────┘            │  │  (8 个 Agent)   │  │  │
+│                                  │  └────────┬────────┘  │  │
+│                                  │           │           │  │
+│                                  │  ┌────────▼────────┐  │  │
+│                                  │  │  知识库 + 数据库  │  │  │
+│                                  │  │  SQLite/ChromaDB │  │  │
+│                                  │  └─────────────────┘  │  │
+│                                  └───────────────────────┘  │
+└───────────────────────────────────────────────────────────────┘
 ```
 
-**容器说明：**
-
-| 容器 | 技术选型 | 职责 |
-|------|----------|------|
-| 前端 SPA | Vue 3 + TypeScript | 用户交互界面，展示对话、诊断、画像、路径、资源、日志 |
-| 后端 API 服务 | FastAPI + uvicorn | 提供 REST API 和 SSE 流式接口，协调各 Agent 工作 |
-| 数据库 | SQLite + SQLAlchemy | 存储用户、会话、画像、路径、资源、日志等业务数据 |
-| 向量数据库 | ChromaDB | 存储课程文档、协议规范、误区库，支持相似度检索 |
-| 知识图谱 | JSON 文件 + 内存索引 | 描述知识点之间的前置依赖关系，支持路径规划 |
-
-### 3.3 Component 组件图（C4 - Level 3 - 后端 Agent 层）
+#### 2.4.3 后端组件图（Level 3 — Agent 层）
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    OrchestratorAgent                              │
-│  (总协调器 - 意图识别、流程编排、SSE 事件发射)                     │
-└──┬────────────┬────────────┬────────────┬────────────┬─────────┘
-   │            │            │            │            │
-   ▼            ▼            ▼            ▼            ▼
-┌───────┐  ┌─────────┐  ┌────────┐  ┌──────────┐  ┌──────────┐
-│Retriever│  │Diagnosis│  │Profiler│  │Resource  │  │PathPlanner│
-│ Agent  │  │ Agent   │  │ Agent  │  │Generator │  │  Agent    │
-│        │  │         │  │        │  │  Agent   │  │           │
-│-向量检索│  │-表层错误  │  │-八维画像│  │-文档生成  │  │-拓扑排序   │
-│-图谱检索│  │-根因分析  │  │-薄弱点  │  │-题目生成  │  │-进阶路径   │
-│-误区检索│  │-模式匹配  │  │-更新维护│  │-代码生成  │  │-节点推荐   │
-└───┬────┘  └────┬────┘  └───┬────┘  └────┬─────┘  └─────┬─────┘
-    │              │             │              │                │
-    └──────────────┴─────────────┴──────────────┴────────────────┘
-                                   │
-                                   ▼
-                        ┌─────────────────────┐
-                        │  AgentCoordinator  │
-                        │  (意图识别与路由)   │
-                        └─────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                       OrchestratorAgent                             │
+│  职责：接收请求→意图识别→调度 Agent→合成 SSE 事件流→返回响应         │
+└─────┬───────────┬──────────────┬──────────────┬────────────┬───────┘
+      │           │              │              │            │
+      ▼           ▼              ▼              ▼            ▼
+┌─────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐ ┌──────────┐
+│Retriever│ │Diagnosis │ │ Profiler │ │  Resource    │ │  Path    │
+│ Agent   │ │  Agent   │ │  Agent   │ │  Generator   │ │ Planner  │
+│         │ │          │ │          │ │    Agent     │ │  Agent   │
+│向量检索  │ │L1表面错误 │ │八维画像  │ │5类资源生成   │ │拓扑路径   │
+│查询扩展  │ │L2根因分析 │ │增量更新  │ │fallback兜底  │ │三维理由   │
+│KG命中   │ │L3模式匹配 │ │LLM校准  │ │资源持久化    │ │进阶路径   │
+└─────────┘ └──────────┘ └──────────┘ └──────────────┘ └──────────┘
+                                    ▲
+      ┌─────────────────────────────┘
+      │
+┌─────┴────────────────────────────────────────────────────────────┐
+│  横切关注点                                                       │
+│  · AgentCoordinator（意图路由）· TrustMechanism（可信机制）       │
+│  · LLMClient（API/Mock 统一入口）· MockProvider（离线降级）       │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.4 Component 组件图（C4 - Level 3 - 前端层）
+#### 2.4.4 前端组件图（Level 3 — 前端层）
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        前端应用层                               │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │                    Views (页面层)                             │    │
-│  │  HomeView / ChatView / DiagnosisView / ProfileView       │    │
-│  │  PathView / ResourcesView / LogsView / ChallengerView  │    │
-│  └───────────────────────┬─────────────────────────────────┘    │
-│                          │                                      │
-│  ┌──────────────────────▼─────────────────────────────────┐    │
-│  │                   Components (组件层)                      │    │
-│  │  ChatPanel / DiagnosisPanel / AgentStatusBar         │    │
-│  │  AgentLogPanel / ProfileRadar / PathTimeline           │    │
-│  │  ResourceTabBar / ChatMessage                        │    │
-│  └───────────────────────┬─────────────────────────────────┘    │
-│                          │                                      │
-│  ┌──────────────────────▼─────────────────────────────────┐    │
-│  │                    Stores (状态层 - Pinia)                   │    │
-│  │  chatStore / userStore / pathStore / resourceStore   │    │
-│  └───────────────────────┬─────────────────────────────────┘    │
-│                          │                                      │
-│  ┌──────────────────────▼─────────────────────────────────┐    │
-│  │                  Composables (组合层)                  │    │
-│  │  useChatSSE / useFetchSSE                              │    │
-│  └───────────────────────┬─────────────────────────────────┘    │
-│                          │                                      │
-│  ┌──────────────────────▼─────────────────────────────────┐    │
-│  │                    API Layer (API 层)                          │    │
-│  │  chat.ts / logs.ts / resources.ts / path.ts              │    │
-│  └─────────────────────────────────────────────────────────┘    │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                         Views（页面层）                          │
+│  ChatView / ProfileView / DiagnosisView / ResourcesView           │
+│  PathView / SimulatorView / ChallengerView / LogsView             │
+└─────────────────────────────┬────────────────────────────────────┘
+                              │ 使用
+┌─────────────────────────────▼────────────────────────────────────┐
+│                       Components（组件层）                       │
+│  ChatPanel / AgentStatusBar / AgentLogPanel / ProfileRadar        │
+│  DiagnosisPanel / PathTimeline / PathReasonModal                  │
+│  ResourceTabBar / DocCard / ExerciseCard / CodeCard               │
+│  SimulatorPlayer / ChallengerPanel / ChatMessage                  │
+└─────────────────────────────┬────────────────────────────────────┘
+                              │ 读写
+┌─────────────────────────────▼────────────────────────────────────┐
+│                       Stores（状态层 Pinia）                     │
+│  chatStore / userStore / pathStore / resourceStore                │
+└─────────────────────────────┬────────────────────────────────────┘
+                              │ 调用
+┌─────────────────────────────▼────────────────────────────────────┐
+│                   Composables + API Layer                        │
+│  useChatSSE（SSE 流处理）/ useFetchSSE                           │
+│  chat.ts / profile.ts / path.ts / resources.ts / logs.ts         │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### 2.5 功能需求与程序模块的关系
+
+| 功能需求 | 主要后端模块 | 主要前端模块 |
+|---------|------------|------------|
+| F01 流式对话 | `orchestrator.py`, `coordinator.py`, `llm_client.py`, `api/chat.py` | `ChatView.vue`, `ChatPanel.vue`, `useSSE.ts` |
+| F02 知识检索 | `retriever.py`, `kb/vector_store.py`, `kb/knowledge_graph.py` | `ChatPanel.vue`（间接） |
+| F03 三层诊断 | `diagnosis.py`, `kb/misconception_registry.py` | `DiagnosisPanel.vue`, `DiagnosisView.vue` |
+| F04 八维画像 | `profiler.py`, `schema/profile.py`, `db/repositories/` | `ProfileView.vue`, `ProfileRadar.vue` |
+| F05 多 Agent 编排 | `orchestrator.py`, `coordinator.py`, `api/logs.py` | `AgentStatusBar.vue`, `AgentLogPanel.vue` |
+| F06 资源生成 | `resource_generator.py`, `api/resources.py` | `ResourcesView.vue`, `ResourceTabBar.vue`, `*Card.vue` |
+| F07 路径规划 | `path_planner.py`, `kb/knowledge_graph.py`, `api/path.py` | `PathView.vue`, `PathTimeline.vue`, `PathReasonModal.vue` |
+| F08 协议仿真 | `api/simulator.py`（场景数据） | `SimulatorView.vue`, `SimulatorPlayer.vue` |
+| F09 可信机制 | `core/trust_mechanism.py` | 回答尾部引用标注展示（ChatMessage.vue） |
+
+---
+
+## 3 多智能体核心设计
+
+### 3.1 Agent 设计规格
+
+#### 3.1.1 OrchestratorAgent
+
+**文件：** `src/loopse/agent/orchestrator.py`  
+**设计模式：** 事件驱动的有状态协调器
+
+```python
+# 核心接口签名
+async def process_message(
+    message: str,
+    user_id: int,
+    session_id: str
+) -> AsyncGenerator[SSEEvent, None]
+```
+
+**调度决策逻辑：**
+
+```
+接收消息
+    ├─ 调用 AgentCoordinator.classify_intent()
+    ├─ 检查 TrustMechanism.check_domain()
+    │     └─ 越界 → yield error_event, return
+    ├─ 并发启动 RetrieverAgent（必启）
+    ├─ 若 is_answer_type → 并发启动 DiagnosisAgent
+    ├─ 流式 LLM 生成（逐 token yield）
+    ├─ 异步更新 ProfilerAgent
+    ├─ 按需触发 ResourceGeneratorAgent
+    └─ 按需触发 PathPlannerAgent
+```
+
+**SSE 事件序列示例：**
+
+```
+→ agent_start {agent:"orchestrator"}
+→ agent_start {agent:"retriever"}
+→ agent_end   {agent:"retriever", elapsed_ms:85}
+→ agent_start {agent:"diagnosis"}
+→ diagnosis   {data:{is_correct:false, surface_error:...}}
+→ agent_end   {agent:"diagnosis", elapsed_ms:320}
+→ token       {data:{token:"根据"}}
+→ token       {data:{token:"TCP"}}
+   ... (流式 token 事件) ...
+→ resource    {data:{doc:{...}, exercise:{...}}}
+→ path_update {data:{nodes:[...]}}
+→ done        {data:{session_id:"...", total_ms:2340}}
+```
+
+#### 3.1.2 DiagnosisAgent
+
+**文件：** `src/loopse/agent/diagnosis.py`  
+**设计模式：** 三层 Prompt 链（Chain-of-Thought）
+
+三层 Prompt 模板路径：
+- L1：`config/prompts/diagnosis/surface_error.txt`
+- L2：`config/prompts/diagnosis/root_cause.txt`
+- L3：`config/prompts/diagnosis/pattern_match.txt`
+
+**关键实现：Prompt 注入知识库上下文**
+
+```python
+# L1 Prompt 构建
+context = retriever.search_all(question)
+prompt = load_template("surface_error.txt").format(
+    question=question,
+    student_answer=student_answer,
+    context_docs=context.course_docs[:3],
+    error_types=ERROR_TYPE_ENUM
+)
+```
+
+**误区模式库加载：**
+
+`MisconceptionRegistry` 在启动时从 `data/misconceptions.json` 加载 150 条误区记录，构建内存索引，支持按 `knowledge_node_id` 和 `misconception_pattern` 两个维度检索。
+
+#### 3.1.3 ProfilerAgent
+
+**文件：** `src/loopse/agent/profiler.py`  
+**设计模式：** 增量状态更新 + 周期性全量校准
+
+**增量更新规则（每轮触发）：**
+
+| 对话事件 | 维度变化 |
+|---------|---------|
+| 回答正确 | `knowledge_depth += 0.03`, `learning_progress += 0.02` |
+| 回答错误 | `knowledge_depth -= 0.02`, `common_mistakes` 追加记录 |
+| 使用代码资源 | `practical_skill += 0.02` |
+| 使用思维导图 | `cognitive_style` 向 `visual` 偏移 |
+| 完成知识节点 | `mastery_map[node_id] = max(current, 0.8)` |
+
+**LLM 深度校准（每 5 轮）：**
+
+```python
+if self.interaction_count % 5 == 0:
+    calibrated = await self._llm_calibrate(
+        profile=current_profile,
+        recent_messages=session[-5:]
+    )
+    profile.merge(calibrated, weight=0.3)  # 保留历史权重 0.7
+```
+
+#### 3.1.4 ResourceGeneratorAgent
+
+**文件：** `src/loopse/agent/resource_generator.py`  
+**设计模式：** 策略模式（5 类资源各自策略 + 统一 fallback）
+
+| 资源类型 | Prompt 模板 | 兜底策略 |
+|---------|------------|---------|
+| doc | `generate_doc.txt` | 返回结构化知识点摘要 |
+| exercise | `generate_exercise.txt` | 返回选择题模板 |
+| code | `generate_code.txt` | 返回 TCP Socket 示例代码 |
+| mindmap | `generate_mindmap.txt` | 返回 Mermaid 骨架图 |
+| script | `generate_script.txt` | 返回分步讲解模板 |
+
+**兜底机制：** 当 LLM 生成失败时，`_fallback_content()` 为所有 5 类资源提供结构化备选内容，确保前端不出现空白卡片。
+
+#### 3.1.5 PathPlannerAgent
+
+**文件：** `src/loopse/agent/path_planner.py`  
+**核心算法：** Kahn 拓扑排序 + DFS 前置依赖搜索
+
+```python
+def plan_path(profile: StudentProfile, target_nodes: List[str]) -> LearningPath:
+    # Step 1: 找出需要补充的前置节点
+    missing = self.kg.find_missing_prerequisites(
+        targets=target_nodes,
+        mastered=profile.mastery_map
+    )
+    # Step 2: 拓扑排序确定学习顺序
+    ordered = self.kg.topological_sort(missing + target_nodes)
+    # Step 3: 为每个节点生成三维推荐理由
+    nodes = []
+    for nid in ordered[:max_nodes]:
+        reason = self._generate_three_dim_reason(nid, profile, diagnosis)
+        nodes.append(PathNode(node_id=nid, reason_sources=reason, ...))
+    return LearningPath(nodes=nodes)
+```
+
+**三维推荐理由生成：**
+
+```python
+def _generate_three_dim_reason(self, node_id, profile, diagnosis):
+    return ReasonSources(
+        graph_dependency=self.kg.get_dependency_reason(node_id),
+        diagnosis_result=self._map_diagnosis_to_reason(node_id, diagnosis),
+        cognitive_style=self._adapt_to_style(node_id, profile.cognitive_style)
+    )
+```
+
+### 3.2 AgentCoordinator 意图路由设计
+
+**文件：** `src/loopse/agent/coordinator.py`
+
+意图分类结果决定激活的 Agent 子集：
+
+| 意图类型 | 激活 Agent | 典型触发词 |
+|---------|-----------|---------|
+| `answer_question` | Retriever, Diagnosis, Profiler | 问题句式 |
+| `request_resource` | Retriever, ResourceGenerator | 「生成」「给我」「推荐」 |
+| `request_path` | PathPlanner | 「路径」「计划」「怎么学」 |
+| `request_simulation` | Simulator | 「演示」「仿真」「模拟」「握手」 |
+| `challenge_question` | Challenger | 概念挑战模式 |
+| `general_chat` | Retriever, Profiler | 其他 |
+
+### 3.3 TrustMechanism 可信机制设计
+
+**文件：** `src/loopse/core/trust_mechanism.py`
+
+#### 3.3.1 域外过滤策略（DFP）
+
+```python
+NETWORK_KEYWORDS = {
+    "TCP", "UDP", "IP", "HTTP", "DNS", "协议", "握手", "路由", ...
+    # 约 80 个核心词
+}
+
+OUT_OF_DOMAIN_PATTERNS = [
+    r"帮.*?(写|生成|实现).*(代码|程序)",  # 通用编程请求
+    r"翻译|英文|语言",                   # 翻译请求
+    r"天气|新闻|娱乐",                   # 非学习内容
+]
+
+def check_domain(message: str) -> DomainCheckResult:
+    kw_count = sum(1 for kw in NETWORK_KEYWORDS if kw in message)
+    if kw_count >= 2:
+        return DomainCheckResult(in_domain=True, confidence=0.95)
+    for pattern in OUT_OF_DOMAIN_PATTERNS:
+        if re.search(pattern, message):
+            return DomainCheckResult(in_domain=False, reason="域外问题")
+    return DomainCheckResult(in_domain=True, confidence=0.6)  # 宽松放行
+```
+
+#### 3.3.2 引用溯源机制
+
+```python
+def add_source_annotations(content: str, sources: List[KBSource]) -> str:
+    # 1. 在回答中插入 [n] 引用标记
+    # 2. 末尾追加 "参考来源：[1] ... [2] ..." 章节
+    ...
 ```
 
 ---
 
-## 四、状态图（State Diagram）
+## 4 接口设计
 
-### 4.1 对话会话状态图
+### 4.1 用户接口
 
-```
-                    ┌─────────────┐
-                    │   Idle    │
-                    │ (空闲等待) │
-                    └──────┬──────┘
-                           │
-                    用户输入消息
-                           │
-                           ▼
-                    ┌─────────────┐
-                    │  Receiving   │
-                    │ (接收输入)   │
-                    └──────┬──────┘
-                           │
-                 开始 SSE 连接
-                           │
-                           ▼
-              ┌──────────────────────────┐
-              │  Agent_Retrieving    │
-              │ (检索知识库)     │
-              └────────┬─────────┘
-                       │
-              检索完成，开始诊断
-                       │
-                       ▼
-              ┌──────────────────┐
-              │  Diagnosing    │
-              │ (三层诊断中)    │
-              └────────┬─────────┘
-                       │
-                诊断完成，生成回复
-                       │
-                       ▼
-              ┌──────────────────┐
-              │  Replying       │
-              │ (流式回复中)   │
-              └────────┬─────────┘
-                       │
-              回复完成，更新画像
-                       │
-                       ▼
-              ┌──────────────────┐
-              │  UpdatingProfile│
-              │ (更新画像/路径) │
-              └────────┬─────────┘
-                       │
-                  全部完成
-                       │
-                       ▼
-                    ┌─────────────┐
-                    │   Done     │
-                    │ (回复完成)   │
-                    └──────┬──────┘
-                           │
-                           ┌───────
-                    错误/异常
-                           │
-                           ▼
-                    ┌─────────────┐
-                    │   Error    │
-                    │ (错误状态)  │
-                    └─────────────┘
-```
+前端页面详见第 2.4.4 节，界面设计原则：
+- 流式输出打字机效果（token 事件驱动）
+- Markdown 渲染（marked + highlight.js）
+- 多模态内容卡片化（资源卡片、诊断卡片、路径时间轴）
+- Agent 状态实时可见（AgentStatusBar 颜色编码）
+- 最低支持 1280px 宽度响应式布局
 
-### 4.2 Agent 生命周期状态图
+### 4.2 外部接口
 
-```
-           初始化
-             │
-             ▼
-        ┌─────────┐
-        │  Idle   │◄───────────┐
-        │ (空闲)  │            │
-        └────┬────┘            │
-             │ 调用开始        │
-             ▼                 │
-        ┌─────────┐           │
-        │ Running  │           │
-        │ (运行中) │           │
-        └────┬────┘           │
-             │                 完成/失败       │
-             ▼                 │
-        ┌─────────┐           │
-        │  Done  │───────────┘
-        │ (完成)  │
-        └─────────┘
-```
-
-### 4.3 学习路径节点状态图
-
-```
-        ┌──────────┐
-        │  Locked  │
-        │ (已锁定)  │
-        └─────┬────┘
-              │
-         前置条件满足
-              │
-              ▼
-        ┌──────────┐
-        │ Pending  │──────────┐
-        │ (待学习)  │      │
-        └─────┬────┘      │
-              │           用户开始学习   │
-              ▼           │
-        ┌──────────┐      │
-        │In_Progress│     │
-        │ (学习中)   │     │
-        └─────┬────┘      │
-              │           │
-         学习完成         跳过
-              │           │
-              ▼           │
-        ┌──────────┐      │
-        │Completed │◄─────┘
-        │ (已完成)  │
-        └──────────┘
-```
-
----
-
-## 五、接口规格说明
-
-### 5.1 对话接口
-
-#### 5.1.1 SSE 流式对话
+#### 4.2.1 讯飞星火 API
 
 | 项目 | 说明 |
 |------|------|
-| 方法 | POST |
-| 路径 | `/api/v1/chat/stream |
-| Content-Type | application/json |
-| 响应类型 | text/event-stream (SSE) |
+| SDK | spark-ai-python ≥ 0.4.5 |
+| 模型 | Spark v3.5（`generalv3.5`） |
+| 认证 | AppID + APIKey + APISecret（HMAC-SHA256） |
+| 接入 | WebSocket 流式接口 |
+| 超时 | 30 秒，超时自动降级 Mock |
 
-**请求体：**
+#### 4.2.2 ChromaDB 向量库
+
+| 项目 | 说明 |
+|------|------|
+| 版本 | chromadb 0.5.0（可选） |
+| 集合 | `course_docs`, `protocol_specs`, `misconceptions` |
+| 降级 | 不可用时自动切换 `data/vector_db/local_index.json` |
+
+### 4.3 内部接口（REST API）
+
+#### 4.3.1 核心接口清单
+
+| 接口路径 | HTTP 方法 | 说明 | 响应类型 |
+|---------|---------|------|---------|
+| `/health` | GET | 健康检查 | JSON |
+| `/api/v1/chat/stream` | POST | SSE 流式对话 | text/event-stream |
+| `/api/v1/profile/{user_id}` | GET | 获取八维画像 | JSON |
+| `/api/v1/profile/{user_id}` | POST | 更新画像 | JSON |
+| `/api/v1/path/{user_id}` | GET | 获取当前路径 | JSON |
+| `/api/v1/path/plan` | POST | 规划新路径 | JSON |
+| `/api/v1/path/{user_id}/progress` | POST | 更新节点进度 | JSON |
+| `/api/v1/resources/generate` | POST | 生成单类资源 | JSON |
+| `/api/v1/resources/generate-all` | POST | 生成全部 5 类 | JSON |
+| `/api/v1/logs/session/{session_id}` | GET | 会话 Agent 日志 | JSON |
+| `/api/v1/diagnosis` | POST | 独立触发诊断 | JSON |
+| `/api/v1/simulator/{scene_id}` | GET | 获取仿真场景数据 | JSON |
+| `/api/v1/challenge` | POST | 概念挑战问答 | JSON |
+
+#### 4.3.2 SSE 事件格式规范
+
+所有 SSE 事件均使用如下统一格式：
+
+```
+event: <event_type>
+data: {"agent_name":"<agent>","timestamp":<ms>,"data":{...}}
+
+```
+
+**示例：token 事件**
+
+```
+event: token
+data: {"agent_name":"orchestrator","timestamp":1720876800123,"data":{"token":"TCP"}}
+
+```
+
+**示例：diagnosis 事件**
+
+```
+event: diagnosis
+data: {
+  "agent_name":"diagnosis",
+  "timestamp":1720876800456,
+  "data":{
+    "is_correct":false,
+    "confidence":0.91,
+    "surface_error":"误认为TCP三次握手为两次",
+    "error_type":"flow_omission",
+    "root_causes":["TCP连接管理","可靠传输"],
+    "pattern":"握手次数混淆",
+    "intervention_suggestion":"建议复习TCP三次握手必要性..."
+  }
+}
+
+```
+
+---
+
+## 5 数据结构设计
+
+### 5.1 核心数据模型
+
+#### 5.1.1 StudentProfile（学生画像）
+
+```python
+# src/loopse/schema/profile.py
+class StudentProfile(BaseModel):
+    user_id: int
+    knowledge_depth: float = 0.5        # 知识储备 [0,1]
+    cognitive_style: CognitiveStyle = CognitiveStyle.mixed  # 认知风格
+    learning_progress: float = 0.0      # 学习进度 [0,1]
+    protocol_understanding: float = 0.5 # 协议理解 [0,1]
+    practical_skill: float = 0.5        # 动手能力 [0,1]
+    common_mistakes: List[str] = []     # 常见错误类型列表
+    learning_preference: Dict[str, float] = {}  # 资源偏好权重
+    overall_level: OverallLevel = OverallLevel.beginner  # 综合水平
+    mastery_map: Dict[str, float] = {}  # 知识点掌握度地图
+    interaction_count: int = 0          # 累计交互轮数
+    updated_at: datetime = ...
+```
+
+#### 5.1.2 DiagnosisResult（诊断结果）
+
+```python
+class DiagnosisResult(BaseModel):
+    is_correct: bool
+    confidence: float                   # [0,1]
+    surface_error: Optional[str]        # 表面错误描述
+    error_type: ErrorType               # 错误分类枚举
+    root_causes: List[str]              # 根因知识点
+    missing_prerequisites: List[str]    # 缺失前置知识
+    trigger: Optional[str]              # 触发证据
+    pattern: Optional[str]              # 误区模式名称
+    intervention_suggestion: str        # 干预建议
+    related_node_ids: List[str]         # 相关图谱节点
+```
+
+#### 5.1.3 PathNode（学习路径节点）
+
+```python
+class PathNode(BaseModel):
+    node_id: str                        # 知识图谱节点 ID
+    name: str                           # 知识点名称
+    status: PathStatus                  # completed/in_progress/pending/locked
+    current_mastery: float              # 当前掌握度 [0,1]
+    recommendation_reason: str          # 推荐理由（≥20字）
+    reason_sources: ReasonSources       # 三维推荐理由
+    prerequisites: List[str]            # 前置节点列表
+    prerequisites_met: bool             # 前置是否满足
+    suggested_resources: List[str]      # 推荐资源 ID
+```
+
+#### 5.1.4 LearningResource（学习资源）
+
+```python
+class LearningResource(BaseModel):
+    resource_id: str                    # UUID
+    resource_type: ResourceType         # doc/exercise/code/mindmap/script
+    knowledge_point: str                # 关联知识点
+    title: str                          # 资源标题
+    content: str                        # 资源正文（Markdown）
+    metadata: ResourceMetadata          # 难度/风格/来源引用
+    created_at: datetime
+```
+
+### 5.2 数据库物理结构
+
+#### 5.2.1 users 表
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER PK AUTOINCREMENT | 主键 |
+| user_id | VARCHAR(64) UNIQUE | 业务 ID |
+| username | VARCHAR(128) | 用户名 |
+| password_hash | VARCHAR(256) | bcrypt 哈希 |
+| created_at | DATETIME | 注册时间 |
+
+#### 5.2.2 student_profiles 表
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER PK | 主键 |
+| user_id | INTEGER FK→users | 关联用户 |
+| profile_json | TEXT | 八维画像 JSON |
+| mastery_map_json | TEXT | 知识掌握度地图 JSON |
+| interaction_count | INTEGER | 交互轮数 |
+| updated_at | DATETIME | 最后更新时间 |
+
+#### 5.2.3 chat_sessions 表
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER PK | 主键 |
+| session_id | VARCHAR(64) UNIQUE | 会话 UUID |
+| user_id | INTEGER FK→users | 关联用户 |
+| messages_json | TEXT | 消息列表 JSON |
+| created_at | DATETIME | 会话创建时间 |
+| updated_at | DATETIME | 最后活跃时间 |
+
+#### 5.2.4 agent_logs 表
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER PK | 主键 |
+| session_id | VARCHAR(64) FK→chat_sessions | 关联会话 |
+| agent_name | VARCHAR(64) | Agent 名称 |
+| action | VARCHAR(128) | 执行动作 |
+| input_state | TEXT | 输入摘要（脱敏） |
+| output_state | TEXT | 输出摘要 |
+| elapsed_ms | INTEGER | 执行耗时（毫秒） |
+| status | VARCHAR(32) | success/error |
+| timestamp | DATETIME | 执行时间 |
+
+#### 5.2.5 learning_paths 表
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | INTEGER PK | 主键 |
+| user_id | INTEGER FK→users | 关联用户 |
+| nodes_json | TEXT | 路径节点列表 JSON |
+| target_topic | VARCHAR(128) | 学习目标主题 |
+| created_at | DATETIME | 创建时间 |
+| updated_at | DATETIME | 最后更新时间 |
+
+### 5.3 知识库结构
+
+#### 5.3.1 知识图谱节点结构
+
 ```json
 {
-  "message": "什么是TCP三次握手？",
-  "user_id": "user_001",
-  "session_id": "session_001"
+  "id": "KP-TCP-HANDSHAKE",
+  "name": "TCP 三次握手",
+  "chapter": "第3章 传输层",
+  "type": "protocol_mechanism",
+  "difficulty": 3,
+  "estimated_time": 45,
+  "keywords": ["SYN", "ACK", "连接建立", "半连接"],
+  "description": "TCP通过三次握手建立全双工可靠连接...",
+  "rfc_reference": "RFC 793 §3.4"
 }
 ```
 
-**SSE 事件类型：**
+**知识图谱规模：** 100 节点，82 条有向边，覆盖 6 个章节
 
-| 事件类型 | 触发时机 | 数据字段 |
-|---------|---------|---------|
-| `agent_start` | Agent 开始执行 | `agent_name`, `data.message` |
-| `agent_end` | Agent 执行完成 | `agent_name`, `data.message` |
-| `tool_call` | Agent 调用工具 | `agent_name`, `data.tool_name`, `data.status` |
-| `token` | LLM 流式 token 到达 | `agent_name`, `data.token` |
-| `diagnosis` | 诊断完成 | `agent_name`, `data` (DiagnosisResult) |
-| `resource` | 资源生成完成 | `agent_name`, `data` (LearningResource) |
-| `path_update` | 路径更新完成 | `agent_name`, `data` (LearningPath) |
-| `done` | 整轮对话完成 | `agent_name`, `data.session_id`, `data.total_time_ms` |
-| `error` | 发生错误 | `agent_name`, `data.error` |
+#### 5.3.2 误区条目结构
 
-### 5.2 画像接口
+```json
+{
+  "id": "MC-001",
+  "knowledge_node_id": "KP-TCP-HANDSHAKE",
+  "wrong_statement": "TCP 两次握手就能建立连接",
+  "correct_explanation": "三次握手是为了验证双方的收发能力...",
+  "root_cause": "对全双工通信原理理解不足",
+  "misconception_pattern": "流程遗漏型",
+  "difficulty": 2,
+  "frequency": "high"
+}
+```
 
-#### 5.2.1 获取用户画像
-
-| 项目 | 说明 |
-|------|------|
-| 方法 | GET |
-| 路径 | `/api/v1/profile/{user_id} |
-| 响应 | StudentProfile 对象 |
-
-#### 5.2.2 更新用户画像
-
-| 项目 | 说明 |
-|------|------|
-| 方法 | POST |
-| 路径 | `/api/v1/profile/{user_id}` |
-| 请求体 | 部分画像更新字段 |
-| 响应 | 更新后的 StudentProfile |
-
-### 5.3 学习路径接口
-
-#### 5.3.1 获取当前学习路径
-
-| 项目 | 说明 |
-|------|------|
-| 方法 | GET |
-| 路径 | `/api/v1/path/{user_id}` |
-| 响应 | LearningPath 对象 |
-
-#### 5.3.2 规划新路径
-
-| 项目 | 说明 |
-|------|------|
-| 方法 | POST |
-| 路径 | `/api/v1/path/plan` |
-| 请求体 | `{ user_id, target_nodes?, max_nodes? }` |
-| 响应 | LearningPath 对象 |
-
-#### 5.3.3 更新节点进度
-
-| 项目 | 说明 |
-|------|------|
-| 方法 | POST |
-| 路径 | `/api/v1/path/{user_id}/progress` |
-| 请求体 | `{ node_id, status, mastery? }` |
-| 响应 | 更新后的 LearningPath |
-
-### 5.4 资源接口
-
-#### 5.4.1 生成指定类型资源
-
-| 项目 | 说明 |
-|------|------|
-| 方法 | POST |
-| 路径 | `/api/v1/resources/generate` |
-| 请求体 | `{ knowledge_point, resource_type, difficulty? }` |
-| 响应 | LearningResource 对象 |
-
-#### 5.4.2 一次性生成全部三类资源
-
-| 项目 | 说明 |
-|------|------|
-| 方法 | POST |
-| 路径 | `/api/v1/resources/generate-all` |
-| 请求体 | `{ knowledge_point, difficulty? }` |
-| 响应 | `{ knowledge_point, docs, exercise, code, total_resources }` |
-
-#### 5.4.3 检索知识库
-
-| 项目 | 说明 |
-|------|------|
-| 方法 | POST |
-| 路径 | `/api/v1/resources/search` |
-| 请求体 | `{ knowledge_point, top_k? }` |
-| 响应 | 检索结果数组 |
-
-### 5.5 日志接口
-
-#### 5.5.1 获取会话 Agent 日志
-
-| 项目 | 说明 |
-|------|------|
-| 方法 | GET |
-| 路径 | `/api/v1/logs/session/{session_id}` |
-| 响应 | AgentLog 数组 |
-
-### 5.6 健康检查接口
-
-| 项目 | 说明 |
-|------|------|
-| 方法 | GET |
-| 路径 | `/health` |
-| 响应 | `{ status: "ok" }` |
+**误区库规模：** 150 条，覆盖 20 个核心知识点，8 种误区模式
 
 ---
 
-## 六、目录结构
+## 6 AI 技术融合设计
 
-```
-Socrates-Cube/
-├── src/loopse/
-│   ├── agents/        # 8个Agent：orchestrator, coordinator, diagnosis, 
-│   │                  # retriever, profiler, resource_generator,
-│   │                  # path_planner, cognitive_engine
-│   ├── api/           # FastAPI路由：chat, profile, logs, resources, path
-│   ├── core/          # llm_client（Spark API + mock回退）
-│   ├── db/            # SQLAlchemy模型、连接、仓库层
-│   ├── kb/            # vector_store（ChromaDB）+ knowledge_graph
-│   └── main.py        # 应用入口，路由注册
-├── config/
-│   ├── prompts/       # 按Agent分类的提示词模板文件
-│   └── api_schema.yaml
-├── data/
-│   ├── cleaned/       # Markdown课程文本（5章）
-│   ├── raw/          # misconceptions.json（24条）
-│   └── knowledge_graph.json  # 20节点21边知识图谱
-├── frontend/src/
-│   ├── types/         # TypeScript类型定义（按领域拆分）
-│   ├── api/           # API客户端：chat, path, resources, logs
-│   ├── stores/        # Pinia：chat, user, path, resource
-│   ├── composables/   # useSSE（SSE流处理）
-│   ├── components/    # UI组件（资源卡片、路径时间轴等）
-│   └── views/         # 页面视图
-├── scripts/
-│   ├── init_db.py     # 数据库初始化
-│   ├── verify_env.py  # 环境校验
-│   ├── ingest_docs.py # 课程文档入库ChromaDB
-│   └── build_knowledge_base.py # 一键构建知识库
-└── tests/
-    ├── unit/          # 单元测试
-    └── conftest.py    # pytest全局配置
+### 6.1 大语言模型集成方案
+
+#### 6.1.1 LLM Client 统一入口
+
+```python
+# src/loopse/core/llm_client.py
+class LLMClient:
+    async def stream_chat(
+        self, messages: List[Message], temperature: float = 0.7
+    ) -> AsyncGenerator[str, None]:
+        if self.mock_mode:
+            async for token in self.mock_provider.stream(messages):
+                yield token
+        else:
+            async for token in self.spark_client.stream(messages):
+                yield token
 ```
 
----
+所有 Agent 通过 `LLMClient` 统一调用 LLM，不直接调用 SDK，便于：
+- 切换不同 LLM 提供商（星火/GPT/本地模型）
+- 统一 Mock/Real 模式切换
+- 统一 token 计数和成本监控
 
-## 七、部署说明
-
-### 7.1 后端启动
-
-```bash
-cd Socrates-Cube
-python -m venv .venv
-.venv\Scripts\Activate.ps1          # Windows
-# source .venv/bin/activate       # macOS / Linux
-
-pip install -r requirements.txt
-copy .env.example .env              # 填入讯飞 API Key（可选）
-
-# 知识库入库（必做）
-python scripts/build_knowledge_base.py
-
-# 初始化数据库
-python scripts/init_db.py
-
-# 启动服务
-uvicorn src.loopse.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### 7.2 前端启动
-
-```bash
-cd frontend
-npm install
-npm run dev
-# 访问 http://localhost:5173
-```
-
-### 7.3 一键启动（Windows）
-
-直接双击项目根目录下的 `start.bat` 即可启动后端服务。
-
----
-
-## 八、Agent 协作流程
-
-### 8.1 正常问答链路
-
-```
-用户输入 → Orchestrator → Profiler(画像) → Retriever(检索) → LLM流式回复
-```
-
-### 8.2 诊断链路
-
-```
-用户输入 → Orchestrator → Profiler → Retriever → Diagnosis(三层诊断) → ResourceGen(资源) → PathPlanner(路径)
-```
-
-### 8.3 仿真链路
-
-```
-用户输入 → Orchestrator → Retriever → Simulator(仿真场景数据) → ResourceGen(配套资源)
-```
-
-### 8.4 全链路协作流程
-
-```
-用户输入
-    │
-    ▼
-OrchestratorAgent（接收问题）
-    │
-    ├─→ AgentCoordinator（意图识别 + 知识点提取）
-    │
-    ├─→ RetrieverAgent（三库联合检索：course_docs / protocol_specs / misconceptions + 知识图谱）
-    │
-    ├─→ DiagnosisAgent（三层认知诊断：表层错误 → 根因分析 → 误区模式匹配）
-    │
-    ├─→ LLM 流式生成主回复（SSE token 事件）
-    │
-    ├─→ TrustMechanism（可信机制：范围校验 + 溯源标注 + 不确定性声明）
-    │
-    ├─→ ProfilerAgent（八维画像 + mastery_map 更新）
-    │
-    ├─→ [按需] ResourceGeneratorAgent（doc/exercise/code/mindmap/script 五类资源）
-    │
-    └─→ [按需] PathPlannerAgent（知识图谱路径规划 + 进阶路径）
-    │
-    ▼（各 Agent 结果封装为 SSE 事件）
-前端 useChatSSE() 消费：
-    ├─── chatStore（消息+流token+诊断结果+Agent状态）
-    ├─── userStore（画像更新→雷达图）
-    ├─── resourceStore（资源卡片）
-    └─── pathStore（路径时间轴）
-```
-
----
-
-## 九、协议仿真引擎设计
-
-### 9.1 参数化仿真原理
-
-协议仿真引擎采用「场景数据 + Canvas渲染」分离架构。每个仿真场景定义为一组有序的报文步骤，每步包含发送方、接收方、标志位、序列号、确认号、状态变化、描述等结构化数据。前端 `SimulatorPlayer.vue` 根据步骤数据驱动 Canvas 动画。
-
-### 9.2 场景库结构
-
-当前支持 7 个仿真场景：
-
-| 场景ID | 名称 | 步骤数 | 说明 |
-|--------|------|:------:|------|
-| three_way_handshake | TCP 三次握手 | 3 | 建立连接 |
-| four_way_wavehand | TCP 四次挥手 | 4 | 关闭连接 |
-| sliding_window | 滑动窗口 | 6 | 流量控制 |
-| http_request | HTTP 请求响应 | 11 | 完整 HTTP 过程 |
-| http_encapsulation | HTTP 分层封装 | 6 | 逐层封装/解封装 |
-| dns_resolution | DNS 解析 | 5 | 递归+迭代查询 |
-| congestion_control_basic | 拥塞控制 | 6 | 慢启动/拥塞避免 |
-
-### 9.3 前端渲染协议
-
-- 动画引擎：Canvas 2D + requestAnimationFrame
-- 布局：双栏（Canvas 动画 + 侧面板状态机 + 步骤详情）
-- 交互：点击步骤查看报文详情，支持步进/播放/暂停/重置/速度调节
-
----
-
-## 十、系统可信机制设计
-
-### 10.1 三层防护架构
+#### 6.1.2 RAG 架构设计
 
 ```
 用户问题
     │
-    ├─→ 第一层：范围校验（verify_scope / check_question_scope）
-    │    快速关键词匹配 + LLM 辅助判断
-    │    越界问题 → 拒答 + 提示课程范围
+    ├─ 查询扩展（同义词/缩略词）
     │
-    ├─→ 第二层：溯源标注（add_source_annotations）
-    │    检索来源编号 + 内容末尾追加参考来源列表
+    ├─ 向量检索（ChromaDB/本地JSON）
+    │   ├─ course_docs：语义相似度 Top-3
+    │   ├─ protocol_specs：语义相似度 Top-2
+    │   └─ misconceptions：相似度 Top-2
     │
-    └─→ 第三层：不确定性声明（add_uncertainty_statement）
-         置信度 < 0.6 → 追加「仅供参考」声明
+    ├─ 知识图谱关键词命中
+    │
+    └─ 检索结果注入 Prompt
+           └─ LLM 生成基于知识库的回答
+                  └─ 来源引用标注
 ```
 
-### 10.2 溯源机制
+#### 6.1.3 Prompt 工程设计
 
-- 每篇生成内容最多引用 5 个来源
-- 来源包含名称 + 关键片段摘要
-- 来源按检索相关性排序
+所有 Prompt 模板采用以下结构：
 
-### 10.3 范围校验
+```
+[系统角色定义]
+你是一位计算机网络课程的专业教师助手...
 
-- 维护约 50 个计算机网络领域关键词
-- 命中 ≥3 个关键词：放行
-- 匹配越界模式（编程/娱乐/翻译）：拒答
-- 无法确定：宽松放行
+[任务说明]
+请根据以下学生回答进行三层诊断...
+
+[知识库上下文注入]
+{context_docs}
+
+[结构化输出要求]
+请以JSON格式返回：{"is_correct":...}
+
+[安全约束]
+仅回答计算机网络课程范围内的问题...
+```
+
+**关键 Prompt 文件清单：**
+
+| 文件路径 | 用途 | 字数 |
+|---------|------|------|
+| `config/prompts/diagnosis/surface_error.txt` | L1 表面错误识别 | ~400 字 |
+| `config/prompts/diagnosis/root_cause.txt` | L2 根因分析 | ~350 字 |
+| `config/prompts/diagnosis/pattern_match.txt` | L3 模式匹配 | ~500 字 |
+| `config/prompts/orchestrator/route.txt` | 意图路由 | ~300 字 |
+| `config/prompts/profiler/update_profile.txt` | 画像校准 | ~400 字 |
+| `config/prompts/resource_generator/generate_doc.txt` | 文档生成 | ~350 字 |
+| `config/prompts/resource_generator/generate_exercise.txt` | 题目生成 | ~400 字 |
+| `config/prompts/resource_generator/generate_code.txt` | 代码生成 | ~300 字 |
+
+### 6.2 知识图谱驱动设计
+
+知识图谱（Knowledge Graph）在系统中承担三重角色：
+
+| 角色 | 具体功能 |
+|------|---------|
+| 路径规划基础 | 拓扑排序确定学习顺序，前置依赖确保学习路径科学 |
+| 诊断增强 | 根因分析时通过知识节点反向遍历定位薄弱点 |
+| 检索扩展 | 用户问题命中节点时同步返回前置节点知识 |
+
+**知识图谱加载与查询：**
+
+```python
+class KnowledgeGraph:
+    def find_missing_prerequisites(
+        self, targets: List[str], mastered: Dict[str, float]
+    ) -> List[str]:
+        """DFS 反向遍历，找出掌握度低于阈值的前置节点"""
+        ...
+
+    def topological_sort(self, nodes: List[str]) -> List[str]:
+        """Kahn 算法，返回按依赖顺序排列的节点列表"""
+        ...
+```
+
+### 6.3 协议仿真引擎设计
+
+仿真引擎采用"数据驱动 + Canvas 渲染"分离架构：
+
+**后端（数据层）：** 每个场景定义为 JSON 结构的有序步骤列表
+
+```json
+{
+  "scene_id": "three_way_handshake",
+  "name": "TCP 三次握手",
+  "steps": [
+    {
+      "step": 1,
+      "sender": "client",
+      "receiver": "server",
+      "flags": {"SYN": true},
+      "seq": 100,
+      "ack": 0,
+      "description": "客户端发送SYN报文，seq=100，请求建立连接",
+      "state_change": {"client": "SYN_SENT"}
+    },
+    ...
+  ],
+  "parameters": {
+    "window_size": {"default": 65535, "range": [512, 65535]},
+    "rtt_ms": {"default": 100, "range": [1, 1000]}
+  }
+}
+```
+
+**前端（渲染层）：** `SimulatorPlayer.vue` 使用 Canvas 2D API + requestAnimationFrame，根据步骤数据驱动动画：
+- 双栏布局：Canvas 动画区（左）+ 状态机面板（右）
+- 报文气泡点击弹出字段详情
+- 支持步进/播放/暂停/速度调节/进度拖拽
 
 ---
 
-## 十一、数据库设计
+## 7 运行设计
 
-### 11.1 ER 图文字描述
+### 7.1 运行模块组合
 
-- **users** (1) → (N) **student_profiles**：用户拥有画像
-- **users** (1) → (N) **chat_sessions**：用户拥有会话
-- **chat_sessions** (1) → (N) **agent_logs**：会话产生日志
-- **users** (1) → (N) **learning_paths**：用户拥有路径
-- **resources** 独立表：由 ResourceGenerator 生成
+| 模块 | 进程 | 端口 | 依赖 |
+|------|------|------|------|
+| FastAPI 后端 | uvicorn | 8000 | Python .venv_new |
+| Vue 前端开发服务 | Vite | 5173 | Node.js 18+ |
+| 前端生产构建 | 静态文件 | 随 nginx | frontend/dist/ |
+| SQLite 数据库 | 内嵌 | — | aiosqlite |
+| ChromaDB 向量库 | 内嵌（可选） | — | chromadb（可选） |
 
-### 11.2 五张表字段说明
+### 7.2 运行控制
 
-| 表名 | 关键字段 | 说明 |
-|------|----------|------|
-| users | id, user_id, created_at | 用户基本信息 |
-| student_profiles | id, user_id, profile_json, updated_at | 八维画像 JSON |
-| chat_sessions | id, session_id, user_id, messages_json, created_at | 会话消息列表 |
-| agent_logs | id, session_id, agent_name, action, input_state, output_state, timestamp | Agent 调度日志 |
-| learning_paths | id, user_id, nodes_json, created_at, updated_at | 路径节点列表 |
+#### 7.2.1 一键启动（Windows）
+
+```bat
+:: start.bat
+start.bat           -- 正常模式（讯飞 API）
+start.bat --mock-mode  -- Mock 模式（无需 API）
+```
+
+启动流程：
+1. 检测 Python 版本
+2. 创建/激活 .venv_new 虚拟环境
+3. 按需安装依赖（pip show fastapi）
+4. 初始化数据库（scripts/init_db.py）
+5. 启动 uvicorn（uvicorn src.loopse.main:app）
+
+#### 7.2.2 环境变量配置
+
+```ini
+# .env 文件（不入 Git）
+SPARK_APP_ID=your_app_id
+SPARK_API_SECRET=your_api_secret
+SPARK_API_KEY=your_api_key
+MOCK_MODE=0                   # 1=强制 Mock
+LOG_LEVEL=INFO                # DEBUG/INFO/WARNING/ERROR
+```
+
+### 7.3 性能优化措施
+
+| 优化点 | 实现方式 | 预期收益 |
+|--------|---------|---------|
+| 检索结果缓存 | 相同查询 5 分钟内复用检索结果 | 检索延迟减少 80% |
+| 画像更新去抖 | 连续对话不重复触发全量 LLM 校准 | LLM 调用减少 60% |
+| 日志异步写入 | asyncio Task 后台写 agent_logs | 主流程不阻塞 |
+| SSE 心跳保活 | 每 20 秒发送 `:keepalive\n\n` | 长连接不断 |
 
 ---
 
-## 十二、知识库设计
+## 8 系统出错处理设计
 
-### 12.1 三库结构
+### 8.1 出错信息规范
 
-系统知识库由三个独立集合组成，支持联合检索：
+所有 SSE `error` 事件遵循以下格式（脱敏）：
 
-| 集合名称 | 数据源 | 条目数 | 检索方式 |
-|---------|---------|:------:|----------|
-| course_docs | 谢希仁《计算机网络》第8版 5 章 | 5 章 Markdown | 向量检索 + 文本切分 |
-| protocol_specs | RFC 规范 + IANA 协议号 | 11 份 RFC/IANA | 向量检索 + 关键词 |
-| misconceptions | 常见误解库 | 60+ 条 | JSON 索引 + 语义匹配 |
+```json
+{
+  "agent_name": "orchestrator",
+  "timestamp": 1720876800789,
+  "data": {
+    "error": "LLM服务暂时不可用，已切换Mock模式",
+    "code": "LLM_TIMEOUT",
+    "fallback": true
+  }
+}
+```
 
-### 12.2 知识图谱设计
+**禁止在 error 事件中出现：** API Key、完整堆栈信息、数据库连接字符串。
 
-- **节点规模**：20 个知识点节点，覆盖 6 个章节
-- **边关系**：21 条前置依赖边 + 关联边
-- **节点属性**：id, name, chapter, type, difficulty(1-5), estimated_time, keywords, description
-- **查询能力**：前置依赖查询、拓扑排序、薄弱前置筛选
+### 8.2 补救措施
 
-### 12.3 误解库设计
+| 故障场景 | 检测方式 | 补救措施 |
+|---------|---------|---------|
+| LLM API 超时 | asyncio.wait_for 30s | 切换 MockProvider，发送 fallback=true |
+| ChromaDB 不可用 | 启动时 try/except | 降级本地 JSON 索引，记录 WARNING |
+| 数据库写入失败 | SQLAlchemy 异常 | 事务回滚，日志记录，不影响主流程 |
+| SSE 连接中断 | 前端 EventSource onerror | 前端自动重连（最多 3 次，指数退避） |
+| 单 Agent 超时 | asyncio.wait_for | 跳过该 Agent，继续执行后续步骤 |
+| 前端构建失败 | npm run build 返回码 | 使用 public/mock/ 目录 Mock 数据离线运行 |
 
-每条误解包含 7 个字段：
-- `id`：唯一标识（mc_001 ~ mc_060）
-- `knowledge_node_id`：对应知识点（kp_001 ~ kp_020）
-- `wrong_statement`：学生典型错误表述
-- `correct_explanation`：正确解释
-- `root_cause`：根因分析
-- `misconception_pattern`：所属误解模式（8 种枚举）
-- `difficulty`：隐蔽程度 1-5
+### 8.3 日志与监控
+
+| 日志级别 | 使用场景 |
+|---------|---------|
+| DEBUG | Agent 入参出参详情（开发环境） |
+| INFO | 系统启动、每轮对话开始/结束、Agent 调度 |
+| WARNING | 降级切换（Mock/本地索引）、性能超阈 |
+| ERROR | 未处理异常、API 调用失败 |
+
+日志格式：`%(asctime)s [%(levelname)s] %(name)s | %(message)s`
 
 ---
 
-## 十三、关键算法与机制
+## 9 附录
 
-### 13.1 三层诊断算法
-
-```
-输入：学生回答文本 + 当前画像
-    │
-    ▼
-第一层：表面错误检测 (surface_error.txt)
-    ├── 7 种错误类型匹配 + 置信度校准
-    ├── 输出：error_type, is_correct, confidence
-    │
-    ▼
-第二层：根因溯源 (root_cause.txt)
-    ├── 知识图谱节点注入 + 画像维度关联
-    ├── 输出：root_causes[], missing_prerequisites[]
-    │
-    ▼
-第三层：模式匹配 (pattern_match.txt)
-    ├── 6 种模式 + 混合模式 + 干预建议
-    └── 输出：pattern, intervention_suggestion, follow_up_question
-```
-
-### 13.2 路径规划算法
+### 附录 A 目录结构
 
 ```
-输入：画像 + 目标节点 + 知识图谱
-    │
-    ▼
-Step 1：拓扑排序 → 确定学习顺序
-    │
-    ▼
-Step 2：前置依赖检查 → 补充缺失节点
-    │
-    ▼
-Step 3：三维理由生成
-    ├── graph_dependency：知识图谱前置依赖链
-    ├── diagnosis_result：诊断结果关联
-    └── cognitive_style：认知风格适配
-    │
-    ▼
-输出：LearningPath（≥ 3 节点 + 三维理由）
+Socrates-Cube/
+├── src/loopse/                 # 后端核心
+│   ├── agent/                  # 9 个 Agent 实现
+│   │   ├── orchestrator.py     #   总协调器
+│   │   ├── coordinator.py      #   意图路由
+│   │   ├── profiler.py         #   画像维护
+│   │   ├── retriever.py        #   知识检索
+│   │   ├── diagnosis.py        #   三层诊断
+│   │   ├── resource_generator.py # 资源生成
+│   │   ├── path_planner.py     #   路径规划
+│   │   ├── challenger.py       #   概念挑战
+│   │   └── simulator.py        #   协议仿真
+│   ├── api/                    # FastAPI 路由层（20+ 路由文件）
+│   ├── core/                   # 核心能力
+│   │   ├── llm_client.py       #   LLM 统一入口
+│   │   ├── mock_provider.py    #   Mock 响应提供器
+│   │   └── trust_mechanism.py  #   可信机制
+│   ├── db/                     # 数据访问层
+│   ├── kb/                     # 知识库
+│   │   ├── vector_store.py     #   ChromaDB/JSON 向量检索
+│   │   ├── knowledge_graph.py  #   图谱加载与查询
+│   │   ├── misconception_registry.py # 误区库
+│   │   └── text_splitter.py    #   文档切分
+│   ├── schema/                 # Pydantic 数据模型
+│   └── main.py                 # 应用入口
+├── config/prompts/             # Prompt 模板（8 类 Agent）
+├── frontend/src/               # Vue 3 前端（20+ 视图组件）
+├── data/
+│   ├── knowledge_graph.json    # 100 节点 82 边知识图谱
+│   ├── misconceptions.json     # 150 条误区库
+│   └── vector_db/local_index.json  # 本地 JSON 向量索引
+├── scripts/                    # 数据工程脚本
+├── tests/unit/                 # 单元测试（8 个测试文件）
+└── docs/                       # 项目文档
 ```
 
-### 13.3 画像增量更新策略
+### 附录 B 开源组件声明
 
-- **确定性更新（每轮）**：根据诊断结果直接调整对应维度分数
-  - 回答正确：conceptual_understanding +0.03，expression_clarity +0.02
-  - 回答错误：conceptual_understanding -0.02，self_correction +0.01
-- **LLM 校准（每 5 轮）**：调用 LLM 进行全量画像校准，避免累积偏差
+| 组件 | 版本 | License | 用途 |
+|------|------|---------|------|
+| FastAPI | 0.111.0 | MIT | Web 框架 |
+| Vue 3 | 3.5 | MIT | 前端框架 |
+| Pydantic | 2.x | MIT | 数据验证 |
+| SQLAlchemy | 2.0.30 | MIT | ORM |
+| ECharts | 5.6 | Apache 2.0 | 数据可视化 |
+| TailwindCSS | 3.4 | MIT | CSS 工具类 |
+| spark-ai-python | ≥0.4.5 | Apache 2.0 | 讯飞星火 SDK |
+| marked | 14.x | MIT | Markdown 渲染 |
+| highlight.js | — | BSD-3 | 代码高亮 |
 
-### 13.4 可信机制实现
+AI 工具使用声明：系统核心 AI 能力使用科大讯飞讯飞星火大模型 API（符合 A3 赛题要求）。
 
-- **范围校验**：快速关键词匹配（≥ 2 个网络关键词放行） + LLM 辅助判断双层
-- **溯源标注**：检索来源编号 + 内容末尾追加参考来源列表（最多 5 个）
-- **不确定性声明**：置信度 < 0.6 自动追加“以上内容仅供参考”声明
+### 附录 C 变更历史
 
----
-
-## 十四、部署架构
-
-### 14.1 单机部署（当前方案）
-
-```
-┌─────────────────────────────────────────┐
-│              单机服务器                 │
-│                                         │
-│  ┌───────────────┐  ┌───────────────┐ │
-│  │  前端 (Vite) │  │  后端 (FastAPI)│ │
-│  │  端口: 5173    │  │  端口: 8000    │ │
-│  └───────────────┘  └───────┬───────┘ │
-│                                     │    │
-│  ┌───────────────┐  ┌───────┴───────┐ │
-│  │  SQLite DB      │  │  ChromaDB       │ │
-│  │  (edu_agent.db) │  │  (向量索引)     │ │
-│  └───────────────┘  └───────────────┘ │
-└─────────────────────────────────────────┘
-```
-
-- **启动命令**：`start.bat [--mock-mode]`
-- **前端代理**：Vite 开发服务器将 /api 请求代理到后端 8000 端口
-- **Mock 模式**：`start.bat --mock-mode` 启用后端 Mock Provider + 前端 Mock 拦截器
-
-### 14.2 可扩展架构（未来方案）
-
-- 前端：Nginx 静态部署 + CDN
-- 后端：Docker 容器 + 负载均衡
-- 数据库：SQLite 迁移至 PostgreSQL
-- 向量库：ChromaDB 迁移至 Milvus
-- LLM：支持多模型切换（星火 / GPT / 本地模型）
+| 版本 | 日期 | 变更说明 |
+|------|------|---------|
+| V1.0 | 2026-05-20 | 初稿 |
+| V1.1 | 2026-07-13 | C4 架构图、状态图、接口规格、算法描述 |
+| V2.0 | 2026-07-20 | GB/T 8567-2006 全面升级：增加详细 Agent 设计、Prompt 工程、知识图谱设计、出错处理规范 |

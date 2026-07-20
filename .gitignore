@@ -50,3 +50,17 @@ node_modules/
 dist/
 .env.local
 .venv/
+
+# 备用虚拟环境目录
+.venv_new/
+
+# 参赛提交包（含 ZIP 和源码副本，体积过大）
+submission_packages/
+
+# 备份文件
+*.backup
+*.main_backup
+
+# 临时工具脚本（可选忽略）
+check_deps.py
+check_path.py

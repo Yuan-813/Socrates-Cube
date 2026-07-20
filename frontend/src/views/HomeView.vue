@@ -5,100 +5,52 @@ import { checkHealth } from '@/api/health'
 
 const router = useRouter()
 const backendStatus = ref<string>('检测中...')
-const kgCanvasRef = ref<HTMLCanvasElement | null>(null)
+const snowCanvasRef = ref<HTMLCanvasElement | null>(null)
 let animId = 0
 
-/* ─── Hero 知识图谱 Canvas ─── */
-function initKGCanvas() {
-  const canvas = kgCanvasRef.value
+/* ─── Hero 魔方 + 飘雪粒子 Canvas ─── */
+function initSnowCanvas() {
+  const canvas = snowCanvasRef.value
   if (!canvas) return
-  const cvs = canvas // 非空断言别名，供闭包使用
+  const cvs = canvas
   const ctx = cvs.getContext('2d')!
   function resize() { cvs.width = cvs.offsetWidth; cvs.height = cvs.offsetHeight }
   resize()
   window.addEventListener('resize', resize)
 
-  const labels = ['TCP/IP', 'HTTP/2', 'QUIC', 'DNS', 'OSPF', 'WebSocket', 'BGP', 'TLS', 'UDP', 'ARP', 'SMTP', 'ICMP']
-  const nodes = labels.map((label, i) => ({
-    label,
-    baseAngle: (i / labels.length) * Math.PI * 2,
-    dist: 0.70 + (i % 3) * 0.08,
-    phase: i * 0.55,
-    speed: 0.06 + (i % 4) * 0.015,
+  // 飘雪 / 星尘粒子：缓慢飘落 + 左右摇摆 + 闪烁
+  const PARTICLE_COUNT = 60
+  const particles = Array.from({ length: PARTICLE_COUNT }, () => ({
+    x: Math.random(),
+    y: Math.random(),
+    r: 0.6 + Math.random() * 2.1,
+    speed: 0.06 + Math.random() * 0.16,
+    sway: Math.random() * Math.PI * 2,
+    swaySpeed: 0.006 + Math.random() * 0.01,
+    swayAmp: 4 + Math.random() * 10,
+    twinklePhase: Math.random() * Math.PI * 2,
   }))
-  let t = 0
-
-  function rr(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-    c.beginPath()
-    c.moveTo(x + r, y); c.lineTo(x + w - r, y); c.quadraticCurveTo(x + w, y, x + w, y + r)
-    c.lineTo(x + w, y + h - r); c.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
-    c.lineTo(x + r, y + h); c.quadraticCurveTo(x, y + h, x, y + h - r)
-    c.lineTo(x, y + r); c.quadraticCurveTo(x, y, x + r, y); c.closePath()
-  }
 
   function draw() {
-    ctx.clearRect(0, 0, cvs.width, cvs.height)
-    const cx = cvs.width / 2, cy = cvs.height / 2
-    const R = Math.min(cx, cy) * 0.86
-    t += 0.005
+    const w = cvs.width, h = cvs.height
+    ctx.clearRect(0, 0, w, h)
 
-    // 轨道虚线圈
-    ;[0.48, 0.84].forEach((f, ri) => {
+    particles.forEach(p => {
+      p.y += (p.speed / h) * 2.2
+      p.sway += p.swaySpeed
+      if (p.y > 1.05) { p.y = -0.05; p.x = Math.random() }
+      const px = p.x * w + Math.sin(p.sway) * p.swayAmp
+      const py = p.y * h
+      const twinkle = 0.45 + 0.5 * Math.sin(p.twinklePhase + p.sway * 1.4)
+
       ctx.beginPath()
-      ctx.arc(cx, cy, R * f, 0, Math.PI * 2)
-      ctx.strokeStyle = ri === 0 ? 'rgba(99,102,241,0.13)' : 'rgba(99,102,241,0.07)'
-      ctx.lineWidth = 1
-      ctx.setLineDash([4, 7])
-      ctx.stroke()
-      ctx.setLineDash([])
-    })
-
-    // 外圈节点
-    nodes.forEach((nd, i) => {
-      const angle = nd.baseAngle + t * nd.speed * (i % 2 === 0 ? 1 : -1)
-      const nx = cx + Math.cos(angle) * R * nd.dist + Math.sin(t * 0.7 + nd.phase) * 7
-      const ny = cy + Math.sin(angle) * R * nd.dist + Math.cos(t * 0.55 + nd.phase) * 5
-
-      // 连线
-      const alpha = 0.11 + 0.07 * Math.sin(t * 1.4 + i)
-      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(nx, ny)
-      ctx.strokeStyle = `rgba(99,102,241,${alpha})`; ctx.lineWidth = 0.9; ctx.stroke()
-
-      // 小节点圆
-      ctx.beginPath(); ctx.arc(nx, ny, 3.5, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(99,102,241,0.62)'; ctx.fill()
-
-      // 标签胶囊
-      ctx.font = 'bold 9.5px "PingFang SC",system-ui'
-      const tw = ctx.measureText(nd.label).width
-      const pw = tw + 14, ph = 19, px = nx - pw / 2, py = ny - ph / 2
-      rr(ctx, px, py, pw, ph, 5)
-      ctx.fillStyle = 'rgba(255,255,255,0.93)'
-      ctx.shadowColor = 'rgba(99,102,241,0.18)'; ctx.shadowBlur = 7; ctx.fill()
+      ctx.arc(px, py, p.r, 0, Math.PI * 2)
+      ctx.fillStyle = `rgba(255,255,255,${(0.35 + twinkle * 0.5).toFixed(3)})`
+      ctx.shadowColor = 'rgba(139,92,246,0.55)'
+      ctx.shadowBlur = 6
+      ctx.fill()
       ctx.shadowBlur = 0
-      ctx.strokeStyle = 'rgba(99,102,241,0.22)'; ctx.lineWidth = 0.7; ctx.stroke()
-      ctx.fillStyle = '#4338CA'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-      ctx.fillText(nd.label, nx, ny)
     })
-
-    // 中心光晕
-    const g1 = ctx.createRadialGradient(cx, cy, 0, cx, cy, 55)
-    g1.addColorStop(0, 'rgba(99,102,241,0.22)'); g1.addColorStop(1, 'transparent')
-    ctx.beginPath(); ctx.arc(cx, cy, 55, 0, Math.PI * 2)
-    ctx.fillStyle = g1; ctx.fill()
-
-    // 中心节点
-    const g2 = ctx.createLinearGradient(cx - 30, cy - 30, cx + 30, cy + 30)
-    g2.addColorStop(0, '#6366F1'); g2.addColorStop(1, '#8B5CF6')
-    ctx.beginPath()
-    ctx.arc(cx, cy, 30 + Math.sin(t * 2) * 1.8, 0, Math.PI * 2)
-    ctx.fillStyle = g2
-    ctx.shadowColor = 'rgba(99,102,241,0.5)'; ctx.shadowBlur = 22; ctx.fill()
-    ctx.shadowBlur = 0
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px "PingFang SC",system-ui'
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-    ctx.fillText('知识图谱', cx, cy - 7)
-    ctx.font = '8px "PingFang SC",system-ui'; ctx.fillText('Knowledge', cx, cy + 7)
 
     animId = requestAnimationFrame(draw)
   }
@@ -181,7 +133,7 @@ onMounted(async () => {
   try {
     const d = await checkHealth(); backendStatus.value = d.status
   } catch { backendStatus.value = '未连接' }
-  initKGCanvas()
+  initSnowCanvas()
   setTimeout(runCountUp, 400)
 })
 onUnmounted(() => { cancelAnimationFrame(animId) })
@@ -217,7 +169,25 @@ onUnmounted(() => { cancelAnimationFrame(animId) })
         </div>
       </div>
       <div class="hero-graph">
-        <canvas ref="kgCanvasRef" class="kg-canvas" />
+        <canvas ref="snowCanvasRef" class="snow-canvas" />
+        <div class="cube-scene">
+          <div class="cube-ring" />
+          <div class="cube-ring cube-ring-2" />
+          <div class="cube-wrap">
+            <div class="cube-face face-front" />
+            <div class="cube-face face-back" />
+            <div class="cube-face face-right" />
+            <div class="cube-face face-left" />
+            <div class="cube-face face-top" />
+            <div class="cube-face face-bottom" />
+          </div>
+          <div class="cube-glow" />
+        </div>
+        <span class="float-tag tag-1">TCP/IP</span>
+        <span class="float-tag tag-2">DNS</span>
+        <span class="float-tag tag-3">HTTP/2</span>
+        <span class="float-tag tag-4">WebSocket</span>
+        <span class="float-tag tag-5">QUIC</span>
       </div>
     </section>
 
@@ -531,19 +501,129 @@ onUnmounted(() => { cancelAnimationFrame(animId) })
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
 }
 
-/* Hero 右侧知识图谱 */
+/* Hero 右侧：魔方 + 飘雪粒子 */
 .hero-graph {
   flex-shrink: 0;
   width: 380px;
   height: 280px;
   position: relative;
   z-index: 1;
+  border-radius: 18px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 40%, #241b4d 0%, #140f2e 55%, #0b0a1c 100%);
+  box-shadow: 0 8px 32px rgba(30, 20, 70, 0.35), inset 0 0 0 1px rgba(139, 92, 246, 0.18);
 }
 
-.kg-canvas {
+.snow-canvas {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
+  z-index: 1;
+}
+
+/* 3D 魔方场景 */
+.cube-scene {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  perspective: 900px;
+}
+
+.cube-glow {
+  position: absolute;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.45) 0%, rgba(6, 182, 212, 0.18) 45%, transparent 72%);
+  filter: blur(6px);
+  animation: cubeGlowPulse 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes cubeGlowPulse {
+  0%, 100% { opacity: 0.65; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.08); }
+}
+
+.cube-ring {
+  position: absolute;
+  width: 210px;
+  height: 210px;
+  border: 1px solid rgba(99, 102, 241, 0.28);
+  border-radius: 50%;
+  transform: rotateX(72deg);
+  animation: ringSpin 14s linear infinite;
+}
+.cube-ring-2 {
+  width: 260px;
+  height: 260px;
+  border-color: rgba(6, 182, 212, 0.2);
+  animation-duration: 20s;
+  animation-direction: reverse;
+}
+@keyframes ringSpin {
+  from { transform: rotateX(72deg) rotate(0deg); }
+  to   { transform: rotateX(72deg) rotate(360deg); }
+}
+
+.cube-wrap {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  transform-style: preserve-3d;
+  animation: cubeSpin 10s linear infinite;
+  z-index: 3;
+}
+@keyframes cubeSpin {
+  from { transform: rotateX(-24deg) rotateY(0deg); }
+  to   { transform: rotateX(-24deg) rotateY(360deg); }
+}
+
+.cube-face {
+  position: absolute;
+  width: 96px;
+  height: 96px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.28), rgba(6, 182, 212, 0.14));
+  border: 1px solid rgba(165, 180, 252, 0.55);
+  box-shadow: 0 0 18px rgba(99, 102, 241, 0.35) inset, 0 0 14px rgba(6, 182, 212, 0.25);
+  backdrop-filter: blur(1px);
+}
+.face-front  { transform: translateZ(48px); }
+.face-back   { transform: translateZ(-48px) rotateY(180deg); }
+.face-right  { transform: rotateY(90deg) translateZ(48px); }
+.face-left   { transform: rotateY(-90deg) translateZ(48px); }
+.face-top    { transform: rotateX(90deg) translateZ(48px); background: linear-gradient(135deg, rgba(165, 180, 252, 0.4), rgba(103, 232, 249, 0.2)); }
+.face-bottom { transform: rotateX(-90deg) translateZ(48px); }
+
+/* 协议浮标 */
+.float-tag {
+  position: absolute;
+  padding: 4px 11px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #E0E7FF;
+  background: rgba(99, 102, 241, 0.16);
+  border: 1px solid rgba(165, 180, 252, 0.35);
+  border-radius: 20px;
+  letter-spacing: 0.02em;
+  z-index: 4;
+  animation: tagFloat 4.5s ease-in-out infinite;
+  backdrop-filter: blur(3px);
+}
+.tag-1 { top: 14%;  left: 10%; animation-delay: 0s; }
+.tag-2 { top: 20%;  right: 8%; animation-delay: 0.8s; }
+.tag-3 { bottom: 18%; left: 8%; animation-delay: 1.6s; }
+.tag-4 { bottom: 12%; right: 12%; animation-delay: 2.4s; }
+.tag-5 { top: 48%; right: -2%; animation-delay: 1.2s; }
+
+@keyframes tagFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
 }
 
 /* ─── Stats Row ─── */

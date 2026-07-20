@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Socrates-Cube 答辩PPT</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #0f1117; color: #e2e8f0; overflow: hidden; }
+  
+  .slides { width: 100vw; height: 100vh; }
+  .slide { display: none; width: 100vw; height: 100vh; padding: 48px 60px; flex-direction: column; justify-content: center; animation: fadeIn 0.3s ease; }
+  .slide.active { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* COVER */
+  .slide-cover { background: linear-gradient(135deg, #0f1117 0%, #1a1f2e 50%, #0d1520 100%); position: relative; overflow: hidden; }
+  .slide-cover::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at 60% 40%, rgba(99,179,237,0.08) 0%, transparent 60%); }
+  .cover-badge { display: inline-block; background: rgba(99,179,237,0.15); border: 1px solid rgba(99,179,237,0.3); color: #63b3ed; padding: 6px 16px; border-radius: 20px; font-size: 13px; margin-bottom: 24px; }
+  .cover-title { font-size: 48px; font-weight: 700; line-height: 1.2; margin-bottom: 16px; background: linear-gradient(90deg, #63b3ed, #a78bfa, #68d391); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .cover-subtitle { font-size: 20px; color: #94a3b8; margin-bottom: 40px; }
+  .cover-meta { font-size: 14px; color: #64748b; }
+  .cover-tag { display: inline-block; background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.3); color: #a78bfa; padding: 4px 12px; border-radius: 12px; margin-right: 8px; font-size: 13px; }
+
+  /* COMMON */
+  .slide-normal { background: #0f1117; }
+  .slide-dark { background: #080c12; }
+  .slide-accent { background: linear-gradient(135deg, #0f1117 0%, #101827 100%); }
+
+  h1.title { font-size: 36px; font-weight: 700; color: #f1f5f9; margin-bottom: 8px; }
+  h2.title { font-size: 30px; font-weight: 700; color: #f1f5f9; margin-bottom: 8px; }
+  .title-line { width: 60px; height: 4px; background: linear-gradient(90deg, #63b3ed, #a78bfa); border-radius: 2px; margin-bottom: 32px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+
+  .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 24px; }
+  .card-blue { border-color: rgba(99,179,237,0.3); background: rgba(99,179,237,0.06); }
+  .card-purple { border-color: rgba(167,139,250,0.3); background: rgba(167,139,250,0.06); }
+  .card-green { border-color: rgba(104,211,145,0.3); background: rgba(104,211,145,0.06); }
+  .card-orange { border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.06); }
+
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 8px; font-size: 12px; margin-right: 6px; margin-bottom: 6px; }
+  .tag-blue { background: rgba(99,179,237,0.15); color: #63b3ed; }
+  .tag-purple { background: rgba(167,139,250,0.15); color: #a78bfa; }
+  .tag-green { background: rgba(104,211,145,0.15); color: #68d391; }
+
+  .num { font-size: 42px; font-weight: 800; background: linear-gradient(90deg, #63b3ed, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .num-label { font-size: 13px; color: #64748b; margin-top: 4px; }
+
+  .badge-blue { background: #63b3ed; color: #0f1117; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+  .badge-purple { background: #a78bfa; color: #0f1117; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+  .badge-green { background: #68d391; color: #0f1117; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+
+  code { background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; color: #a78bfa; }
+  
+  .flow-box { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .flow-item { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 8px 14px; border-radius: 8px; font-size: 13px; }
+  .flow-arrow { color: #475569; font-size: 18px; }
+
+  p, li { color: #94a3b8; line-height: 1.7; }
+  ul { padding-left: 20px; }
+  .highlight { color: #63b3ed; }
+  .highlight-purple { color: #a78bfa; }
+  .highlight-green { color: #68d391; }
+
+  /* NAV */
+  .nav { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; }
+  .nav-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+  .nav-btn:hover { background: rgba(99,179,237,0.2); color: #63b3ed; border-color: rgba(99,179,237,0.4); }
+  .slide-counter { background: rgba(0,0,0,0.4); color: #64748b; padding: 8px 16px; border-radius: 20px; font-size: 13px; }
+
+  .agent-row { display: flex; align-items: center; padding: 12px 16px; border-radius: 8px; margin-bottom: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); }
+  .agent-name { font-weight: 600; font-size: 14px; color: #f1f5f9; min-width: 160px; }
+  .agent-desc { font-size: 13px; color: #64748b; flex: 1; }
+
+  .layer-box { padding: 12px 20px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+  .layer-1 { background: rgba(99,179,237,0.08); border-left: 3px solid #63b3ed; }
+  .layer-2 { background: rgba(167,139,250,0.08); border-left: 3px solid #a78bfa; }
+  .layer-3 { background: rgba(104,211,145,0.08); border-left: 3px solid #68d391; }
+  .layer-4 { background: rgba(251,191,36,0.08); border-left: 3px solid #fbbf24; }
+  .layer-5 { background: rgba(248,113,113,0.08); border-left: 3px solid #f87171; }
+  .layer-title { font-weight: 600; color: #f1f5f9; margin-bottom: 2px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: rgba(255,255,255,0.05); color: #94a3b8; padding: 10px 14px; text-align: left; font-weight: 500; }
+  td { padding: 9px 14px; color: #94a3b8; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .progress-bar { background: rgba(255,255,255,0.08); border-radius: 4px; height: 6px; margin-top: 6px; }
+  .progress-fill { height: 6px; border-radius: 4px; background: linear-gradient(90deg, #63b3ed, #a78bfa); }
+
+  .diag-layer { display: flex; align-items: flex-start; gap: 16px; padding: 16px; border-radius: 10px; margin-bottom: 12px; }
+  .diag-num { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
+  .diag-num-1 { background: rgba(99,179,237,0.2); color: #63b3ed; }
+  .diag-num-2 { background: rgba(167,139,250,0.2); color: #a78bfa; }
+  .diag-num-3 { background: rgba(104,211,145,0.2); color: #68d391; }
+  .diag-content h4 { font-size: 15px; color: #f1f5f9; margin-bottom: 4px; }
+  .diag-content p { font-size: 13px; color: #64748b; }
+</style>
+</head>
+<body>
+
+<div class="slides">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide slide-cover active" id="slide-1">
+    <div>
+      <div class="cover-badge">第十五届中国软件杯 · A3赛道</div>
+      <div class="cover-title">Socrates-Cube<br>苏格拉底方块</div>
+      <div class="cover-subtitle">多智能体自适应《计算机网络》学习系统</div>
+      <div style="margin-bottom: 32px;">
+        <span class="cover-tag">多Agent协同</span>
+        <span class="cover-tag">三层认知诊断</span>
+        <span class="cover-tag">RAG增强检索</span>
+        <span class="cover-tag">SSE实时推流</span>
+      </div>
+      <div class="cover-meta">FastAPI · Vue3 · ChromaDB · 讯飞星火 · Python 3.10</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: PROBLEM -->
+  <div class="slide slide-normal" id="slide-2">
+    <h2 class="title">问题痛点</h2>
+    <div class="title-line"></div>
+    <div class="grid-3" style="margin-bottom: 32px;">
+      <div class="card card-blue">
+        <div style="font-size: 32px; margin-bottom: 12px;">❌</div>
+        <h3 style="font-size: 16px; color: #f1f5f9; margin-bottom: 8px;">只判断对错</h3>
+        <p style="font-size: 13px;">传统系统只告诉学生"错了"，<br>不告诉"为什么错、错在哪里"</p>
+      </div>
+      <div class="card card-purple">
+        <div style="font-size: 32px; margin-bottom: 12px;">📋</div>
+        <h3 style="font-size: 16px; color: #f1f5f9; margin-bottom: 8px;">内容千篇一律</h3>
+        <p style="font-size: 13px;">不同认知基础的学生<br>获得完全相同的学习资源</p>
+      </div>
+      <div class="card card-green">
+        <div style="font-size: 32px; margin-bottom: 12px;">🔒</div>
+        <h3 style="font-size: 16px; color: #f1f5f9; margin-bottom: 8px;">路径固定</h3>
+        <p style="font-size: 13px;">学习顺序固定，<br>无法根据知识图谱前置依赖动态调整</p>
+      </div>
+    </div>
+    <div class="card" style="text-align: center; padding: 20px;">
+      <p style="font-size: 16px; color: #f1f5f9;">
+        <span style="color: #63b3ed; font-weight: 600;">Socrates-Cube</span> 的核心转变：
+        <span class="highlight-purple" style="margin-left: 8px;">从"判断对错"到"理解认知过程"</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: SYSTEM OVERVIEW -->
+  <div class="slide slide-dark" id="slide-3">
+    <h2 class="title">系统架构 — 五层设计</h2>
+    <div class="title-line"></div>
+    <div style="margin-bottom: 16px;">
+      <div class="layer-box layer-1"><div class="layer-title">Layer 1 · 前端层</div>Vue3 3.5.29 + Vite + Pinia + Element Plus + ECharts · 9个业务页面 · SSE实时消费</div>
+      <div class="layer-box layer-2"><div class="layer-title">Layer 2 · API层</div>FastAPI 0.111.0 + Uvicorn + sse-starlette · 10个REST/SSE端点 · Pydantic数据验证</div>
+      <div class="layer-box layer-3"><div class="layer-title">Layer 3 · Agent层</div>OrchestratorAgent（编排中枢）+ 5个专业Agent · CognitiveAgentMixin · plan-act-reflect</div>
+      <div class="layer-box layer-4"><div class="layer-title">Layer 4 · 知识层</div>ChromaDB 0.5.0（三集合）+ KnowledgeGraph（KP/ACU双层）+ 误解库150条</div>
+      <div class="layer-box layer-5"><div class="layer-title">Layer 5 · LLM层</div>讯飞星火 sparkai 0.1.8 · LangChain 0.2.1 RAG管道 · Mock离线降级</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: 6 AGENTS -->
+  <div class="slide slide-normal" id="slide-4">
+    <h2 class="title">6-Agent 多智能体协同架构</h2>
+    <div class="title-line"></div>
+    <div class="agent-row" style="border-color: rgba(99,179,237,0.3);">
+      <span class="badge-blue" style="margin-right: 12px;">中枢</span>
+      <span class="agent-name">OrchestratorAgent</span>
+      <span class="agent-desc">意图识别（qa/resource/planning/simulation）+ 工作流编排 + SSE事件推送</span>
+      <code>orchestrator.py 217行</code>
+    </div>
+    <div class="agent-row" style="border-color: rgba(248,113,113,0.3);">
+      <span class="badge-purple" style="margin-right: 12px; background: #f87171;">诊断</span>
+      <span class="agent-name">DiagnosisAgent</span>
+      <span class="agent-desc">三层认知诊断：L1表面错误 → L2根因分析 → L3误区模式匹配</span>
+      <code>diagnosis.py 241行</code>
+    </div>
+    <div class="agent-row">
+      <span class="badge-green" style="margin-right: 12px;">画像</span>
+      <span class="agent-name">ProfilerAgent</span>
+      <span class="agent-desc">8维动态画像 · 混合更新策略（LLM增量 + 确定性mastery更新）</span>
+      <code>profiler.py 158行</code>
+    </div>
+    <div class="agent-row">
+      <span class="badge-blue" style="margin-right: 12px; background: #a78bfa;">检索</span>
+      <span class="agent-name">RetrieverAgent</span>
+      <span class="agent-desc">三库向量检索（course_docs/protocol_specs/misconceptions）+ 知识图谱关键词匹配</span>
+      <code>retriever.py 141行</code>
+    </div>
+    <div class="agent-row">
+      <span class="badge-blue" style="margin-right: 12px; background: #fbbf24; color: #0f1117;">资源</span>
+      <span class="agent-name">ResourceGeneratorAgent</span>
+      <span class="agent-desc">三类资源生成：doc（知识文档）/ exercise（练习题）/ code（代码示例）</span>
+      <code>resource_generator.py 244行</code>
+    </div>
+    <div class="agent-row">
+      <span class="badge-green" style="margin-right: 12px;">路径</span>
+      <span class="agent-name">PathPlannerAgent</span>
+      <span class="agent-desc">Kahn拓扑排序 + DFS前置查询 + 三维推荐理由生成</span>
+      <code>path_planner.py 111行</code>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: THREE-LAYER DIAGNOSIS (CORE INNOVATION 1) -->
+  <div class="slide slide-accent" id="slide-5">
+    <h2 class="title">核心创新一：三层认知诊断框架</h2>
+    <div class="title-line"></div>
+    <div class="grid-2">
+      <div>
+        <div class="diag-layer" style="background: rgba(99,179,237,0.05); border: 1px solid rgba(99,179,237,0.2);">
+          <div class="diag-num diag-num-1">L1</div>
+          <div class="diag-content">
+            <h4>表面错误检测（_detect_surface_error）</h4>
+            <p>LLM语义判断 + 关键词硬规则双重机制<br>"两次握手" → 强制标记 factual 错误（零漏判）</p>
+          </div>
+        </div>
+        <div class="diag-layer" style="background: rgba(167,139,250,0.05); border: 1px solid rgba(167,139,250,0.2);">
+          <div class="diag-num diag-num-2">L2</div>
+          <div class="diag-content">
+            <h4>根因分析（_analyze_root_cause）</h4>
+            <p>LLM深度分析认知根源<br>定位缺失的前置知识节点（missing_prerequisites）</p>
+          </div>
+        </div>
+        <div class="diag-layer" style="background: rgba(104,211,145,0.05); border: 1px solid rgba(104,211,145,0.2);">
+          <div class="diag-num diag-num-3">L3</div>
+          <div class="diag-content">
+            <h4>误区模式匹配（_match_pattern）</h4>
+            <p>在 <strong style="color: #68d391;">150条误解库</strong>（23种错误类型）中匹配<br>输出标准化干预策略</p>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom: 16px;">
+          <h4 style="font-size: 14px; color: #f1f5f9; margin-bottom: 12px;">诊断结果示例（10字段输出）</h4>
+          <div style="font-family: monospace; font-size: 12px; color: #64748b; line-height: 1.8;">
+            is_correct: <span style="color: #f87171;">false</span><br>
+            surface_error: <span style="color: #68d391;">"把三次握手误认为两次"</span><br>
+            error_type: <span style="color: #fbbf24;">"flow_omission"</span><br>
+            root_causes: <span style="color: #a78bfa;">["TCP连接机制不清楚"]</span><br>
+            missing_prerequisites: <span style="color: #63b3ed;">["kn_005"]</span><br>
+            pattern: <span style="color: #68d391;">"握手次数混淆"</span><br>
+            intervention_suggestion: <span style="color: #94a3b8;">"仿真演示TCP握手"</span>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+          <div style="text-align: center;"><div class="num" style="font-size: 28px;">150</div><div class="num-label">误解条目</div></div>
+          <div style="text-align: center;"><div class="num" style="font-size: 28px;">23</div><div class="num-label">错误类型</div></div>
+          <div style="text-align: center;"><div class="num" style="font-size: 28px;">10</div><div class="num-label">输出字段</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: HYBRID PROFILE UPDATE (CORE INNOVATION 2) -->
+  <div class="slide slide-normal" id="slide-6">
+    <h2 class="title">核心创新二：混合更新学习画像策略</h2>
+    <div class="title-line"></div>
+    <div class="grid-2">
+      <div>
+        <h3 style="font-size: 16px; color: #63b3ed; margin-bottom: 16px;">8维能力画像</h3>
+        <table>
+          <thead><tr><th>维度</th><th>含义</th><th>默认值</th></tr></thead>
+          <tbody>
+            <tr><td>conceptual_understanding</td><td>概念理解深度</td><td>0.5</td></tr>
+            <tr><td>protocol_analysis</td><td>协议分析能力</td><td>0.5</td></tr>
+            <tr><td>calculation_ability</td><td>计算推导能力</td><td>0.5</td></tr>
+            <tr><td>error_diagnosis</td><td>自我纠错能力</td><td>0.5</td></tr>
+            <tr><td>system_design</td><td>系统设计思维</td><td>0.5</td></tr>
+            <tr><td>knowledge_connection</td><td>知识关联迁移</td><td>0.5</td></tr>
+            <tr><td>expression_clarity</td><td>表达清晰程度</td><td>0.5</td></tr>
+            <tr><td>self_correction</td><td>自我修正能力</td><td>0.5</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3 style="font-size: 16px; color: #a78bfa; margin-bottom: 16px;">混合更新策略</h3>
+        <div class="card card-blue" style="margin-bottom: 12px;">
+          <h4 style="font-size: 13px; color: #63b3ed; margin-bottom: 8px;">策略A：LLM增量校准（每轮对话）</h4>
+          <p style="font-size: 12px;">LLM解析对话内容 → 返回各维度 δ ∈ [-0.2, +0.2]<br>更新公式：<code>score = clamp(score + δ, 0.1, 1.0)</code></p>
+        </div>
+        <div class="card card-green" style="margin-bottom: 12px;">
+          <h4 style="font-size: 13px; color: #68d391; margin-bottom: 8px;">策略B：确定性掌握度更新（每次诊断）</h4>
+          <p style="font-size: 12px;">诊断正确：<code>mastery += 0.05</code><br>诊断错误：<code>mastery -= 0.07</code><br>动态维护 weak_points 和 strong_points</p>
+        </div>
+        <div class="card" style="background: rgba(248,113,113,0.05); border-color: rgba(248,113,113,0.2);">
+          <h4 style="font-size: 13px; color: #f87171; margin-bottom: 4px;">降级设计</h4>
+          <p style="font-size: 12px;">LLM失败时：δ为空，仅执行策略B<br>确保画像始终有合理更新</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: KP-ACU + RAG (CORE INNOVATION 3) -->
+  <div class="slide slide-dark" id="slide-7">
+    <h2 class="title">核心创新三：KP-ACU双层知识图谱 + RAG三库检索</h2>
+    <div class="title-line"></div>
+    <div class="grid-2">
+      <div>
+        <h3 style="font-size: 16px; color: #63b3ed; margin-bottom: 16px;">KP-ACU双层建模</h3>
+        <div class="card card-blue" style="margin-bottom: 12px;">
+          <h4 style="font-size: 14px; color: #f1f5f9; margin-bottom: 6px;">KP层（Knowledge Point）</h4>
+          <p style="font-size: 12px;">粒度较粗的学习概念（kn_001~kn_010+）<br>用于学习路径规划、拓扑排序</p>
+        </div>
+        <div class="card card-purple">
+          <h4 style="font-size: 14px; color: #f1f5f9; margin-bottom: 6px;">ACU层（Atomic Cognitive Unit）</h4>
+          <p style="font-size: 12px;">细粒度认知单元（acu_001~acu_046+）<br>与150条误解库精确对应</p>
+        </div>
+        <div style="margin-top: 16px;">
+          <h3 style="font-size: 16px; color: #fbbf24; margin-bottom: 8px;">Kahn拓扑排序（PathPlanner）</h3>
+          <div class="flow-box">
+            <div class="flow-item">计算入度</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-item">入度0入队</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-item">按(章节/难度)排序</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-item">有序路径</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3 style="font-size: 16px; color: #68d391; margin-bottom: 16px;">RAG三库增强检索</h3>
+        <table>
+          <thead><tr><th>集合</th><th>内容</th><th>用途</th></tr></thead>
+          <tbody>
+            <tr><td><code>course_docs</code></td><td>5章课程讲义</td><td>通用QA背景</td></tr>
+            <tr><td><code>protocol_specs</code></td><td>11个RFC规范</td><td>协议权威来源</td></tr>
+            <tr><td><code>misconceptions</code></td><td>150条误解全文</td><td>L3误区匹配</td></tr>
+          </tbody>
+        </table>
+        <div class="card" style="margin-top: 12px;">
+          <h4 style="font-size: 13px; color: #f1f5f9; margin-bottom: 6px;">TF-IDF降级公式</h4>
+          <p style="font-size: 12px; font-family: monospace; color: #94a3b8;">
+            score = Σ (1 + log(tf)) × (log((N+1)/(df+1)) + 1)<br>
+            ChromaDB不可用时自动降级，对调用方透明
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: SSE REALTIME -->
+  <div class="slide slide-normal" id="slide-8">
+    <h2 class="title">SSE 实时事件流 — Agent执行可视化</h2>
+    <div class="title-line"></div>
+    <div class="grid-2">
+      <div>
+        <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">标准对话请求的完整SSE事件序列：</p>
+        <div style="font-family: monospace; font-size: 12px; line-height: 2.2; color: #64748b; background: rgba(0,0,0,0.3); padding: 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+          <span style="color: #63b3ed;">agent_start</span> "Orchestrator" ← 意图识别<br>
+          <span style="color: #63b3ed;">agent_start</span> "Retriever" ← 三库检索<br>
+          <span style="color: #63b3ed;">agent_end</span> "Retriever" ← 命中N条文档<br>
+          <span style="color: #f87171;">agent_start</span> "Diagnosis" ← 三层诊断<br>
+          <span style="color: #a78bfa;">diagnosis</span> {完整10字段结果}<br>
+          <span style="color: #f87171;">agent_end</span> "Diagnosis"<br>
+          <span style="color: #fbbf24;">token</span> ×N ← LLM逐字推送<br>
+          <span style="color: #68d391;">agent_end</span> "Profiler" ← 画像更新<br>
+          <span style="color: #63b3ed;">resource</span> / <span style="color: #a78bfa;">path_update</span> ← 按需<br>
+          <span style="color: #94a3b8;">done</span> {session_id, total_ms}
+        </div>
+      </div>
+      <div>
+        <h3 style="font-size: 15px; color: #f1f5f9; margin-bottom: 16px;">技术实现亮点</h3>
+        <div class="card" style="margin-bottom: 10px;">
+          <h4 style="font-size: 13px; color: #63b3ed; margin-bottom: 4px;">前后端协议</h4>
+          <p style="font-size: 12px;">sse-starlette 2.1.0 | text/event-stream<br>data: {JSON}\n\n 标准格式</p>
+        </div>
+        <div class="card" style="margin-bottom: 10px;">
+          <h4 style="font-size: 13px; color: #a78bfa; margin-bottom: 4px;">AgentTrace追踪系统</h4>
+          <p style="font-size: 12px;">每次对话记录完整推理轨迹<br>随done事件推送给前端，供教学分析</p>
+        </div>
+        <div class="card">
+          <h4 style="font-size: 13px; color: #68d391; margin-bottom: 4px;">降级容错设计</h4>
+          <p style="font-size: 12px;">单个Agent失败不触发全局错误<br>捕获异常 → 降级跳过 → 继续推送</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: TECH STACK -->
+  <div class="slide slide-dark" id="slide-9">
+    <h2 class="title">技术栈全览</h2>
+    <div class="title-line"></div>
+    <div class="grid-2">
+      <div>
+        <h3 style="font-size: 15px; color: #63b3ed; margin-bottom: 12px;">后端技术栈</h3>
+        <table>
+          <thead><tr><th>组件</th><th>版本</th><th>用途</th></tr></thead>
+          <tbody>
+            <tr><td>FastAPI</td><td>0.111.0</td><td>异步Web框架</td></tr>
+            <tr><td>Uvicorn</td><td>0.29.0</td><td>ASGI服务器</td></tr>
+            <tr><td>sse-starlette</td><td>2.1.0</td><td>SSE推送</td></tr>
+            <tr><td>SQLAlchemy</td><td>2.0.30</td><td>ORM数据库</td></tr>
+            <tr><td>ChromaDB</td><td>0.5.0</td><td>向量检索</td></tr>
+            <tr><td>sparkai</td><td>0.1.8</td><td>讯飞星火LLM</td></tr>
+            <tr><td>LangChain</td><td>0.2.1</td><td>RAG管道</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3 style="font-size: 15px; color: #a78bfa; margin-bottom: 12px;">前端技术栈</h3>
+        <table>
+          <thead><tr><th>组件</th><th>版本</th><th>用途</th></tr></thead>
+          <tbody>
+            <tr><td>Vue3</td><td>3.5.29</td><td>前端框架</td></tr>
+            <tr><td>Vite</td><td>5.4.21</td><td>构建工具</td></tr>
+            <tr><td>TypeScript</td><td>5.9.3</td><td>类型安全</td></tr>
+            <tr><td>Pinia</td><td>2.3.1</td><td>状态管理</td></tr>
+            <tr><td>Element Plus</td><td>2.13.2</td><td>UI组件库</td></tr>
+            <tr><td>ECharts</td><td>5.6.0</td><td>数据可视化</td></tr>
+            <tr><td>Axios</td><td>1.13.6</td><td>HTTP客户端</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="grid-6" style="margin-top: 16px;">
+      <div style="text-align: center;"><div class="num" style="font-size: 24px;">10</div><div class="num-label">API端点</div></div>
+      <div style="text-align: center;"><div class="num" style="font-size: 24px;">10</div><div class="num-label">数据库表</div></div>
+      <div style="text-align: center;"><div class="num" style="font-size: 24px;">9</div><div class="num-label">前端页面</div></div>
+      <div style="text-align: center;"><div class="num" style="font-size: 24px;">150</div><div class="num-label">误解条目</div></div>
+      <div style="text-align: center;"><div class="num" style="font-size: 24px;">26</div><div class="num-label">测试用例</div></div>
+      <div style="text-align: center;"><div class="num" style="font-size: 24px;">0</div><div class="num-label">测试失败</div></div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: DEMO FLOW -->
+  <div class="slide slide-accent" id="slide-10">
+    <h2 class="title">演示流程说明</h2>
+    <div class="title-line"></div>
+    <div class="grid-2">
+      <div>
+        <h3 style="font-size: 15px; color: #63b3ed; margin-bottom: 16px;">7分钟演示脚本</h3>
+        <div class="card" style="margin-bottom: 10px; padding: 14px;">
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <span class="badge-blue">0:00</span>
+            <span style="font-size: 13px; color: #94a3b8;">首页展示 + 系统架构说明（30s）</span>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom: 10px; padding: 14px;">
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <span class="badge-blue">0:30</span>
+            <span style="font-size: 13px; color: #94a3b8;">输入错误答案"TCP两次握手" → 展示三层诊断结果（1:30）</span>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom: 10px; padding: 14px;">
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <span class="badge-purple">2:00</span>
+            <span style="font-size: 13px; color: #94a3b8;">查看8维能力画像 + 知识掌握度可视化（1:00）</span>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom: 10px; padding: 14px;">
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <span class="badge-purple">3:00</span>
+            <span style="font-size: 13px; color: #94a3b8;">生成个性化练习题 → 展示资源质量评分（1:00）</span>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom: 10px; padding: 14px;">
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <span class="badge-green">4:00</span>
+            <span style="font-size: 13px; color: #94a3b8;">学习路径规划 → 展示Kahn排序结果（1:00）</span>
+          </div>
+        </div>
+        <div class="card" style="padding: 14px;">
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <span class="badge-green">5:00</span>
+            <span style="font-size: 13px; color: #94a3b8;">Agent执行日志 + 总结创新点（2:00）</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3 style="font-size: 15px; color: #a78bfa; margin-bottom: 16px;">访问地址</h3>
+        <div class="card card-blue" style="margin-bottom: 12px;">
+          <p style="font-size: 13px; color: #63b3ed; margin-bottom: 4px;">前端界面</p>
+          <code style="font-size: 15px;">http://localhost:5173</code>
+        </div>
+        <div class="card" style="margin-bottom: 12px;">
+          <p style="font-size: 13px; color: #94a3b8; margin-bottom: 4px;">API文档</p>
+          <code>http://localhost:8000/docs</code>
+        </div>
+        <div class="card" style="margin-bottom: 12px;">
+          <p style="font-size: 13px; color: #94a3b8; margin-bottom: 4px;">健康检查</p>
+          <code>http://localhost:8000/health</code>
+        </div>
+        <div class="card card-green">
+          <p style="font-size: 13px; color: #68d391; margin-bottom: 4px;">演示账号</p>
+          <code>user_id: student-001</code><br>
+          <p style="font-size: 12px; color: #64748b; margin-top: 6px;">无需注册，直接使用</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: SUMMARY -->
+  <div class="slide slide-cover" id="slide-11">
+    <div>
+      <div class="cover-badge">项目总结</div>
+      <div class="cover-title" style="font-size: 36px; margin-bottom: 20px;">Socrates-Cube 核心亮点</div>
+      <div class="grid-3" style="margin-bottom: 32px;">
+        <div class="card card-blue" style="text-align: center; padding: 20px;">
+          <div class="num">三层</div>
+          <div style="font-size: 14px; color: #f1f5f9; margin: 8px 0;">认知诊断框架</div>
+          <div class="num-label">从表面错误到根因到误区模式</div>
+        </div>
+        <div class="card card-purple" style="text-align: center; padding: 20px;">
+          <div class="num">6-Agent</div>
+          <div style="font-size: 14px; color: #f1f5f9; margin: 8px 0;">多智能体协同</div>
+          <div class="num-label">OrchestratorAgent统一编排</div>
+        </div>
+        <div class="card card-green" style="text-align: center; padding: 20px;">
+          <div class="num">8维</div>
+          <div style="font-size: 14px; color: #f1f5f9; margin: 8px 0;">动态学习画像</div>
+          <div class="num-label">混合更新策略（LLM+确定性）</div>
+        </div>
+      </div>
+      <div style="text-align: center; color: #64748b; font-size: 14px;">
+        <span style="margin-right: 24px;">150条误解库</span>
+        <span style="margin-right: 24px;">RAG三库增强</span>
+        <span style="margin-right: 24px;">KP-ACU双层图谱</span>
+        <span style="margin-right: 24px;">SSE实时推流</span>
+        <span>pytest 26 passed</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- NAVIGATION -->
+<div class="nav">
+  <button class="nav-btn" onclick="prevSlide()">← 上一页</button>
+  <span class="slide-counter" id="counter">1 / 11</span>
+  <button class="nav-btn" onclick="nextSlide()">下一页 →</button>
+</div>
+
+<script>
+  let current = 1;
+  const total = 11;
+
+  function showSlide(n) {
+    document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+    document.getElementById('slide-' + n).classList.add('active');
+    document.getElementById('counter').textContent = n + ' / ' + total;
+    current = n;
+  }
+
+  function nextSlide() {
+    if (current < total) showSlide(current + 1);
+  }
+
+  function prevSlide() {
+    if (current > 1) showSlide(current - 1);
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') nextSlide();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+  });
+</script>
+</body>
+</html>

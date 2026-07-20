@@ -78,7 +78,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/challenger',
     name: 'Challenger',
-    component: () => import('@/views/ChallengerView.vue'),
+    component: () => import('@/views/ChallengerViewScheme3.vue'),
     meta: { title: '概念挑战' },
   },
   {

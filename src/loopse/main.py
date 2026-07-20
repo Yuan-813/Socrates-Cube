@@ -13,12 +13,19 @@ import argparse
 import logging
 import os
 import uuid
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
+
+# 前端构建产物目录（src/loopse/main.py -> src/loopse -> src -> 项目根）
+_BASE_DIR = Path(__file__).resolve().parent.parent.parent
+_DIST_DIR = _BASE_DIR / "frontend" / "dist"
+_DIST_EXISTS = _DIST_DIR.is_dir()
 
 # Check for --mock-mode flag
 _parser = argparse.ArgumentParser(add_help=False)
@@ -231,3 +238,29 @@ app.include_router(lesson_router)
 app.include_router(virtual_teacher_router)
 app.include_router(stats_router)
 app.include_router(admin_router)
+
+
+# 静态文件托管（前端 dist/ 构建产物）—— 仅在 frontend/dist 存在时启用
+if _DIST_EXISTS:
+    _assets = _DIST_DIR / "assets"
+    if _assets.is_dir():
+        app.mount("/assets", StaticFiles(directory=str(_assets)), name="spa-assets")
+
+    @app.get("/", include_in_schema=False)
+    async def serve_index():
+        """SPA 入口"""
+        return FileResponse(str(_DIST_DIR / "index.html"))
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa(full_path: str):
+        """SPA catch-all：API 路由不拦截，其余返回 index.html"""
+        if full_path.startswith(("api/", "docs", "openapi", "redoc")):
+            raise HTTPException(status_code=404)
+        candidate = _DIST_DIR / full_path
+        if candidate.is_file():
+            return FileResponse(str(candidate))
+        return FileResponse(str(_DIST_DIR / "index.html"))
+
+    logger.info("前端静态文件已挂载 → %s", _DIST_DIR)
+else:
+    logger.info("frontend/dist 不存在，跳过静态文件挂载（开发模式）")

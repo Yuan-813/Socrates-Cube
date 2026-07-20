@@ -95,25 +95,30 @@
 
 Socrates-Cube 是一个独立运行的 Web 应用系统，不依赖任何现有教务系统。系统由前端 SPA、后端 API 服务、多智能体引擎与知识库四部分构成，通过 HTTP/SSE 协议交互。系统外部依赖讯飞星火大模型 API 提供语言理解与生成能力；当 API 不可用时，系统自动降级至 Mock 模式，保证演示稳定性。
 
-**系统上下文关系图：**
+**图 1：系统上下文关系图（C4 Level 1）**
 
+```mermaid
+graph TB
+    Student["👨‍🎓 学生用户\n计算机网络课程学习者"]
+    TA["👨‍🏫 助教 / 教师\n监督与验收角色"]
+    LLM["☁️ 讯飞星火 LLM API\n可选 · HTTPS · Spark v3.5"]
+
+    subgraph SC["Socrates-Cube 系统 (localhost)"]
+        FE["前端 SPA\nVue3 + TypeScript + Pinia\nPort: 5173"]
+        BE["后端 API 服务\nFastAPI + Uvicorn\nPort: 8000"]
+        DB[("SQLite 数据库\nedu_agent.db")]
+        KB[("知识库\n向量索引 / 知识图谱")]
+        FE <-- "HTTP / SSE" --> BE
+        BE <-- "aiosqlite" --> DB
+        BE <-- "本地 JSON" --> KB
+    end
+
+    Student -- "HTTP/SSE（浏览器）" --> FE
+    TA -- "HTTP（浏览器）" --> FE
+    BE -- "spark-ai-python SDK\n(可选，无则 Mock)" --> LLM
 ```
-  ┌─────────────────────────────────────────────────────────────┐
-  │  外部参与者                                                 │
-  │  ┌─────────┐    ┌─────────┐    ┌──────────────────────┐   │
-  │  │  学  生  │    │  助  教  │    │  讯飞星火 LLM API     │   │
-  │  └────┬────┘    └────┬────┘    └──────────┬───────────┘   │
-  └───────┼──────────────┼───────────────────┼───────────────┘
-          │ HTTP/SSE      │ HTTP              │ HTTPS/WSS
-          ▼               ▼                   ▼
-  ┌───────────────────────────────────────────────────────────┐
-  │              Socrates-Cube 系统                           │
-  │  ┌──────────────┐    ┌──────────────────────────────────┐ │
-  │  │  前端 SPA     │◄──►│  后端 API + 多 Agent 引擎        │ │
-  │  │  Vue3+TS      │    │  FastAPI + Orchestrator          │ │
-  │  └──────────────┘    └──────────────────────────────────┘ │
-  └───────────────────────────────────────────────────────────┘
-```
+
+> **注**：系统支持完全离线运行（Mock 模式），不强依赖讯飞星火 API。
 
 ### 2.2 产品功能概述
 
@@ -130,6 +135,80 @@ Socrates-Cube 是一个独立运行的 Web 应用系统，不依赖任何现有�
 | **F07 可解释学习路径** | 知识图谱驱动、含三维推荐理由的个性化学习路径 |
 | **F08 协议仿真演示** | 7 种网络协议场景的 Canvas 动画交互仿真 |
 | **F09 内容可信机制** | 域外拦截 + 引用溯源 + 不确定性声明三重保障 |
+
+**图 2：认知闭环驱动架构图**
+
+```mermaid
+graph LR
+    subgraph 学生交互
+        S["👨‍🎓 学生输入"]
+    end
+
+    subgraph 认知闭环 ["Socrates-Cube 认知闭环"]
+        direction TB
+        R["🔍 RetrieverAgent\n三库联合检索"]
+        D["🧠 DiagnosisAgent\n三层认知诊断"]
+        G["📚 ResourceGeneratorAgent\n五类资源生成"]
+        P["🗣️ ProfilerAgent\n八维画像更新"]
+        L["🗳️ PathPlannerAgent\n路径重规划"]
+    end
+
+    subgraph 可信机制
+        T["🔐 TrustMechanism\n域外拦截+溯源+不确定"]
+    end
+
+    S --> R
+    R --> D
+    D --> G
+    D --> P
+    G --> P
+    P --> L
+    L --> S
+    T -. "可信保障" .-> R
+    T -. "可信保障" .-> D
+    T -. "可信保障" .-> G
+```
+
+**图 3：知识图谱核心结构（部分）**
+
+```mermaid
+graph LR
+    subgraph 数据链路层
+        DL1["KP-DL-ETH\n以太网"]
+        DL2["KP-DL-MAC\nMAC 地址"]
+    end
+    subgraph 网络层
+        NL1["KP-NL-IPV4\nIPv4 协议"]
+        NL2["KP-NL-SUBNET\n子网划分"]
+        NL3["KP-NL-ROUTE\n路由协议"]
+    end
+    subgraph 传输层
+        TL1["KP-TL-TCP\nTCP 基础"]
+        TL2["KP-TL-CONN\nTCP 连接管理"]
+        TL3["KP-TL-FLOW\nTCP 流量控制"]
+        TL4["KP-TL-CONG\nTCP 拥塞控制"]
+        TL5["KP-TL-UDP\nUDP 协议"]
+    end
+    subgraph 应用层
+        AL1["KP-AL-HTTP\nHTTP 协议"]
+        AL2["KP-AL-DNS\nDNS 协议"]
+        AL3["KP-AL-TLS\nTLS/HTTPS"]
+    end
+    DL1 --> NL1
+    DL2 --> NL1
+    NL1 --> TL1
+    NL1 --> NL2
+    NL2 --> NL3
+    TL1 --> TL2
+    TL2 --> TL3
+    TL3 --> TL4
+    TL1 --> TL5
+    TL1 --> AL1
+    TL1 --> AL2
+    AL1 --> AL3
+```
+
+> **图说**：知识图谱共 100 个节点、82 条依赖边，导向边表示“学习前置关系”。
 
 ### 2.3 用户类和特征
 

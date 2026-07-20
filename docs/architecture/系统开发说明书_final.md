@@ -280,6 +280,58 @@ OrchestratorAgent 作为中枢节点，按意图路由激活专业 Agent 子集�
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+#### 2.4.5 多 Agent 协同序列图（Mermaid）
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor 学生
+    participant O as OrchestratorAgent
+    participant R as RetrieverAgent
+    participant D as DiagnosisAgent
+    participant P as ProfilerAgent
+    participant RG as ResourceGeneratorAgent
+    participant PP as PathPlannerAgent
+    participant TM as TrustMechanism
+
+    学生->>O: POST /api/v1/chat/stream
+    O->>O: 意图分类 + DFP 域外过滤
+    Note over O: 默认安全：非计算机网络问题拦截
+
+    O->>R: 知识检索请求
+    R-->>O: top-5 知识片段 + KG 节点
+    O-->>  学生: SSE: agent_start(retriever)
+
+    alt 检测到学生错误
+        O->>D: 三层诊断请求
+        D->>D: L1 表面错误识别
+        D->>D: L2 根因分析
+        D->>D: L3 误区模式匹配
+        D-->>O: 诊断 JSON \n(error_type/root_causes/pattern)
+        O-->> 学生: SSE: diagnosis(result)
+    end
+
+    O->>O: LLM 流式生成回复
+    O-->>  学生: SSE: token(chunk) x N
+    O->>TM: 可信处理
+    TM-->>O: 来源标注 + 不确定性声明
+
+    O->>P: 更新八维画像
+    P-->>O: 画像更新完毕
+    O-->> 学生: SSE: profile(updated)
+
+    opt 按需激活
+        O->>RG: 生成五类资源
+        RG-->>O: 资源卡片列表
+        O-->> 学生: SSE: resources(cards)
+        O->>PP: 路径重规划
+        PP-->>O: 学习路径（含三维理由）
+        O-->> 学生: SSE: path(nodes)
+    end
+
+    O-->> 学生: SSE: done
+```
+
 ### 2.5 功能需求与程序模块的关系
 
 | 功能需求 | 主要后端模块 | 主要前端模块 |
@@ -593,6 +645,73 @@ data: {
 ---
 
 ## 5 数据结构设计
+
+### 5.0 数据库实体关系图（ER Diagram）
+
+```mermaid
+erDiagram
+    USERS {
+        int id PK
+        string username
+        string hashed_password
+        string role
+        datetime created_at
+    }
+    STUDENT_PROFILES {
+        int id PK
+        int user_id FK
+        float knowledge_depth
+        string cognitive_style
+        float learning_progress
+        float protocol_understanding
+        float practical_skill
+        json common_mistakes
+        string learning_preference
+        float overall_level
+        datetime updated_at
+    }
+    CHAT_SESSIONS {
+        int id PK
+        int user_id FK
+        string session_id
+        datetime created_at
+    }
+    CHAT_MESSAGES {
+        int id PK
+        int session_id FK
+        string role
+        text content
+        datetime timestamp
+    }
+    AGENT_LOGS {
+        int id PK
+        int session_id FK
+        string agent_name
+        string action
+        string status
+        text input_summary
+        text output_result
+        int duration_ms
+        datetime timestamp
+    }
+    LEARNING_RESOURCES {
+        int id PK
+        int user_id FK
+        string knowledge_point
+        string resource_type
+        text content
+        json metadata
+        datetime created_at
+    }
+
+    USERS ||--o{ STUDENT_PROFILES : "has"
+    USERS ||--o{ CHAT_SESSIONS : "owns"
+    CHAT_SESSIONS ||--o{ CHAT_MESSAGES : "contains"
+    CHAT_SESSIONS ||--o{ AGENT_LOGS : "records"
+    USERS ||--o{ LEARNING_RESOURCES : "generates"
+```
+
+> **说明**：系统使用 SQLite3（aiosqlite 异步驱动），多表通过 SQLAlchemy ORM 操作，编排期除 `LEARNING_RESOURCES` 外均已初始化。
 
 ### 5.1 核心数据模型
 
